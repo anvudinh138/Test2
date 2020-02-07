@@ -1,0 +1,89 @@
+@import 'core';
+
+.square-container {
+    width: 60%;
+    margin: auto;
+    padding: 1em 2em;
+    border: 1px solid;
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: flex-start;
+
+    div {
+        width: map-get($map: $width-square, $key: default);
+        padding-bottom: map-get($map: $width-square, $key: default);
+        margin: 1.5%;
+        border: 1px solid;
+        position: relative;
+
+        &:hover {
+            cursor: pointer;
+        }
+
+        span {
+            position: absolute;
+            left: 0;
+            right: 0;
+            text-align: center;
+            top: 40%;
+            font-size: 1vw;
+
+            &.times-clicked {
+                top: 50%;
+            }
+        }
+    }
+}
+
+.mark {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: map-get($map: $colors, $key: mark-panel);
+    z-index: 2;
+}
+
+.panel {
+    position: fixed;
+    background-color: map-get($map: $colors, $key: panel);
+    width: 300px;
+    height: 100%;
+    top: 0;
+    right: -300px;
+    padding: 1em;
+    color: map-get($map: $colors, $key: primary);
+
+    &.on-panel {
+        z-index: 3;
+        transition: right 0.2s ease-in;
+        right: 0px;
+    }
+
+    &.off-panel {
+        z-index: 3;
+        transition: right 0.2s ease-in;
+        right: -300px;
+    }
+
+    .close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: map-get($map: $colors, $key: close);
+    }
+
+    .panel-info {
+        display: flex;
+        height: 100%;
+        width: 100%;
+        padding-top: 50px;
+        flex-flow: column nowrap;
+        align-items: flex-start;
+
+        span {
+            margin-bottom: 10px;
+        }
+    }
+}

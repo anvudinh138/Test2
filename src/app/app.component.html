@@ -1,0 +1,24 @@
+<div class='square-container my-3'>
+    <ng-container *ngFor="let item of listUserDisplay; let i = index;">
+        <div [ngStyle]="{'background-color': item.backgroundColor}" (click)='onClickSquare(item)'>
+            <span>ID: {{item.id}}</span>
+            <span class="times-clicked" *ngIf='item.timesClicked > 0'>clicked {{item.timesClicked}} times</span>
+        </div>
+    </ng-container>
+    <div (click)='onLoadMore()' *ngIf='remainUser.length !== 0'>
+        <span>Load More</span>
+    </div>
+</div>
+
+<div class="mark" *ngIf='isShowPanel' (click)='isShowPanel = false'></div>
+<div class='panel' [ngClass]='isShowPanel ? "on-panel" : "off-panel"'>
+    <button type="button" class="close" aria-label="Close" (click)='isShowPanel = false'>
+        <span aria-hidden="true">&times;</span>
+    </button>
+    <div class="panel-info" *ngIf='userSelected'>
+        <span>ID: {{userSelected.id}}</span>
+        <span>Clicked {{userSelected.timesClicked}} times</span>
+        <span>TITLE: {{userSelected.title}}</span>
+        <span>BODY: {{userSelected.body}}</span>
+    </div>
+</div>
