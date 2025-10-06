@@ -38,6 +38,7 @@ private:
 
    // Cache
    ETrendState       m_last_state;
+   ETrendState       m_previous_state;  // Track previous state for hysteresis
    datetime          m_last_check_time;
    datetime          m_last_state_change_time;  // Hysteresis: time of last state change
 
@@ -96,6 +97,7 @@ public:
                          m_ema_handle(INVALID_HANDLE),
                          m_adx_handle(INVALID_HANDLE),
                          m_last_state(TREND_NEUTRAL),
+                         m_previous_state(TREND_NEUTRAL),
                          m_last_check_time(0),
                          m_last_state_change_time(0)
      {
@@ -272,6 +274,7 @@ public:
                                           state_str,price,ema,adx));
            }
 
+         m_previous_state=m_last_state;  // Save previous state for hysteresis
          m_last_state=current_state;
          m_last_state_change_time=TimeCurrent();  // Track state change time for hysteresis
         }
@@ -287,17 +290,31 @@ public:
       if(!m_enabled)
          return true;
 
+      // Block BUY during strong downtrend
+      if(IsStrongDowntrend())
+         return false;
+
       // Hysteresis: If recently changed to NEUTRAL from DOWNTREND, wait 10 minutes before allowing BUY
       datetime now=TimeCurrent();
-      if(m_last_state==TREND_NEUTRAL && (now-m_last_state_change_time)<600)
+      if(m_last_state==TREND_NEUTRAL && m_previous_state==TREND_DOWN)
         {
-         // Check if previous state was DOWNTREND by checking current downtrend condition
-         if(IsStrongDowntrend())
-            return false;  // Still too close to downtrend, wait
+         if((now-m_last_state_change_time)<600)
+           {
+            if(m_log!=NULL)
+              {
+               static datetime last_hysteresis_log=0;
+               if(now-last_hysteresis_log>60)  // Log once per minute
+                 {
+                  int remaining=(int)(600-(now-m_last_state_change_time));
+                  m_log.Event(Tag(),StringFormat("BUY basket blocked by hysteresis (DOWNTREND→NEUTRAL, wait %ds)",remaining));
+                  last_hysteresis_log=now;
+                 }
+              }
+            return false;
+           }
         }
 
-      // Block BUY during strong downtrend
-      return !IsStrongDowntrend();
+      return true;
      }
 
    //+------------------------------------------------------------------+
@@ -308,17 +325,31 @@ public:
       if(!m_enabled)
          return true;
 
+      // Block SELL during strong uptrend
+      if(IsStrongUptrend())
+         return false;
+
       // Hysteresis: If recently changed to NEUTRAL from UPTREND, wait 10 minutes before allowing SELL
       datetime now=TimeCurrent();
-      if(m_last_state==TREND_NEUTRAL && (now-m_last_state_change_time)<600)
+      if(m_last_state==TREND_NEUTRAL && m_previous_state==TREND_UP)
         {
-         // Check if previous state was UPTREND by checking current uptrend condition
-         if(IsStrongUptrend())
-            return false;  // Still too close to uptrend, wait
+         if((now-m_last_state_change_time)<600)
+           {
+            if(m_log!=NULL)
+              {
+               static datetime last_hysteresis_log=0;
+               if(now-last_hysteresis_log>60)  // Log once per minute
+                 {
+                  int remaining=(int)(600-(now-m_last_state_change_time));
+                  m_log.Event(Tag(),StringFormat("SELL basket blocked by hysteresis (UPTREND→NEUTRAL, wait %ds)",remaining));
+                  last_hysteresis_log=now;
+                 }
+              }
+            return false;
+           }
         }
 
-      // Block SELL during strong uptrend
-      return !IsStrongUptrend();
+      return true;
      }
 
    //+------------------------------------------------------------------+
