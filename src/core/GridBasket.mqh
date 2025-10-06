@@ -26,6 +26,7 @@ private:
 
    SGridLevel     m_levels[];
    bool           m_active;
+   bool           m_trading_enabled;  // Trend filter control
    bool           m_closed_recently;
    int            m_cycles_done;
 
@@ -400,6 +401,7 @@ public:
                          m_log(logger),
                          m_magic(magic),
                          m_active(false),
+                         m_trading_enabled(true),
                          m_closed_recently(false),
                          m_cycles_done(0),
                          m_total_lot(0.0),
@@ -460,6 +462,8 @@ public:
      {
       if(!m_params.grid_dynamic_enabled)
          return;
+      if(!m_trading_enabled)
+         return;  // Trend filter disabled trading
       if(m_levels_placed>=m_max_levels)
          return;
       if(m_pending_count>m_params.grid_refill_threshold)
@@ -670,6 +674,16 @@ public:
    void           SetActive(const bool active)
      {
       m_active=active;
+     }
+
+   void           SetTradingEnabled(const bool enabled)
+     {
+      m_trading_enabled=enabled;
+     }
+
+   bool           IsTradingEnabled() const
+     {
+      return m_trading_enabled;
      }
   };
 

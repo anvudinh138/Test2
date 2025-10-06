@@ -68,6 +68,14 @@ struct SParams
 
    // timeframe preservation (prevent duplicate positions on TF switch)
    bool         preserve_on_tf_switch;   // preserve positions on timeframe switch (default: true)
+
+   // trend filter (Phase 1.1 - prevent counter-trend positions)
+   bool         trend_filter_enabled;    // enable trend filter
+   ENUM_TIMEFRAMES trend_ema_timeframe;  // EMA timeframe (default: H4)
+   int          trend_ema_period;        // EMA period (default: 200)
+   int          trend_adx_period;        // ADX period (default: 14)
+   double       trend_adx_threshold;     // ADX threshold for strong trend (default: 25.0)
+   double       trend_buffer_pips;       // Distance buffer from EMA (default: 200 pips)
   };
 
 #endif // __RGD_V2_PARAMS_MQH__

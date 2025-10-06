@@ -87,6 +87,14 @@ input bool              InpSpawnOnJobDD     = true;  // Spawn new job when job D
 input int               InpSpawnCooldownSec = 30;    // Cooldown between spawns (seconds)
 input int               InpMaxSpawns        = 10;    // Max spawns per session
 
+//--- Trend Filter (Phase 1.1 - Strong Trend Protection)
+input group             "=== Trend Filter (v3.1 - Strong Trend Protection) ==="
+input bool              InpTrendFilterEnabled = false;          // Enable trend filter (OFF by default - test first!)
+input ENUM_TIMEFRAMES   InpTrendEMA_Timeframe = PERIOD_H4;     // EMA timeframe
+input int               InpTrendEMA_Period    = 200;           // EMA period
+input int               InpTrendADX_Period    = 14;            // ADX period
+input double            InpTrendADX_Threshold = 25.0;          // ADX threshold (strong trend)
+input double            InpTrendBufferPips    = 200.0;         // Distance buffer from EMA (pips)
 
 //--- Globals
 SParams              g_params;
@@ -147,6 +155,14 @@ void BuildParams()
 
    // Timeframe preservation (bug fix - always enabled)
    g_params.preserve_on_tf_switch=true;
+
+   // Trend filter (Phase 1.1 - strong trend protection)
+   g_params.trend_filter_enabled  =InpTrendFilterEnabled;
+   g_params.trend_ema_timeframe   =InpTrendEMA_Timeframe;
+   g_params.trend_ema_period      =InpTrendEMA_Period;
+   g_params.trend_adx_period      =InpTrendADX_Period;
+   g_params.trend_adx_threshold   =InpTrendADX_Threshold;
+   g_params.trend_buffer_pips     =InpTrendBufferPips;
 
    // THEN apply preset overrides (if not CUSTOM)
    // Preset will override only the critical params (spacing, grid, target, cooldown)

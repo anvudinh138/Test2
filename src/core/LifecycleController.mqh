@@ -10,6 +10,7 @@
 #include "SpacingEngine.mqh"
 #include "OrderExecutor.mqh"
 #include "GridBasket.mqh"
+#include "TrendFilter.mqh"
 #include "Logger.mqh"
 
 class CLifecycleController
@@ -24,6 +25,7 @@ private:
 
    CGridBasket      *m_buy;
    CGridBasket      *m_sell;
+   CTrendFilter     *m_trend_filter;
    bool              m_halted;
 
    // Grid protection
@@ -223,15 +225,34 @@ public:
                          m_magic(magic),
                          m_buy(NULL),
                          m_sell(NULL),
+                         m_trend_filter(NULL),
                          m_halted(false),
                          m_cooldown_until(0),
                          m_in_cooldown(false),
                          m_total_realized_pnl(0.0)
      {
+      // Create trend filter
+      m_trend_filter=new CTrendFilter(m_symbol,
+                                      m_params.trend_filter_enabled,
+                                      m_params.trend_ema_timeframe,
+                                      m_params.trend_ema_period,
+                                      m_params.trend_adx_period,
+                                      m_params.trend_adx_threshold,
+                                      m_params.trend_buffer_pips,
+                                      m_log);
      }
 
    bool              Init()
      {
+      // Initialize trend filter
+      if(m_trend_filter!=NULL && !m_trend_filter.Init())
+        {
+         if(m_log!=NULL)
+            m_log.Event(Tag(),"Trend filter init failed");
+         delete m_trend_filter;
+         m_trend_filter=NULL;
+        }
+
       double ask=SymbolInfoDouble(m_symbol,SYMBOL_ASK);
       double bid=SymbolInfoDouble(m_symbol,SYMBOL_BID);
       if(ask<=0 || bid<=0)
@@ -310,6 +331,18 @@ public:
       if(m_halted)
          return;
 
+      // Update trend filter and apply to baskets
+      if(m_trend_filter!=NULL)
+        {
+         m_trend_filter.Update();
+
+         // Apply trend filter to baskets
+         if(m_buy!=NULL)
+            m_buy.SetTradingEnabled(m_trend_filter.AllowBuyBasket());
+         if(m_sell!=NULL)
+            m_sell.SetTradingEnabled(m_trend_filter.AllowSellBasket());
+        }
+
       // Check grid protection first (before updating baskets)
       CheckGridProtection();
 
@@ -351,6 +384,11 @@ public:
         {
          delete m_sell;
          m_sell=NULL;
+        }
+      if(m_trend_filter!=NULL)
+        {
+         delete m_trend_filter;
+         m_trend_filter=NULL;
         }
      }
 
