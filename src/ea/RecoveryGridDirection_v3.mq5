@@ -4,6 +4,7 @@
 
 #include <RECOVERY-GRID-DIRECTION_v3/core/Types.mqh>
 #include <RECOVERY-GRID-DIRECTION_v3/core/Params.mqh>
+#include <RECOVERY-GRID-DIRECTION_v3/core/PresetManager.mqh>
 #include <RECOVERY-GRID-DIRECTION_v3/core/Logger.mqh>
 #include <RECOVERY-GRID-DIRECTION_v3/core/SpacingEngine.mqh>
 #include <RECOVERY-GRID-DIRECTION_v3/core/OrderValidator.mqh>
@@ -15,6 +16,9 @@
 //--- Inputs
 //--- Identity
 input long              InpMagic            = 990045;  // Magic Number (IMPORTANT: Change this first!)
+
+//--- Symbol Preset (Auto-configure for different symbols)
+input ENUM_SYMBOL_PRESET InpSymbolPreset    = PRESET_AUTO;  // Symbol preset (AUTO, EURUSD, XAUUSD, GBPUSD, USDJPY, CUSTOM)
 
 //--- Logging
 input int               InpStatusInterval   = 60;      // Status log interval (seconds)
@@ -74,6 +78,7 @@ CNewsFilter         *g_news_filter   = NULL;
 
 void BuildParams()
   {
+   // First apply manual inputs (baseline configuration)
    g_params.spacing_mode       =(ESpacingMode)InpSpacingMode;
    g_params.spacing_pips       =InpSpacingStepPips;
    g_params.spacing_atr_mult   =InpSpacingAtrMult;
@@ -84,13 +89,13 @@ void BuildParams()
    g_params.grid_levels        =InpGridLevels;
    g_params.lot_base           =InpLotBase;
    g_params.lot_scale          =InpLotScale;
-   
+
    g_params.grid_dynamic_enabled=InpDynamicGrid;
    g_params.grid_warm_levels   =InpWarmLevels;
    g_params.grid_refill_threshold=InpRefillThreshold;
    g_params.grid_refill_batch  =InpRefillBatch;
    g_params.grid_max_pendings  =InpMaxPendings;
-   
+
    g_params.target_cycle_usd   =InpTargetCycleUSD;
    g_params.session_sl_usd     =InpSessionSL_USD;
 
@@ -103,6 +108,12 @@ void BuildParams()
    g_params.commission_per_lot =InpCommissionPerLot;
 
    g_params.magic              =InpMagic;
+
+   // Apply preset overrides (if not CUSTOM)
+   if(InpSymbolPreset != PRESET_CUSTOM)
+     {
+      CPresetManager::ApplyPreset(g_params, InpSymbolPreset, _Symbol);
+     }
   }
 
 int OnInit()
@@ -147,6 +158,17 @@ int OnInit()
                                                InpCooldownMinutes));
       else
          g_logger.Event("[RGDv2]","Grid Protection: DISABLED");
+
+      // Log active preset
+      string preset_name = CPresetManager::GetPresetName(InpSymbolPreset);
+      if(InpSymbolPreset == PRESET_CUSTOM)
+         g_logger.Event("[RGDv2]",StringFormat("Preset: CUSTOM (manual inputs)"));
+      else
+         g_logger.Event("[RGDv2]",StringFormat("Preset: %s (Spacing=%.1f, ATR=%s, Cooldown=%d min)",
+                                               preset_name,
+                                               g_params.spacing_pips,
+                                               EnumToString(g_params.atr_timeframe),
+                                               g_params.grid_cooldown_minutes));
      }
 
    return(INIT_SUCCEEDED);
