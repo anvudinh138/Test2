@@ -206,23 +206,33 @@ private:
         {
          if(m_jobs[i].job_id==job_id)
            {
+            // CRITICAL: Close all positions BEFORE shutdown
+            if(m_executor!=NULL)
+              {
+               long job_magic=m_jobs[i].magic;
+               m_executor.SetMagic(job_magic);
+               m_executor.CloseAllByDirection(DIR_BUY,job_magic);
+               m_executor.CloseAllByDirection(DIR_SELL,job_magic);
+               m_executor.CancelPendingByDirection(DIR_BUY,job_magic);
+               m_executor.CancelPendingByDirection(DIR_SELL,job_magic);
+              }
+
             if(m_jobs[i].controller!=NULL)
               {
-               // Close all positions via FlattenAll
                m_jobs[i].controller.Shutdown();
                delete m_jobs[i].controller;
                m_jobs[i].controller=NULL;
               }
             m_jobs[i].status=JOB_STOPPED;
             if(m_log!=NULL)
-               m_log.Event(Tag(),StringFormat("Job %d stopped: %s",job_id,reason));
+               m_log.Event(Tag(),StringFormat("Job %d stopped: %s (all positions closed)",job_id,reason));
             break;
            }
         }
      }
 
    //+------------------------------------------------------------------+
-   //| Abandon job (stop managing, keep positions open)                |
+   //| Abandon job (stop managing, CLOSE positions to prevent blow-up) |
    //+------------------------------------------------------------------+
    void              AbandonJob(const int job_id)
      {
@@ -230,10 +240,28 @@ private:
         {
          if(m_jobs[i].job_id==job_id)
            {
+            // CHANGED: Close positions instead of keeping them open
+            // Reason: Abandoned jobs = too risky to recover, cut loss immediately
+            if(m_executor!=NULL)
+              {
+               long job_magic=m_jobs[i].magic;
+               m_executor.SetMagic(job_magic);
+               m_executor.CloseAllByDirection(DIR_BUY,job_magic);
+               m_executor.CloseAllByDirection(DIR_SELL,job_magic);
+               m_executor.CancelPendingByDirection(DIR_BUY,job_magic);
+               m_executor.CancelPendingByDirection(DIR_SELL,job_magic);
+              }
+
+            if(m_jobs[i].controller!=NULL)
+              {
+               m_jobs[i].controller.Shutdown();
+               delete m_jobs[i].controller;
+               m_jobs[i].controller=NULL;
+              }
+
             m_jobs[i].status=JOB_ABANDONED;
             if(m_log!=NULL)
-               m_log.Event(Tag(),StringFormat("Job %d abandoned (positions kept open)",job_id));
-            // Note: Controller still exists, but we stop updating it
+               m_log.Event(Tag(),StringFormat("Job %d abandoned (all positions closed)",job_id));
             break;
            }
         }
@@ -301,6 +329,8 @@ public:
    //+------------------------------------------------------------------+
    int               SpawnJob()
      {
+
+
       int job_id=m_next_job_id;
       long job_magic=CalculateJobMagic(job_id);
 
@@ -357,6 +387,15 @@ public:
    //+------------------------------------------------------------------+
    void              Update()
      {
+
+      if(m_log!=NULL)
+        {
+          m_log.Event(Tag(), StringFormat("Active Jobs: %d, Total Spawns: %d",
+
+                                          GetActiveJobCount(),
+        m_total_spawns));
+        }
+
       // 1. Update all jobs
       for(int i=0;i<ArraySize(m_jobs);i++)
         {
