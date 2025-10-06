@@ -42,9 +42,7 @@ private:
    int            m_pending_count;
    double         m_initial_spacing_pips;
 
-   bool           m_trailing_on;
    double         m_last_realized;
-   double         m_trail_anchor;
 
    double         m_volume_step;
    double         m_volume_min;
@@ -370,118 +368,6 @@ private:
         m_log.Event(Tag(),StringFormat("Basket closed: %s",reason));
      }
 
-   void           ManageTrailing()
-     {
-      if(!m_params.tsl_enabled)
-         return;
-      if(m_kind!=BASKET_HEDGE)
-         return;
-      if(m_total_lot<=0.0)
-         return;
-
-      double point=SymbolInfoDouble(m_symbol,SYMBOL_POINT);
-      if(point<=0.0)
-         point=_Point;
-      double price=(m_direction==DIR_BUY)?SymbolInfoDouble(m_symbol,SYMBOL_BID)
-                                         :SymbolInfoDouble(m_symbol,SYMBOL_ASK);
-      double move_points=(m_direction==DIR_BUY)?((price-m_avg_price)/point)
-                                              :((m_avg_price-price)/point);
-
-      if(!m_trailing_on)
-        {
-         if(move_points>=m_params.tsl_start_points)
-           {
-            m_trailing_on=true;
-            m_trail_anchor=price;
-            if(m_log!=NULL)
-              m_log.Event(Tag(),"TSL activated");
-           }
-         return;
-        }
-
-      double step=m_params.tsl_step_points*point;
-      if(step<=0.0)
-         return;
-
-      bool moved=false;
-      double logged_sl=0.0;
-      if(m_direction==DIR_BUY)
-        {
-         if(price-m_trail_anchor>=step)
-           {
-            double new_anchor=price;
-            double new_sl=new_anchor-step;
-            if(ApplyTrailingStop(new_sl))
-              {
-               m_trail_anchor=new_anchor;
-               moved=true;
-               logged_sl=new_sl;
-              }
-           }
-        }
-      else
-        {
-         if(m_trail_anchor-price>=step)
-           {
-            double new_anchor=price;
-            double new_sl=new_anchor+step;
-            if(ApplyTrailingStop(new_sl))
-              {
-               m_trail_anchor=new_anchor;
-               moved=true;
-               logged_sl=new_sl;
-              }
-           }
-        }
-
-      if(moved && m_log!=NULL)
-        {
-         int digits=(int)SymbolInfoInteger(m_symbol,SYMBOL_DIGITS);
-         m_log.Event(Tag(),StringFormat("TSL trail stop to %s",DoubleToString(logged_sl,digits)));
-        }
-     }
-
-   bool           ApplyTrailingStop(const double new_sl)
-     {
-      bool applied=false;
-      CTrade trade;
-      trade.SetExpertMagicNumber(m_magic);
-      double point=SymbolInfoDouble(m_symbol,SYMBOL_POINT);
-      if(point<=0.0)
-         point=_Point;
-      int digits=(int)SymbolInfoInteger(m_symbol,SYMBOL_DIGITS);
-      double norm_sl=NormalizeDouble(new_sl,digits);
-      int total=(int)PositionsTotal();
-      for(int i=0;i<total;i++)
-        {
-         ulong ticket=PositionGetTicket(i);
-         if(ticket==0)
-            continue;
-         if(!PositionSelectByTicket(ticket))
-            continue;
-         if(PositionGetString(POSITION_SYMBOL)!=m_symbol)
-            continue;
-         if(PositionGetInteger(POSITION_MAGIC)!=m_magic)
-            continue;
-         long type=PositionGetInteger(POSITION_TYPE);
-         if((m_direction==DIR_BUY && type!=POSITION_TYPE_BUY) ||
-            (m_direction==DIR_SELL && type!=POSITION_TYPE_SELL))
-            continue;
-         double current_sl=PositionGetDouble(POSITION_SL);
-         double current_tp=PositionGetDouble(POSITION_TP);
-         bool better=false;
-         if(m_direction==DIR_BUY)
-           better=(current_sl==0.0 || norm_sl>current_sl+point/2.0);
-         else
-           better=(current_sl==0.0 || norm_sl<current_sl-point/2.0);
-         if(!better)
-            continue;
-         if(trade.PositionModify(ticket,norm_sl,current_tp))
-            applied=true;
-        }
-      return applied;
-     }
-
   void           AdjustTarget(const double delta,const string reason)
      {
       if(delta<=0.0)
@@ -497,52 +383,6 @@ private:
      }
 
 public:
-   void           DeployRecovery(const double price)
-     {
-      if(m_params.recovery_lot<=0.0)
-         return;
-      if(m_executor==NULL)
-         return;
-      m_executor.SetMagic(m_magic);
-      int pendings=1+ArraySize(m_params.recovery_steps);
-      if(pendings<1)
-         pendings=1;
-      m_executor.BypassNext(pendings);
-      double rescue_lot=NormalizeVolumeValue(m_params.recovery_lot);
-      if(rescue_lot<=0.0)
-         return;
-      m_executor.Market(m_direction,rescue_lot,"RGDv2_RescueSeed");
-      double point=SymbolInfoDouble(m_symbol,SYMBOL_POINT);
-      if(point<=0.0)
-         point=_Point;
-      double updated_last=m_last_grid_price;
-      if(m_direction==DIR_BUY)
-        {
-         for(int i=0;i<ArraySize(m_params.recovery_steps);i++)
-           {
-            double level=price-m_params.recovery_steps[i]*point;
-            ulong ticket=m_executor.Limit(DIR_BUY,level,rescue_lot,"RGDv2_RescueGrid");
-            if(ticket>0 && (updated_last==0.0 || level<updated_last))
-               updated_last=level;
-           }
-        }
-      else
-        {
-         for(int i=0;i<ArraySize(m_params.recovery_steps);i++)
-           {
-            double level=price+m_params.recovery_steps[i]*point;
-            ulong ticket=m_executor.Limit(DIR_SELL,level,rescue_lot,"RGDv2_RescueGrid");
-            if(ticket>0 && (updated_last==0.0 || level>updated_last))
-               updated_last=level;
-           }
-        }
-      if(updated_last!=0.0)
-         m_last_grid_price=updated_last;
-      RefreshState();
-      if(m_log!=NULL)
-         m_log.Event(Tag(),"Rescue layer deployed");
-     }
-
    CGridBasket(const string symbol,
                                  const EDirection direction,
                                  const EBasketKind kind,
@@ -572,9 +412,7 @@ public:
                          m_levels_placed(0),
                          m_pending_count(0),
                          m_initial_spacing_pips(0.0),
-                         m_trailing_on(false),
                          m_last_realized(0.0),
-                         m_trail_anchor(0.0),
                          m_volume_step(0.0),
                          m_volume_min(0.0),
                          m_volume_max(0.0),
@@ -611,8 +449,6 @@ public:
       BuildGrid(anchor_price,spacing_px);
       m_target_reduction=0.0;
       m_last_realized=0.0;
-      m_trailing_on=false;
-      m_trail_anchor=0.0;
       PlaceInitialOrders();
       m_active=true;
       m_closed_recently=false;
@@ -710,8 +546,7 @@ public:
            }
          RefillBatch();
         }
-      
-      ManageTrailing();
+
       if((m_pnl_usd>=EffectiveTargetUsd()) || PriceReachedTP())
         {
          CloseBasket("GroupTP");
@@ -790,7 +625,7 @@ public:
       snap.pnl_usd=m_pnl_usd;
       snap.tp_price=m_tp_price;
       snap.last_grid_price=m_last_grid_price;
-      snap.trailing_active=m_trailing_on;
+      snap.trailing_active=false;
       return snap;
      }
 

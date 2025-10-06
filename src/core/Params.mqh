@@ -21,7 +21,7 @@ struct SParams
    int          grid_levels;        // number of levels including market seed
    double       lot_base;
    double       lot_scale;
-   
+
    // dynamic grid
    bool         grid_dynamic_enabled;
    int          grid_warm_levels;      // initial pending count
@@ -32,20 +32,8 @@ struct SParams
    // profit target
    double       target_cycle_usd;
 
-   // trailing stop for hedge basket
-   bool         tsl_enabled;
-   int          tsl_start_points;
-   int          tsl_step_points;
-
-   // rescue
-   int          recovery_steps[];   // points offsets for staged pending orders
-   double       recovery_lot;
-   double       dd_open_usd;
-   double       offset_ratio;
-   double       exposure_cap_lots;
-   int          max_cycles_per_side;
+   // session risk limit (keep for safety)
    double       session_sl_usd;
-   int          cooldown_bars;
 
    // execution
    int          slippage_pips;
