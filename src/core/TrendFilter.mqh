@@ -294,18 +294,18 @@ public:
       if(IsStrongDowntrend())
          return false;
 
-      // Hysteresis: If recently changed to NEUTRAL from DOWNTREND, wait 10 minutes before allowing BUY
+      // Hysteresis: If recently changed to NEUTRAL from DOWNTREND, wait 3 minutes before allowing BUY
       datetime now=TimeCurrent();
       if(m_last_state==TREND_NEUTRAL && m_previous_state==TREND_DOWN)
         {
-         if((now-m_last_state_change_time)<600)
+         if((now-m_last_state_change_time)<180)  // 3 minutes = 180 seconds (reduced from 10min)
            {
             if(m_log!=NULL)
               {
                static datetime last_hysteresis_log=0;
                if(now-last_hysteresis_log>60)  // Log once per minute
                  {
-                  int remaining=(int)(600-(now-m_last_state_change_time));
+                  int remaining=(int)(180-(now-m_last_state_change_time));
                   m_log.Event(Tag(),StringFormat("BUY basket blocked by hysteresis (DOWNTREND→NEUTRAL, wait %ds)",remaining));
                   last_hysteresis_log=now;
                  }
@@ -329,18 +329,18 @@ public:
       if(IsStrongUptrend())
          return false;
 
-      // Hysteresis: If recently changed to NEUTRAL from UPTREND, wait 10 minutes before allowing SELL
+      // Hysteresis: If recently changed to NEUTRAL from UPTREND, wait 3 minutes before allowing SELL
       datetime now=TimeCurrent();
       if(m_last_state==TREND_NEUTRAL && m_previous_state==TREND_UP)
         {
-         if((now-m_last_state_change_time)<600)
+         if((now-m_last_state_change_time)<180)  // 3 minutes = 180 seconds (reduced from 10min)
            {
             if(m_log!=NULL)
               {
                static datetime last_hysteresis_log=0;
                if(now-last_hysteresis_log>60)  // Log once per minute
                  {
-                  int remaining=(int)(600-(now-m_last_state_change_time));
+                  int remaining=(int)(180-(now-m_last_state_change_time));
                   m_log.Event(Tag(),StringFormat("SELL basket blocked by hysteresis (UPTREND→NEUTRAL, wait %ds)",remaining));
                   last_hysteresis_log=now;
                  }
