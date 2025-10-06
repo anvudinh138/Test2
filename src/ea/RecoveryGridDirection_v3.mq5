@@ -17,8 +17,9 @@
 //--- Identity
 input long              InpMagic            = 990045;  // Magic Number (IMPORTANT: Change this first!)
 
-//--- Symbol Preset (Auto-configure for different symbols)
-input ENUM_SYMBOL_PRESET InpSymbolPreset    = PRESET_AUTO;  // Symbol preset (AUTO, EURUSD, XAUUSD, GBPUSD, USDJPY, CUSTOM)
+//--- Symbol Preset (Volatility-based for easy backtesting)
+input ENUM_SYMBOL_PRESET InpSymbolPreset    = PRESET_AUTO;  // Volatility preset (AUTO, LOW_VOL, MEDIUM_VOL, HIGH_VOL, CUSTOM)
+input bool              InpUseTestedPresets = true;  // Use tested presets when available (EUR, XAU, GBP, JPY)
 
 //--- Logging
 input int               InpStatusInterval   = 60;      // Status log interval (seconds)
@@ -113,7 +114,7 @@ void BuildParams()
    // Preset will override only the critical params (spacing, grid, target, cooldown)
    if(InpSymbolPreset != PRESET_CUSTOM)
      {
-      CPresetManager::ApplyPreset(g_params, InpSymbolPreset, _Symbol);
+      CPresetManager::ApplyPreset(g_params, InpSymbolPreset, _Symbol, InpUseTestedPresets);
      }
   }
 

@@ -7,16 +7,29 @@
 #include "Params.mqh"
 
 //+------------------------------------------------------------------+
-//| Preset types                                                      |
+//| Preset types - Volatility-based for easy backtesting             |
 //+------------------------------------------------------------------+
 enum ENUM_SYMBOL_PRESET
   {
-   PRESET_AUTO = 0,      // Auto-detect from chart symbol
-   PRESET_EURUSD = 1,    // EURUSD conservative
-   PRESET_XAUUSD = 2,    // XAUUSD wide spacing (tested +472%)
-   PRESET_GBPUSD = 3,    // GBPUSD medium volatility
-   PRESET_USDJPY = 4,    // USDJPY medium volatility
-   PRESET_CUSTOM = 99    // Manual override (no preset)
+   PRESET_AUTO = 0,           // Auto-detect from chart symbol
+   PRESET_LOW_VOL = 1,        // Low volatility (25 pips, 10 levels)
+   PRESET_MEDIUM_LOW_VOL = 2, // Medium-low volatility (35 pips, 9 levels)
+   PRESET_MEDIUM_VOL = 3,     // Medium volatility (45 pips, 8 levels)
+   PRESET_MEDIUM_HIGH_VOL = 4,// Medium-high volatility (60 pips, 6 levels)
+   PRESET_HIGH_VOL = 5,       // High volatility (150 pips, 5 levels)
+   PRESET_CUSTOM = 99         // Manual override (no preset)
+  };
+
+//+------------------------------------------------------------------+
+//| Symbol-to-volatility mapping (tested presets)                    |
+//+------------------------------------------------------------------+
+enum ENUM_TESTED_SYMBOL
+  {
+   SYM_EURUSD,
+   SYM_XAUUSD,
+   SYM_GBPUSD,
+   SYM_USDJPY,
+   SYM_UNKNOWN
   };
 
 //+------------------------------------------------------------------+
@@ -27,32 +40,50 @@ class CPresetManager
 public:
    //+------------------------------------------------------------------+
    //| Apply preset to params struct                                    |
+   //| use_tested_presets: if true, override volatility preset with    |
+   //|                     tested symbol-specific settings              |
    //+------------------------------------------------------------------+
-   static void ApplyPreset(SParams &params, ENUM_SYMBOL_PRESET preset, const string symbol)
+   static void ApplyPreset(SParams &params, ENUM_SYMBOL_PRESET preset, const string symbol, const bool use_tested_presets = true)
      {
-      // Auto-detect preset from symbol
+      // Auto-detect: Check if symbol has tested preset first
       if(preset == PRESET_AUTO)
         {
-         preset = DetectPresetFromSymbol(symbol);
+         if(use_tested_presets)
+           {
+            // Try to use tested preset first
+            ENUM_TESTED_SYMBOL tested_sym = DetectTestedSymbol(symbol);
+            if(tested_sym != SYM_UNKNOWN)
+              {
+               ApplyTestedPreset(params, tested_sym);
+               return;
+              }
+           }
+
+         // No tested preset, fallback to volatility-based
+         preset = DetectVolatilityPreset(symbol);
         }
 
-      // Apply preset-specific settings
+      // Apply volatility-based settings
       switch(preset)
         {
-         case PRESET_EURUSD:
-            ApplyEURUSD(params);
+         case PRESET_LOW_VOL:
+            ApplyLowVol(params);
             break;
 
-         case PRESET_XAUUSD:
-            ApplyXAUUSD(params);
+         case PRESET_MEDIUM_LOW_VOL:
+            ApplyMediumLowVol(params);
             break;
 
-         case PRESET_GBPUSD:
-            ApplyGBPUSD(params);
+         case PRESET_MEDIUM_VOL:
+            ApplyMediumVol(params);
             break;
 
-         case PRESET_USDJPY:
-            ApplyUSDJPY(params);
+         case PRESET_MEDIUM_HIGH_VOL:
+            ApplyMediumHighVol(params);
+            break;
+
+         case PRESET_HIGH_VOL:
+            ApplyHighVol(params);
             break;
 
          case PRESET_CUSTOM:
@@ -60,8 +91,8 @@ public:
             break;
 
          default:
-            // Fallback to EURUSD
-            ApplyEURUSD(params);
+            // Fallback to LOW_VOL (safest)
+            ApplyLowVol(params);
             break;
         }
      }
@@ -73,39 +104,109 @@ public:
      {
       switch(preset)
         {
-         case PRESET_AUTO:    return "AUTO";
-         case PRESET_EURUSD:  return "EURUSD";
-         case PRESET_XAUUSD:  return "XAUUSD";
-         case PRESET_GBPUSD:  return "GBPUSD";
-         case PRESET_USDJPY:  return "USDJPY";
-         case PRESET_CUSTOM:  return "CUSTOM";
-         default:             return "UNKNOWN";
+         case PRESET_AUTO:             return "AUTO";
+         case PRESET_LOW_VOL:          return "LOW_VOL";
+         case PRESET_MEDIUM_LOW_VOL:   return "MEDIUM_LOW_VOL";
+         case PRESET_MEDIUM_VOL:       return "MEDIUM_VOL";
+         case PRESET_MEDIUM_HIGH_VOL:  return "MEDIUM_HIGH_VOL";
+         case PRESET_HIGH_VOL:         return "HIGH_VOL";
+         case PRESET_CUSTOM:           return "CUSTOM";
+         default:                      return "UNKNOWN";
         }
      }
 
 private:
    //+------------------------------------------------------------------+
-   //| Auto-detect preset from symbol name                              |
+   //| Detect if symbol has tested preset                               |
    //+------------------------------------------------------------------+
-   static ENUM_SYMBOL_PRESET DetectPresetFromSymbol(const string symbol)
+   static ENUM_TESTED_SYMBOL DetectTestedSymbol(const string symbol)
      {
       string upper = symbol;
       StringToUpper(upper);
 
+      // Exact tested symbols (backtested and validated)
       if(StringFind(upper, "XAU") >= 0 || StringFind(upper, "GOLD") >= 0)
-         return PRESET_XAUUSD;
+         return SYM_XAUUSD;
 
       if(StringFind(upper, "GBP") >= 0 && StringFind(upper, "USD") >= 0)
-         return PRESET_GBPUSD;
+         return SYM_GBPUSD;
 
       if(StringFind(upper, "USD") >= 0 && StringFind(upper, "JPY") >= 0)
-         return PRESET_USDJPY;
+         return SYM_USDJPY;
 
       if(StringFind(upper, "EUR") >= 0 && StringFind(upper, "USD") >= 0)
-         return PRESET_EURUSD;
+         return SYM_EURUSD;
 
-      // Default fallback
-      return PRESET_EURUSD;
+      // No tested preset found
+      return SYM_UNKNOWN;
+     }
+
+   //+------------------------------------------------------------------+
+   //| Auto-detect volatility-based preset from symbol                  |
+   //+------------------------------------------------------------------+
+   static ENUM_SYMBOL_PRESET DetectVolatilityPreset(const string symbol)
+     {
+      string upper = symbol;
+      StringToUpper(upper);
+
+      // High volatility (precious metals, indices, crypto)
+      if(StringFind(upper, "XAU") >= 0 || StringFind(upper, "GOLD") >= 0 ||
+         StringFind(upper, "XAG") >= 0 || StringFind(upper, "SILVER") >= 0 ||
+         StringFind(upper, "BTC") >= 0 || StringFind(upper, "ETH") >= 0)
+         return PRESET_HIGH_VOL;
+
+      // Medium-high volatility (cross pairs with GBP or JPY)
+      if((StringFind(upper, "GBP") >= 0 && StringFind(upper, "JPY") >= 0) ||
+         (StringFind(upper, "EUR") >= 0 && StringFind(upper, "JPY") >= 0) ||
+         (StringFind(upper, "EUR") >= 0 && StringFind(upper, "GBP") >= 0))
+         return PRESET_MEDIUM_HIGH_VOL;
+
+      // Medium volatility (GBP, AUD pairs)
+      if(StringFind(upper, "GBP") >= 0 || StringFind(upper, "AUD") >= 0)
+         return PRESET_MEDIUM_VOL;
+
+      // Medium-low volatility (NZD, CAD, CHF pairs)
+      if(StringFind(upper, "NZD") >= 0 || StringFind(upper, "CAD") >= 0 ||
+         StringFind(upper, "CHF") >= 0)
+         return PRESET_MEDIUM_LOW_VOL;
+
+      // Low volatility (EUR, USD/JPY pairs)
+      if(StringFind(upper, "EUR") >= 0 ||
+         (StringFind(upper, "USD") >= 0 && StringFind(upper, "JPY") >= 0))
+         return PRESET_LOW_VOL;
+
+      // Default fallback (conservative)
+      return PRESET_LOW_VOL;
+     }
+
+   //+------------------------------------------------------------------+
+   //| Apply tested preset (backtested and validated)                   |
+   //+------------------------------------------------------------------+
+   static void ApplyTestedPreset(SParams &params, ENUM_TESTED_SYMBOL symbol)
+     {
+      switch(symbol)
+        {
+         case SYM_EURUSD:
+            ApplyEURUSD(params);
+            break;
+
+         case SYM_XAUUSD:
+            ApplyXAUUSD(params);
+            break;
+
+         case SYM_GBPUSD:
+            ApplyGBPUSD(params);
+            break;
+
+         case SYM_USDJPY:
+            ApplyUSDJPY(params);
+            break;
+
+         default:
+            // Should not happen
+            ApplyLowVol(params);
+            break;
+        }
      }
 
    //+------------------------------------------------------------------+
@@ -230,6 +331,130 @@ private:
       // Grid Protection
       params.grid_protection_enabled = true;
       params.grid_cooldown_minutes = 40;
+     }
+
+   //+------------------------------------------------------------------+
+   //| Generic Volatility Presets (for untested symbols)                |
+   //+------------------------------------------------------------------+
+
+   //+------------------------------------------------------------------+
+   //| LOW_VOL Preset (EURUSD-like: 25 pips, 10 levels)                 |
+   //+------------------------------------------------------------------+
+   static void ApplyLowVol(SParams &params)
+     {
+      params.spacing_mode = SPACING_HYBRID;
+      params.spacing_pips = 25.0;
+      params.spacing_atr_mult = 0.6;
+      params.min_spacing_pips = 12.0;
+      params.atr_period = 14;
+      params.atr_timeframe = PERIOD_M15;
+
+      params.grid_levels = 10;
+      params.grid_dynamic_enabled = true;
+      params.grid_warm_levels = 5;
+      params.grid_refill_threshold = 2;
+      params.grid_refill_batch = 3;
+      params.grid_max_pendings = 15;
+
+      params.target_cycle_usd = 6.0;
+      params.grid_protection_enabled = true;
+      params.grid_cooldown_minutes = 30;
+     }
+
+   //+------------------------------------------------------------------+
+   //| MEDIUM_LOW_VOL Preset (35 pips, 9 levels)                        |
+   //+------------------------------------------------------------------+
+   static void ApplyMediumLowVol(SParams &params)
+     {
+      params.spacing_mode = SPACING_HYBRID;
+      params.spacing_pips = 35.0;
+      params.spacing_atr_mult = 0.65;
+      params.min_spacing_pips = 18.0;
+      params.atr_period = 14;
+      params.atr_timeframe = PERIOD_M15;
+
+      params.grid_levels = 9;
+      params.grid_dynamic_enabled = true;
+      params.grid_warm_levels = 4;
+      params.grid_refill_threshold = 2;
+      params.grid_refill_batch = 3;
+      params.grid_max_pendings = 14;
+
+      params.target_cycle_usd = 6.5;
+      params.grid_protection_enabled = true;
+      params.grid_cooldown_minutes = 35;
+     }
+
+   //+------------------------------------------------------------------+
+   //| MEDIUM_VOL Preset (45 pips, 8 levels)                            |
+   //+------------------------------------------------------------------+
+   static void ApplyMediumVol(SParams &params)
+     {
+      params.spacing_mode = SPACING_HYBRID;
+      params.spacing_pips = 45.0;
+      params.spacing_atr_mult = 0.75;
+      params.min_spacing_pips = 22.0;
+      params.atr_period = 14;
+      params.atr_timeframe = PERIOD_M30;
+
+      params.grid_levels = 8;
+      params.grid_dynamic_enabled = true;
+      params.grid_warm_levels = 4;
+      params.grid_refill_threshold = 2;
+      params.grid_refill_batch = 3;
+      params.grid_max_pendings = 13;
+
+      params.target_cycle_usd = 7.5;
+      params.grid_protection_enabled = true;
+      params.grid_cooldown_minutes = 40;
+     }
+
+   //+------------------------------------------------------------------+
+   //| MEDIUM_HIGH_VOL Preset (60 pips, 6 levels)                       |
+   //+------------------------------------------------------------------+
+   static void ApplyMediumHighVol(SParams &params)
+     {
+      params.spacing_mode = SPACING_HYBRID;
+      params.spacing_pips = 60.0;
+      params.spacing_atr_mult = 0.85;
+      params.min_spacing_pips = 30.0;
+      params.atr_period = 14;
+      params.atr_timeframe = PERIOD_M30;
+
+      params.grid_levels = 6;
+      params.grid_dynamic_enabled = true;
+      params.grid_warm_levels = 3;
+      params.grid_refill_threshold = 2;
+      params.grid_refill_batch = 2;
+      params.grid_max_pendings = 10;
+
+      params.target_cycle_usd = 9.0;
+      params.grid_protection_enabled = true;
+      params.grid_cooldown_minutes = 50;
+     }
+
+   //+------------------------------------------------------------------+
+   //| HIGH_VOL Preset (XAUUSD-like: 150 pips, 5 levels)                |
+   //+------------------------------------------------------------------+
+   static void ApplyHighVol(SParams &params)
+     {
+      params.spacing_mode = SPACING_HYBRID;
+      params.spacing_pips = 150.0;
+      params.spacing_atr_mult = 1.0;
+      params.min_spacing_pips = 80.0;
+      params.atr_period = 14;
+      params.atr_timeframe = PERIOD_H1;
+
+      params.grid_levels = 5;
+      params.grid_dynamic_enabled = true;
+      params.grid_warm_levels = 3;
+      params.grid_refill_threshold = 1;
+      params.grid_refill_batch = 2;
+      params.grid_max_pendings = 10;
+
+      params.target_cycle_usd = 10.0;
+      params.grid_protection_enabled = true;
+      params.grid_cooldown_minutes = 60;
      }
   };
 
