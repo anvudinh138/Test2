@@ -216,6 +216,32 @@ public:
       if(!m_enabled)
          return;
 
+      double ema=GetEMA();
+      double adx=GetADX();
+
+      // DEBUG: Log every check (first time only)
+      static bool first_log=true;
+      if(first_log && m_log!=NULL)
+        {
+         double price=SymbolInfoDouble(m_symbol,SYMBOL_ASK);
+         m_log.Event(Tag(),StringFormat("[DEBUG] First check: Price=%.5f, EMA=%.5f, ADX=%.1f, Enabled=%s",
+                                       price,ema,adx,m_enabled?"YES":"NO"));
+         first_log=false;
+        }
+
+      // Check if indicators loaded
+      if(ema<=0.0 || adx<=0.0)
+        {
+         static datetime last_warning=0;
+         datetime now=TimeCurrent();
+         if(now-last_warning>3600 && m_log!=NULL)
+           {
+            m_log.Event(Tag(),StringFormat("[WARNING] Indicators not ready: EMA=%.5f, ADX=%.1f",ema,adx));
+            last_warning=now;
+           }
+         return;
+        }
+
       ETrendState current_state=GetTrendState();
 
       // Log state changes
@@ -237,12 +263,10 @@ public:
                   break;
               }
 
-            double ema=GetEMA();
-            double adx=GetADX();
             double price=(current_state==TREND_UP)?SymbolInfoDouble(m_symbol,SYMBOL_ASK)
                          :SymbolInfoDouble(m_symbol,SYMBOL_BID);
 
-            m_log.Event(Tag(),StringFormat("Trend state: %s (Price=%.5f, EMA=%.5f, ADX=%.1f)",
+            m_log.Event(Tag(),StringFormat("Trend state changed: %s (Price=%.5f, EMA=%.5f, ADX=%.1f)",
                                           state_str,price,ema,adx));
            }
 
