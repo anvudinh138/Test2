@@ -35,6 +35,10 @@ struct SParams
    // session risk limit (keep for safety)
    double       session_sl_usd;
 
+   // grid protection (anti blow-up)
+   bool         grid_protection_enabled;  // enable grid full auto-close
+   int          grid_cooldown_minutes;    // cooldown after grid full (minutes)
+
    // execution
    int          slippage_pips;
    int          order_cooldown_sec;

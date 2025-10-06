@@ -610,6 +610,26 @@ public:
    double         GroupTPPrice() const { return m_tp_price; }
    void           SetKind(const EBasketKind kind) { m_kind=kind; }
 
+   // Grid protection
+   int            GetFilledLevels() const
+     {
+      int filled=0;
+      for(int i=0;i<ArraySize(m_levels);i++)
+        {
+         if(m_levels[i].filled)
+            filled++;
+        }
+      return filled;
+     }
+
+   bool           IsGridFull() const
+     {
+      if(m_max_levels<=0)
+         return false;
+      int filled=GetFilledLevels();
+      return filled>=m_max_levels;
+     }
+
    EBasketKind    Kind() const { return m_kind; }
    EDirection     Direction() const { return m_direction; }
 

@@ -26,6 +26,10 @@ private:
    CGridBasket      *m_sell;
    bool              m_halted;
 
+   // Grid protection
+   datetime          m_cooldown_until;        // Cooldown end time
+   bool              m_in_cooldown;           // Currently in cooldown
+
    string            Tag() const { return StringFormat("[RGDv2][%s][LC]",m_symbol); }
 
    double           CurrentPrice(const EDirection dir) const
@@ -119,6 +123,69 @@ private:
       m_halted=true;
      }
 
+   void              CheckGridProtection()
+     {
+      if(!m_params.grid_protection_enabled)
+         return;
+
+      // Check cooldown status
+      datetime now=TimeCurrent();
+      if(m_in_cooldown)
+        {
+         if(now>=m_cooldown_until)
+           {
+            m_in_cooldown=false;
+            if(m_log!=NULL)
+               m_log.Event(Tag(),"Cooldown ended - EA active again");
+           }
+         else
+           {
+            // Still in cooldown - skip trading
+            return;
+           }
+        }
+
+      // Check if any basket hit grid full
+      bool buy_full=(m_buy!=NULL && m_buy.IsGridFull());
+      bool sell_full=(m_sell!=NULL && m_sell.IsGridFull());
+
+      if(buy_full || sell_full)
+        {
+         // Calculate current floating loss
+         double total_pnl=0.0;
+         if(m_buy!=NULL)
+            total_pnl+=m_buy.BasketPnL();
+         if(m_sell!=NULL)
+            total_pnl+=m_sell.BasketPnL();
+
+         string side=(buy_full && sell_full)?"BUY+SELL":(buy_full?"BUY":"SELL");
+
+         if(m_log!=NULL)
+           {
+            int buy_filled=(m_buy!=NULL)?m_buy.GetFilledLevels():0;
+            int sell_filled=(m_sell!=NULL)?m_sell.GetFilledLevels():0;
+            m_log.Event(Tag(),StringFormat("Grid FULL detected: %s | BUY:%d SELL:%d | Floating PnL:%.2f USD",
+                                          side,buy_filled,sell_filled,total_pnl));
+           }
+
+         // Close all positions (accept current loss to prevent blow-up)
+         FlattenAll(StringFormat("Grid exhausted (%s) - Auto-close at %.2f USD",side,total_pnl));
+
+         // Set cooldown
+         int cooldown_seconds=m_params.grid_cooldown_minutes*60;
+         m_cooldown_until=now+cooldown_seconds;
+         m_in_cooldown=true;
+
+         if(m_log!=NULL)
+           {
+            MqlDateTime dt;
+            TimeToStruct(m_cooldown_until,dt);
+            m_log.Event(Tag(),StringFormat("Cooldown activated: %d minutes (until %02d:%02d)",
+                                          m_params.grid_cooldown_minutes,dt.hour,dt.min));
+           }
+        }
+     }
+
 public:
                      CLifecycleController(const string symbol,
                                           const SParams &params,
@@ -134,7 +201,9 @@ public:
                          m_magic(magic),
                          m_buy(NULL),
                          m_sell(NULL),
-                         m_halted(false)
+                         m_halted(false),
+                         m_cooldown_until(0),
+                         m_in_cooldown(false)
      {
      }
 
@@ -183,6 +252,13 @@ public:
    void              Update()
      {
       if(m_halted)
+         return;
+
+      // Check grid protection first (before updating baskets)
+      CheckGridProtection();
+
+      // Skip trading if in cooldown
+      if(m_in_cooldown)
          return;
 
       if(m_buy!=NULL)

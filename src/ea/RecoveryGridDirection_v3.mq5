@@ -31,7 +31,7 @@ input double            InpSpacingAtrMult   = 0.6;   // ATR multiplier
 input double            InpMinSpacingPips   = 12.0;  // Min spacing floor (pips)
 
 //--- Grid Configuration
-input int               InpGridLevels       = 10;    // Grid levels per side
+input int               InpGridLevels       = 5;     // Grid levels per side (REDUCED from 10 to 5 for safety)
 input double            InpLotBase          = 0.01;  // Base lot size
 input double            InpLotScale         = 2.0;   // Lot scale multiplier
 
@@ -47,6 +47,10 @@ input double            InpTargetCycleUSD   = 6.0;   // Target profit per cycle 
 
 //--- Risk Management (Session Stop Loss)
 input double            InpSessionSL_USD    = 10000; // Session stop loss (USD) - for monitoring only
+
+//--- Grid Protection (Anti Blow-Up)
+input bool              InpGridProtection   = true;  // Enable grid full auto-close
+input int               InpCooldownMinutes  = 30;    // Cooldown after grid full (minutes)
 
 //--- News Filter (pause trading during high-impact news)
 input bool              InpNewsFilterEnabled   = false;  // Enable news filter
@@ -89,6 +93,9 @@ void BuildParams()
    
    g_params.target_cycle_usd   =InpTargetCycleUSD;
    g_params.session_sl_usd     =InpSessionSL_USD;
+
+   g_params.grid_protection_enabled=InpGridProtection;
+   g_params.grid_cooldown_minutes=InpCooldownMinutes;
 
    g_params.slippage_pips      =InpSlippagePips;
    g_params.order_cooldown_sec =InpOrderCooldownSec;
@@ -133,6 +140,13 @@ int OnInit()
                                                InpNewsImpactFilter,InpNewsBufferMinutes));
       else
          g_logger.Event("[RGDv2]","News Filter: DISABLED");
+
+      // Log grid protection status
+      if(InpGridProtection)
+         g_logger.Event("[RGDv2]",StringFormat("Grid Protection: ENABLED (Cooldown=%d min after grid full)",
+                                               InpCooldownMinutes));
+      else
+         g_logger.Event("[RGDv2]","Grid Protection: DISABLED");
      }
 
    return(INIT_SUCCEEDED);
