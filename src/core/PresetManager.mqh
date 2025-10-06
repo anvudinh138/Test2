@@ -121,6 +121,9 @@ private:
       params.atr_period = 14;
       params.atr_timeframe = PERIOD_M15;
 
+      // Grid Configuration (EURUSD can handle more levels - low volatility)
+      params.grid_levels = 10;        // More levels for EUR (stable)
+
       // Dynamic Grid
       params.grid_dynamic_enabled = true;
       params.grid_warm_levels = 5;
@@ -148,6 +151,9 @@ private:
       params.min_spacing_pips = 80.0;     // Higher safety floor
       params.atr_period = 14;
       params.atr_timeframe = PERIOD_H1;   // Capture longer trends
+
+      // Grid Configuration (XAU needs fewer levels - high volatility)
+      params.grid_levels = 5;             // Fewer levels for XAU (volatile)
 
       // Dynamic Grid (conservative)
       params.grid_dynamic_enabled = true;
@@ -177,6 +183,9 @@ private:
       params.atr_period = 14;
       params.atr_timeframe = PERIOD_M30;
 
+      // Grid Configuration (GBP medium levels - medium volatility)
+      params.grid_levels = 7;             // Medium levels for GBP
+
       // Dynamic Grid
       params.grid_dynamic_enabled = true;
       params.grid_warm_levels = 4;
@@ -204,6 +213,9 @@ private:
       params.min_spacing_pips = 20.0;
       params.atr_period = 14;
       params.atr_timeframe = PERIOD_M30;
+
+      // Grid Configuration (JPY medium levels - stable trends)
+      params.grid_levels = 8;             // Medium-high levels for JPY (stable)
 
       // Dynamic Grid
       params.grid_dynamic_enabled = true;
