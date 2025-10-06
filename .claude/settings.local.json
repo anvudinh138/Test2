@@ -4,7 +4,8 @@
       "Bash(git checkout:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Add news filter to pause trading during high-impact events\n\nImplemented economic calendar integration to avoid volatile price\nmovements during major news releases.\n\nFeatures:\n- ForexFactory API integration (ff_calendar_thisweek.json)\n- Configurable impact filter (High, Medium+, All)\n- Adjustable buffer window (default: 30 min before/after)\n- Retry logic with exponential backoff (max 5 attempts)\n- Rate-limited error logging (once per hour to prevent spam)\n- Simple JSON parser (no external dependencies)\n\nNew inputs:\n- InpNewsFilterEnabled: Enable/disable filter (default: false)\n- InpNewsImpactFilter: Filter level (default: \"High\")\n- InpNewsBufferMinutes: Buffer window in minutes (default: 30)\n\nFiles added:\n- src/core/NewsFilter.mqh: Core news filter implementation\n- doc/NEWS_FILTER.md: Comprehensive documentation\n\nUpdated:\n- src/ea/RecoveryGridDirection_v3.mq5: Integrated news filter into OnTick\n- CLAUDE.md: Added news filter documentation and setup instructions\n\nNote: Requires WebRequest permission for https://nfs.faireconomy.media\nSee doc/NEWS_FILTER.md for setup instructions.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "ask": []
