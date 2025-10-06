@@ -164,7 +164,8 @@ private:
      {
       m_api_url = "https://nfs.faireconomy.media/ff_calendar_thisweek.json";
 
-      if(m_log != NULL)
+      // Hide backtest logs to reduce spam
+      if(m_log != NULL && !MQLInfoInteger(MQL_TESTER))
          m_log.Event(Tag(), StringFormat("Fetching calendar from API (attempt 1/%d)...", m_max_retries));
 
       // Retry logic with exponential backoff
@@ -214,7 +215,8 @@ private:
            {
             // Success - parse JSON
             string json = CharArrayToString(result);
-            if(m_log != NULL)
+            // Hide backtest logs
+            if(m_log != NULL && !MQLInfoInteger(MQL_TESTER))
                m_log.Event(Tag(), StringFormat("API fetch successful (attempt %d/%d) - JSON size: %d bytes",
                                               m_retry_count, m_max_retries, StringLen(json)));
 
@@ -251,7 +253,9 @@ private:
    bool           FetchMqlCalendar()
      {
       if(m_log != NULL)
-         m_log.Event(Tag(), "Fetching historical calendar from MQL5 Calendar API...");
+         // Hide backtest logs
+         if(!MQLInfoInteger(MQL_TESTER) && m_log!=NULL)
+            m_log.Event(Tag(), "Fetching historical calendar from MQL5 Calendar API...");
 
       // Get calendar database
       MqlCalendarCountry countries[];
@@ -260,12 +264,16 @@ private:
       if(country_count <= 0)
         {
          if(m_log != NULL)
-            m_log.Event(Tag(), "Calendar database not available - ensure MT5 calendar is synced");
+            // Hide backtest logs
+            if(!MQLInfoInteger(MQL_TESTER) && m_log!=NULL)
+               m_log.Event(Tag(), "Calendar database not available - ensure MT5 calendar is synced");
          return false;
         }
 
       if(m_log != NULL)
-         m_log.Event(Tag(), StringFormat("Calendar database: %d countries loaded", country_count));
+         // Hide backtest logs
+         if(!MQLInfoInteger(MQL_TESTER) && m_log!=NULL)
+            m_log.Event(Tag(), StringFormat("Calendar database: %d countries loaded", country_count));
 
       // Define time range for historical fetch
       // For backtest: fetch from backtest start to end + 1 week buffer
@@ -278,7 +286,9 @@ private:
          MqlDateTime dt_start, dt_end;
          TimeToStruct(m_history_start, dt_start);
          TimeToStruct(m_history_end, dt_end);
-         m_log.Event(Tag(), StringFormat("Fetching events from %04d.%02d.%02d to %04d.%02d.%02d",
+         // Hide backtest logs
+         if(!MQLInfoInteger(MQL_TESTER) && m_log!=NULL)
+            m_log.Event(Tag(), StringFormat("Fetching events from %04d.%02d.%02d to %04d.%02d.%02d",
                                         dt_start.year, dt_start.mon, dt_start.day,
                                         dt_end.year, dt_end.mon, dt_end.day));
         }
@@ -289,12 +299,14 @@ private:
 
       if(event_count <= 0)
         {
-         if(m_log != NULL)
+         // Hide backtest logs
+         if(m_log != NULL && !MQLInfoInteger(MQL_TESTER))
             m_log.Event(Tag(), StringFormat("No calendar events found in range (returned %d)", event_count));
          return false;
         }
 
-      if(m_log != NULL)
+      // Hide backtest logs
+      if(m_log != NULL && !MQLInfoInteger(MQL_TESTER))
          m_log.Event(Tag(), StringFormat("Retrieved %d raw calendar values from MQL5", event_count));
 
       // Parse and filter events
@@ -349,7 +361,8 @@ private:
          filtered_count++;
         }
 
-      if(m_log != NULL)
+      // Hide backtest logs (only log in live/demo)
+      if(m_log != NULL && !MQLInfoInteger(MQL_TESTER))
         {
          m_log.Event(Tag(), StringFormat("Loaded %d events from MQL5 Calendar (filter: %s impact)",
                                         filtered_count, m_impact_filter));
@@ -501,8 +514,8 @@ public:
 
       if(need_fetch)
         {
-         // Rate-limit fetch logs (only log every 5 minutes)
-         bool should_log = (m_log != NULL) && ((now - m_last_fetch_log) >= m_fetch_log_interval);
+         // Rate-limit fetch logs (only log every 5 minutes) + hide in backtest
+         bool should_log = (m_log != NULL) && ((now - m_last_fetch_log) >= m_fetch_log_interval) && !MQLInfoInteger(MQL_TESTER);
 
          if(should_log)
            {
@@ -530,7 +543,7 @@ public:
               {
                m_last_fetch = now;
                m_last_fetch_log = now;  // Reset log timer on success
-               if(m_log != NULL)
+               if(m_log != NULL && !MQLInfoInteger(MQL_TESTER))
                   m_log.Event(Tag(), "Calendar loaded from ForexFactory API");
               }
             else
@@ -546,7 +559,7 @@ public:
                   m_last_fetch = now;
                   m_last_fetch_log = now;  // Reset log timer on success
                   m_use_mql_calendar = true;  // Remember to use MQL calendar from now on
-                  if(m_log != NULL)
+                  if(m_log != NULL && !MQLInfoInteger(MQL_TESTER))
                      m_log.Event(Tag(), "Calendar loaded from MQL5 Calendar API (will use this source going forward)");
                  }
                else if(should_log)

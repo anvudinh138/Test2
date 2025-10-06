@@ -30,6 +30,9 @@ private:
    datetime          m_cooldown_until;        // Cooldown end time
    bool              m_in_cooldown;           // Currently in cooldown
 
+   // P&L tracking (for multi-job system)
+   double            m_total_realized_pnl;    // Cumulative realized profit
+
    string            Tag() const { return StringFormat("[RGDv2][%s][LC]",m_symbol); }
 
    double           CurrentPrice(const EDirection dir) const
@@ -74,6 +77,25 @@ private:
    CGridBasket*      Basket(const EDirection dir)
      {
       return (dir==DIR_BUY)?m_buy:m_sell;
+     }
+
+   bool              HasExistingPositions() const
+     {
+      int total=PositionsTotal();
+      for(int i=0;i<total;i++)
+        {
+         ulong ticket=PositionGetTicket(i);
+         if(ticket==0)
+            continue;
+         if(!PositionSelectByTicket(ticket))
+            continue;
+         if(PositionGetString(POSITION_SYMBOL)!=m_symbol)
+            continue;
+         if(PositionGetInteger(POSITION_MAGIC)!=m_magic)
+            continue;
+         return true;
+        }
+      return false;
      }
 
    bool              TryReseedBasket(CGridBasket *basket,const EDirection dir)
@@ -203,7 +225,8 @@ public:
                          m_sell(NULL),
                          m_halted(false),
                          m_cooldown_until(0),
-                         m_in_cooldown(false)
+                         m_in_cooldown(false),
+                         m_total_realized_pnl(0.0)
      {
      }
 
@@ -214,6 +237,39 @@ public:
       if(ask<=0 || bid<=0)
         return false;
 
+      // Check if we should preserve existing positions (TF switch protection)
+      bool has_positions=m_params.preserve_on_tf_switch && HasExistingPositions();
+
+      if(has_positions)
+        {
+         // Reconstruct mode: baskets will discover their positions
+         if(m_log!=NULL)
+            m_log.Event(Tag(),"[TF-Preserve] Existing positions detected, reconstructing baskets");
+
+         m_buy=new CGridBasket(m_symbol,DIR_BUY,BASKET_PRIMARY,m_params,m_spacing,m_executor,m_log,m_magic);
+         m_sell=new CGridBasket(m_symbol,DIR_SELL,BASKET_PRIMARY,m_params,m_spacing,m_executor,m_log,m_magic);
+
+         // Mark baskets active without seeding
+         m_buy.SetActive(true);
+         m_sell.SetActive(true);
+
+         // Force immediate refresh to discover positions
+         m_buy.Update();
+         m_sell.Update();
+
+         if(m_log!=NULL)
+           {
+            int buy_positions=m_buy.IsActive()?1:0;
+            int sell_positions=m_sell.IsActive()?1:0;
+            m_log.Event(Tag(),StringFormat("[TF-Preserve] Reconstruction complete: BUY:%s SELL:%s",
+                                          m_buy.IsActive()?"Active":"Inactive",
+                                          m_sell.IsActive()?"Active":"Inactive"));
+           }
+
+         return true;
+        }
+
+      // Normal mode: seed new grid
       double seed_lot=NormalizeVolume(m_params.lot_base);
 
       m_buy=new CGridBasket(m_symbol,DIR_BUY,BASKET_PRIMARY,m_params,m_spacing,m_executor,m_log,m_magic);
@@ -269,6 +325,7 @@ public:
       if(m_buy!=NULL && m_buy.ClosedRecently())
         {
          double realized=m_buy.TakeRealizedProfit();
+         m_total_realized_pnl+=realized;  // Track cumulative realized PnL
          if(realized>0 && m_sell!=NULL)
             m_sell.ReduceTargetBy(realized);
          TryReseedBasket(m_buy,DIR_BUY);
@@ -276,6 +333,7 @@ public:
       if(m_sell!=NULL && m_sell.ClosedRecently())
         {
          double realized=m_sell.TakeRealizedProfit();
+         m_total_realized_pnl+=realized;  // Track cumulative realized PnL
          if(realized>0 && m_buy!=NULL)
             m_buy.ReduceTargetBy(realized);
          TryReseedBasket(m_sell,DIR_SELL);
@@ -295,6 +353,50 @@ public:
          m_sell=NULL;
         }
      }
+
+   // P&L tracking methods (for multi-job system)
+   double            GetUnrealizedPnL() const
+     {
+      double pnl=0.0;
+      if(m_buy!=NULL)
+         pnl+=m_buy.BasketPnL();
+      if(m_sell!=NULL)
+         pnl+=m_sell.BasketPnL();
+      return pnl;
+     }
+
+   double            GetRealizedPnL() const
+     {
+      return m_total_realized_pnl;
+     }
+
+   double            GetTotalPnL() const
+     {
+      return GetUnrealizedPnL()+GetRealizedPnL();
+     }
+
+   bool              IsTSLActive() const
+     {
+      bool tsl_active=false;
+      if(m_buy!=NULL)
+         tsl_active=tsl_active || m_buy.IsTSLActive();
+      if(m_sell!=NULL)
+         tsl_active=tsl_active || m_sell.IsTSLActive();
+      return tsl_active;
+     }
+
+   bool              IsGridFull() const
+     {
+      bool grid_full=false;
+      if(m_buy!=NULL)
+         grid_full=grid_full || m_buy.IsGridFull();
+      if(m_sell!=NULL)
+         grid_full=grid_full || m_sell.IsGridFull();
+      return grid_full;
+     }
+
+   string            Symbol() const { return m_symbol; }
+   SParams           Params() const { return m_params; }
   };
 
 #endif // __RGD_V2_LIFECYCLE_CONTROLLER_MQH__

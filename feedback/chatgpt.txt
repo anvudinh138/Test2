@@ -1,0 +1,112 @@
+Đúng rồi – bất kỳ grid nào cũng “toang” khi giá chạy 1 chiều đủ lâu và bạn cứ tiếp tục bình quân. Ảnh của bạn cho thấy equity đi lên đều rồi gục thẳng khi trend kéo dài (đụng full levels). Với EA của bạn (dual-grid BUY/SELL), bản hiện tại không có giới hạn rủi ro tự động và không còn rescue/hedge nên rủi ro kiểu này là tất yếu nếu để chạy vô hạn. 
+
+CLAUDE
+
+Dưới đây là bộ “4 lớp an toàn” để chặn cháy ví khi trend mạnh, kèm gợi ý cài đặt/điểm móc trong code của dự án bạn:
+
+1) TRÁNH VÀO LÚC NGUY HIỂM (lọc trend + biến thiên step)
+
+ATR/Hybrid spacing để tự giãn bước khi biến động tăng (đã có SpacingEngine: PIPS/ATR/HYBRID). Dùng HYBRID, tăng InpSpacingAtrMult và/hoặc InpMinSpacingPips khi ATR lớn. 
+
+CLAUDE
+
+
+Gợi ý: HYBRID với AtrMult ≈ 0.8–1.2 và MinSpacingPips cao hơn bình thường 30–50% trong giờ có trend.
+
+One-sided mode khi trend mạnh: nếu EMA200 dốc + ADX>25 thì tắt giỏ ngược chiều, chỉ cho phép grid thuận chiều (hoặc tạm dừng cả 2). Hook ngay đầu LifecycleController.Update() để quyết định có seed/auto-refill cho BUY/SELL hay không. 
+
+CLAUDE
+
+News filter: đã có module mới. Bật để né NFP/FOMC/CPI vì các cú “bốc” một chiều thường nổ ở đây. Đặt buffer ±30–60 phút. 
+
+CLAUDE
+
+2) KHÓA MỞ RỘNG (stop-adding & limits)
+
+Bản hiện tại không cưỡng chế giới hạn phơi nhiễm hay session SL, nên hãy thêm các chốt cứng này: 
+
+CLAUDE
+
+Stop-adding theo DD (đóng băng thêm lệnh mới khi giỏ lỗ quá X USD hoặc khoảng cách khỏi giá trung bình > K×ATR / > N levels). Thực thi trong CGridBasket.Update() trước đoạn “auto-refill”.
+Inputs mới đề xuất:
+InpStopAddDD_USD, InpStopAddDistance_ATR, InpMaxLevelsActive.
+
+Exposure cap: InpMaxExposureLots (tổng lots mỗi basket). Vượt thì không refill/seed nữa.
+
+LotScale thận trọng: để InpLotScale = 1.0 (không martingale) hoặc rất nhẹ (1.1–1.2). Martingale 2.0 gần như chắc chắn chết trong trend dài. 
+
+CLAUDE
+
+3) HEDGE/RESCUE ĐƠN GIẢN (để trend “nuôi” TP cho giỏ thua)
+
+Trong spec của bạn có “kéo TP giỏ thua bằng lợi nhuận giỏ thắng” – rất hữu ích, nhưng vì rescue/hedge đã bị loại bỏ, bạn không có nguồn profit khi giá chạy 1 chiều. Hãy thêm lại một hedge tối giản:
+
+Khi breach (ví dụ khoảng cách > 4–6×ATR hoặc > N cấp bậc), mở 1 lệnh hedge thuận trend với SL ngắn và trailing stop; mọi profit từ hedge tiếp tục giảm target_cycle_usd của giỏ thua (cơ chế đã có). Hook trong LifecycleController sau khi tính PnL hai basket. 
+
+CLAUDE
+
+
+Quy tắc đơn giản:
+khối lượng hedge ≈ 0.3–0.7 × tổng lot của giỏ thua; SL ≈ 1–1.5×ATR; TS ≈ 1–2×ATR.
+
+Tắt auto-refill của giỏ thua trong lúc hedge đang chạy (tránh “đu” thêm ngược trend).
+
+4) KILL-SWITCH CỨNG (thoát hết & dừng EA)
+
+Không được “để thị trường dạy dỗ”:
+
+Equity Stop: nếu Equity ≤ Balance × (1 − EquityStopPct), đóng tất cả và tạm dừng EA.
+
+Margin-level Guard: dưới ngưỡng M% (ví dụ 300–500%) thì ngưng thêm lệnh; dưới ngưỡng thấp hơn (150–200%) thì flatten.
+Lý do: bản hiện tại chỉ có InpSessionSL_USD để… theo dõi, không cưỡng chế. Hãy biến nó thành lệnh đóng thật sự. 
+
+CLAUDE
+
+Tham số gợi ý để bắt đầu (an toàn)
+
+Spacing: HYBRID, AtrMult 0.8–1.0, MinSpacingPips tăng +30% so với trước.
+
+GridLevels 6–10, LotBase nhỏ (0.01–0.03), LotScale = 1.0. 
+
+CLAUDE
+
+Bật NewsFilter, impact = High, buffer = 30–60’. 
+
+CLAUDE
+
+Thêm mới: StopAddDD_USD (ví dụ 1–2% balance), StopAddDistance_ATR = 4–6, MaxExposureLots, EquityStopPct = 25–35%, OneSidedDuringTrend = true.
+
+Phác thảo code nhanh (để bạn gắn vào dự án)
+
+(pseudo-MQL5, cắm ở LifecycleController.Update() / CGridBasket.Update())
+
+// KILL-SWITCH
+double eq = AccountInfoDouble(ACCOUNT_EQUITY);
+double bal = AccountInfoDouble(ACCOUNT_BALANCE);
+if(eq <= bal * (1.0 - InpEquityStopPct)) { CloseAllAndDisableEA(); return; }
+
+// TREND FILTER (ví dụ EMA + ADX)
+bool strongUp   = ADX(14) > 25 && EMASlope(200) > SlopeTh;
+bool strongDown = ADX(14) > 25 && EMASlope(200) < -SlopeTh;
+if(InpOneSidedDuringTrend){
+    m_buy.enabled  = !strongDown;   // tắt BUY khi downtrend mạnh
+    m_sell.enabled = !strongUp;     // tắt SELL khi uptrend mạnh
+}
+
+// STOP-ADDING theo DD/Distance
+if(basket.DrawdownUSD() > InpStopAddDD_USD || basket.DistanceFromAvgInATR() > InpStopAddDistance_ATR)
+    basket.freezeRefill = true;
+
+// HEDGE đơn giản khi breach
+if(!basket.hedgeOpen && basket.DistanceFromAvgInATR() >= InpHedgeTriggerATR){
+    OpenTrendHedge(basket.LoserDirection(), basket.TotalLots()*InpHedgeLotRatio,
+                   atr*InpHedgeSL_ATR, atr*InpHedgeTS_ATR);
+}
+
+Tóm lại
+
+Grid nào cũng thua trend dài nếu không có: lọc trend/news → giới hạn thêm lệnh → hedge hồi phục → kill-switch cứng.
+
+Dự án của bạn đã có sẵn SpacingEngine, Dynamic Grid và NewsFilter để tận dụng; nhưng cần bổ sung giới hạn rủi ro & hedge vì chúng đã bị loại bỏ ở bản đơn giản hiện tại. 
+
+CLAUDE
