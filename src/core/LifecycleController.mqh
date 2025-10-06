@@ -377,7 +377,7 @@ public:
               {
                if(m_log!=NULL)
                   m_log.Event(Tag(),"[TrendAction] Closing SELL basket (STRONG UPTREND detected)");
-               FlattenBasket(m_sell,DIR_SELL,"TrendAction_UPTREND");
+               m_sell.CloseBasket("TrendAction_UPTREND");
               }
 
             // Close BUY basket during strong downtrend
@@ -385,7 +385,7 @@ public:
               {
                if(m_log!=NULL)
                   m_log.Event(Tag(),"[TrendAction] Closing BUY basket (STRONG DOWNTREND detected)");
-               FlattenBasket(m_buy,DIR_BUY,"TrendAction_DOWNTREND");
+               m_buy.CloseBasket("TrendAction_DOWNTREND");
               }
            }
         }
