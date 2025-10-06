@@ -24,6 +24,13 @@ enum EBasketKind
    BASKET_HEDGE   = 1
   };
 
+enum ETrendAction
+  {
+   TREND_ACTION_NONE      = 0,  // Block new seeds only (default)
+   TREND_ACTION_CLOSE_ALL = 1,  // Close counter-trend basket immediately
+   TREND_ACTION_NO_REFILL = 2   // Block refills, allow existing positions
+  };
+
 enum EJobStatus
   {
    JOB_ACTIVE    = 0,  // Trading normally

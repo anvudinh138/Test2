@@ -357,11 +357,37 @@ public:
         {
          m_trend_filter.Update();
 
-         // Apply trend filter to baskets
+         // Apply trend filter to baskets based on trend action
+         bool allow_buy=m_trend_filter.AllowBuyBasket();
+         bool allow_sell=m_trend_filter.AllowSellBasket();
+
          if(m_buy!=NULL)
-            m_buy.SetTradingEnabled(m_trend_filter.AllowBuyBasket());
+            m_buy.SetTradingEnabled(allow_buy);
          if(m_sell!=NULL)
-            m_sell.SetTradingEnabled(m_trend_filter.AllowSellBasket());
+            m_sell.SetTradingEnabled(allow_sell);
+
+         // CLOSE_ALL action: Close counter-trend basket when strong trend detected
+         if(m_params.trend_action==TREND_ACTION_CLOSE_ALL)
+           {
+            bool is_strong_uptrend=m_trend_filter.IsStrongUptrend();
+            bool is_strong_downtrend=m_trend_filter.IsStrongDowntrend();
+
+            // Close SELL basket during strong uptrend
+            if(is_strong_uptrend && m_sell!=NULL && m_sell.IsActive())
+              {
+               if(m_log!=NULL)
+                  m_log.Event(Tag(),"[TrendAction] Closing SELL basket (STRONG UPTREND detected)");
+               FlattenBasket(m_sell,DIR_SELL,"TrendAction_UPTREND");
+              }
+
+            // Close BUY basket during strong downtrend
+            if(is_strong_downtrend && m_buy!=NULL && m_buy.IsActive())
+              {
+               if(m_log!=NULL)
+                  m_log.Event(Tag(),"[TrendAction] Closing BUY basket (STRONG DOWNTREND detected)");
+               FlattenBasket(m_buy,DIR_BUY,"TrendAction_DOWNTREND");
+              }
+           }
         }
 
       // Check grid protection first (before updating baskets)

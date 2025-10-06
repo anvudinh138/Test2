@@ -90,6 +90,7 @@ input int               InpMaxSpawns        = 10;    // Max spawns per session
 //--- Trend Filter (Phase 1.1 - Strong Trend Protection)
 input group             "=== Trend Filter (v3.1 - Strong Trend Protection) ==="
 input bool              InpTrendFilterEnabled = false;          // Enable trend filter (OFF by default - test first!)
+input ETrendAction      InpTrendAction        = TREND_ACTION_NONE; // Action on strong trend: NONE=block new only, CLOSE_ALL=close counter-trend, NO_REFILL=stop adding
 input ENUM_TIMEFRAMES   InpTrendEMA_Timeframe = PERIOD_H4;     // EMA timeframe
 input int               InpTrendEMA_Period    = 200;           // EMA period
 input int               InpTrendADX_Period    = 14;            // ADX period
@@ -158,6 +159,7 @@ void BuildParams()
 
    // Trend filter (Phase 1.1 - strong trend protection)
    g_params.trend_filter_enabled  =InpTrendFilterEnabled;
+   g_params.trend_action          =InpTrendAction;
    g_params.trend_ema_timeframe   =InpTrendEMA_Timeframe;
    g_params.trend_ema_period      =InpTrendEMA_Period;
    g_params.trend_adx_period      =InpTrendADX_Period;

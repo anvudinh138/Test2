@@ -71,6 +71,7 @@ struct SParams
 
    // trend filter (Phase 1.1 - prevent counter-trend positions)
    bool         trend_filter_enabled;    // enable trend filter
+   ETrendAction trend_action;            // action on strong trend (NONE/CLOSE_ALL/NO_REFILL)
    ENUM_TIMEFRAMES trend_ema_timeframe;  // EMA timeframe (default: H4)
    int          trend_ema_period;        // EMA period (default: 200)
    int          trend_adx_period;        // ADX period (default: 14)
