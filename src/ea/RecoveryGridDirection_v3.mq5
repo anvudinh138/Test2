@@ -57,7 +57,7 @@ input bool              InpGridProtection   = true;  // Enable grid full auto-cl
 input int               InpCooldownMinutes  = 30;    // Cooldown after grid full (minutes)
 
 //--- News Filter (pause trading during high-impact news)
-input bool              InpNewsFilterEnabled   = false;  // Enable news filter
+input bool              InpNewsFilterEnabled   = true;  // Enable news filter
 input string            InpNewsImpactFilter    = "High"; // Impact filter (High, Medium+, All)
 input int               InpNewsBufferMinutes   = 30;     // Buffer before/after news (minutes)
 
