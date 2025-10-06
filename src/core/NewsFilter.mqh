@@ -45,6 +45,10 @@ private:
    datetime       m_history_start;         // Start time for historical fetch
    datetime       m_history_end;           // End time for historical fetch
 
+   // Log rate limiting
+   datetime       m_last_fetch_log;        // Last fetch attempt log time
+   int            m_fetch_log_interval;    // Fetch log interval (5 min)
+
    string         Tag() const { return "[NewsFilter]"; }
 
    //+------------------------------------------------------------------+
@@ -472,6 +476,8 @@ public:
                          m_max_retries(5),                // Max 5 retry attempts
                          m_use_mql_calendar(false),       // Auto-detect mode
                          m_history_start(0),
+                         m_last_fetch_log(0),
+                         m_fetch_log_interval(300),       // 5 min
                          m_history_end(0)
      {
       ArrayResize(m_events, 0);
@@ -495,7 +501,10 @@ public:
 
       if(need_fetch)
         {
-         if(m_log != NULL)
+         // Rate-limit fetch logs (only log every 5 minutes)
+         bool should_log = (m_log != NULL) && ((now - m_last_fetch_log) >= m_fetch_log_interval);
+
+         if(should_log)
            {
             if(ArraySize(m_events) == 0)
                m_log.Event(Tag(), "First fetch - loading news calendar...");
@@ -512,7 +521,7 @@ public:
          // Try ForexFactory API first (works in live/demo)
          if(!m_use_mql_calendar)
            {
-            if(m_log != NULL)
+            if(should_log)
                m_log.Event(Tag(), "Attempting ForexFactory API...");
 
             fetch_success = FetchCalendar();
@@ -520,13 +529,14 @@ public:
             if(fetch_success)
               {
                m_last_fetch = now;
+               m_last_fetch_log = now;  // Reset log timer on success
                if(m_log != NULL)
                   m_log.Event(Tag(), "Calendar loaded from ForexFactory API");
               }
             else
               {
                // API failed - try MQL5 Calendar as fallback
-               if(m_log != NULL)
+               if(should_log)
                   m_log.Event(Tag(), "ForexFactory API failed - trying MQL5 Calendar API...");
 
                fetch_success = FetchMqlCalendar();
@@ -534,28 +544,36 @@ public:
                if(fetch_success)
                  {
                   m_last_fetch = now;
+                  m_last_fetch_log = now;  // Reset log timer on success
                   m_use_mql_calendar = true;  // Remember to use MQL calendar from now on
                   if(m_log != NULL)
                      m_log.Event(Tag(), "Calendar loaded from MQL5 Calendar API (will use this source going forward)");
                  }
-               else if(m_log != NULL)
+               else if(should_log)
                  {
                   m_log.Event(Tag(), "Both API sources failed - using cached events (if any)");
+                  m_last_fetch_log = now;  // Reset log timer even on failure
                  }
               }
            }
          else
            {
             // Already using MQL5 Calendar - continue with it
-            if(m_log != NULL)
-               m_log.Event(Tag(), "Using MQL5 Calendar API...");
+            if(should_log)
+               m_log.Event(Tag(), "Fetching from MQL5 Calendar API...");
 
             fetch_success = FetchMqlCalendar();
 
             if(fetch_success)
+              {
                m_last_fetch = now;
-            else if(m_log != NULL)
+               m_last_fetch_log = now;  // Reset log timer on success
+              }
+            else if(should_log)
+              {
                m_log.Event(Tag(), "MQL5 Calendar fetch failed - using cached events (if any)");
+               m_last_fetch_log = now;  // Reset log timer even on failure
+              }
            }
         }
 
