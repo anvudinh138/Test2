@@ -10,6 +10,7 @@
 #include <RECOVERY-GRID-DIRECTION_v3/core/OrderExecutor.mqh>
 #include <RECOVERY-GRID-DIRECTION_v3/core/GridBasket.mqh>
 #include <RECOVERY-GRID-DIRECTION_v3/core/LifecycleController.mqh>
+#include <RECOVERY-GRID-DIRECTION_v3/core/NewsFilter.mqh>
 
 //--- Inputs
 //--- Identity
@@ -47,6 +48,11 @@ input double            InpTargetCycleUSD   = 6.0;   // Target profit per cycle 
 //--- Risk Management (Session Stop Loss)
 input double            InpSessionSL_USD    = 10000; // Session stop loss (USD) - for monitoring only
 
+//--- News Filter (pause trading during high-impact news)
+input bool              InpNewsFilterEnabled   = false;  // Enable news filter
+input string            InpNewsImpactFilter    = "High"; // Impact filter (High, Medium+, All)
+input int               InpNewsBufferMinutes   = 30;     // Buffer before/after news (minutes)
+
 //--- Execution
 input int               InpOrderCooldownSec = 5;     // Min seconds between orders (anti-spam)
 input int               InpSlippagePips     = 0;     // Max slippage (pips)
@@ -60,6 +66,7 @@ CSpacingEngine      *g_spacing       = NULL;
 COrderValidator     *g_validator     = NULL;
 COrderExecutor      *g_executor      = NULL;
 CLifecycleController*g_controller    = NULL;
+CNewsFilter         *g_news_filter   = NULL;
 
 void BuildParams()
   {
@@ -101,6 +108,7 @@ int OnInit()
    g_executor = new COrderExecutor(_Symbol,g_validator,g_params.slippage_pips,g_params.order_cooldown_sec);
    if(g_executor!=NULL)
       g_executor.SetMagic(g_params.magic);
+   g_news_filter = new CNewsFilter(InpNewsFilterEnabled,InpNewsImpactFilter,InpNewsBufferMinutes,g_logger);
    g_controller = new CLifecycleController(_Symbol,g_params,g_spacing,g_executor,g_logger,g_params.magic);
 
    if(g_controller==NULL || !g_controller.Init())
@@ -128,15 +136,24 @@ void OnTick()
    // Check if market is open
    MqlDateTime dt;
    TimeToStruct(TimeCurrent(),dt);
-   
+
    // Skip weekend
    if(dt.day_of_week==0 || dt.day_of_week==6)
       return;
-   
+
    // Check symbol trading allowed
    if(!SymbolInfoInteger(_Symbol,SYMBOL_TRADE_MODE))
       return;
-      
+
+   // Check news filter (pause trading during high-impact news)
+   string active_event = "";
+   if(g_news_filter != NULL && g_news_filter.IsNewsTime(active_event))
+     {
+      // Log once when entering news window (IsNewsTime handles this internally)
+      // Skip trading during news
+      return;
+     }
+
    if(g_controller!=NULL)
       g_controller.Update();
   }
@@ -144,6 +161,7 @@ void OnTick()
 void OnDeinit(const int reason)
   {
    if(g_controller!=NULL){ g_controller.Shutdown(); delete g_controller; g_controller=NULL; }
+   if(g_news_filter!=NULL){ delete g_news_filter; g_news_filter=NULL; }
    if(g_executor!=NULL){ delete g_executor; g_executor=NULL; }
    if(g_validator!=NULL){ delete g_validator; g_validator=NULL; }
    if(g_spacing!=NULL){ delete g_spacing; g_spacing=NULL; }
