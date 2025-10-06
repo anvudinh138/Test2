@@ -106,6 +106,15 @@ private:
          return false;
       if(basket.IsActive())
          return false;
+
+      // Check trend filter before reseeding
+      if(!basket.IsTradingEnabled())
+        {
+         if(m_log!=NULL)
+            m_log.Event(Tag(),StringFormat("Reseed %s blocked by trend filter", (dir==DIR_BUY)?"BUY":"SELL"));
+         return false;
+        }
+
       double seed_lot=NormalizeVolume(m_params.lot_base);
       if(seed_lot<=0.0)
          return false;
@@ -293,7 +302,18 @@ public:
       // Normal mode: seed new grid
       double seed_lot=NormalizeVolume(m_params.lot_base);
 
+      // Update trend filter BEFORE seeding baskets
+      bool allow_buy=true;
+      bool allow_sell=true;
+      if(m_trend_filter!=NULL)
+        {
+         m_trend_filter.Update();
+         allow_buy=m_trend_filter.AllowBuyBasket();
+         allow_sell=m_trend_filter.AllowSellBasket();
+        }
+
       m_buy=new CGridBasket(m_symbol,DIR_BUY,BASKET_PRIMARY,m_params,m_spacing,m_executor,m_log,m_magic);
+      m_buy.SetTradingEnabled(allow_buy);  // Apply filter BEFORE Init()
       if(!m_buy.Init(ask))
         {
          if(m_log!=NULL)
@@ -304,6 +324,7 @@ public:
         }
 
       m_sell=new CGridBasket(m_symbol,DIR_SELL,BASKET_PRIMARY,m_params,m_spacing,m_executor,m_log,m_magic);
+      m_sell.SetTradingEnabled(allow_sell);  // Apply filter BEFORE Init()
       if(!m_sell.Init(bid))
         {
          if(m_log!=NULL)

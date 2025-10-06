@@ -171,8 +171,16 @@ private:
       if(m_executor==NULL)
          return;
 
+      // Check trend filter
+      if(!m_trading_enabled)
+        {
+         if(m_log!=NULL)
+            m_log.Event(Tag(),"Initial seed blocked by trend filter");
+         return;
+        }
+
       m_executor.SetMagic(m_magic);
-      
+
       if(m_params.grid_dynamic_enabled)
         {
          // Dynamic mode: only place seed + warm levels
