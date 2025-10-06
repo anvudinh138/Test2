@@ -34,6 +34,7 @@ src/
     ├── SpacingEngine.mqh                # Grid spacing (PIPS/ATR/HYBRID)
     ├── OrderExecutor.mqh                # Atomic order operations
     ├── OrderValidator.mqh               # Broker constraints validation
+    ├── NewsFilter.mqh                   # Economic calendar news filter
     ├── Logger.mqh                       # Event logging
     └── MathHelpers.mqh                  # Math utilities
 ```
@@ -62,6 +63,13 @@ src/
 4. **COrderExecutor** (`OrderExecutor.mqh`)
    - Atomic open/modify/close with retry logic
    - Handles broker-specific constraints
+
+5. **CNewsFilter** (`NewsFilter.mqh`) - NEW FEATURE
+   - Fetches economic calendar from ForexFactory API
+   - Pauses trading during high-impact news events
+   - Configurable buffer window (before/after news)
+   - Retry logic with exponential backoff (max 5 attempts)
+   - Rate-limited error logging to prevent spam
 
 ### Data Flow (Simplified)
 
@@ -105,6 +113,11 @@ src/
 
 **Risk Management** (For monitoring):
 - `InpSessionSL_USD`: Session stop loss reference (USD) - for monitoring only, not enforced by system
+
+**News Filter** (Pause trading during news - NEW):
+- `InpNewsFilterEnabled`: Enable/disable news filter (default: false)
+- `InpNewsImpactFilter`: Filter level - "High", "Medium+", or "All" (default: "High")
+- `InpNewsBufferMinutes`: Minutes to pause before/after news event (default: 30)
 
 **Execution**:
 - `InpOrderCooldownSec`: Minimum seconds between order operations (anti-spam protection)
@@ -208,6 +221,7 @@ When `InpDynamicGrid = true`:
 - `doc/CONFIG_EXAMPLE.yaml` — Safe baseline parameters for testing
 - `doc/TESTING_CHECKLIST.md` — Acceptance criteria and test scenarios
 - `doc/GLOSSARY.md` — UI/term mapping
+- **`doc/NEWS_FILTER.md`** — **NEW**: News filter setup, API integration, troubleshooting
 
 ## Parameter Tuning
 
@@ -252,3 +266,19 @@ InpCommissionPerLot: 7.0 (adjust to your broker)
 - Start with `InpLotScale = 1.0` (flat lot) to avoid aggressive martingale
 - Use small `InpLotBase` (0.01-0.02) for initial testing
 - Both grids run simultaneously - total exposure = sum of both baskets
+
+### 🆕 News Filter Setup (Optional)
+
+**Enable WebRequest Permission** (Required for news filter):
+1. Tools → Options → Expert Advisors
+2. Check "Allow WebRequest for listed URL"
+3. Add: `https://nfs.faireconomy.media`
+
+**Recommended Settings**:
+```
+InpNewsFilterEnabled   = true
+InpNewsImpactFilter    = "High"      // Only major events (NFP, FOMC, CPI)
+InpNewsBufferMinutes   = 30          // Pause 30 min before/after
+```
+
+See `doc/NEWS_FILTER.md` for detailed documentation

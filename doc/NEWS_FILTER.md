@@ -1,0 +1,270 @@
+# News Filter Feature
+
+## Overview
+
+The News Filter pauses trading during high-impact economic news events to avoid volatile price movements, slippage, and unpredictable spread widening.
+
+## How It Works
+
+### 1. **News Calendar API**
+
+- **Source**: ForexFactory Calendar API
+- **URL**: `https://nfs.faireconomy.media/ff_calendar_thisweek.json`
+- **Update Frequency**: Every 1 hour (3600 seconds)
+- **Data Cached**: Events stored in memory, refreshed periodically
+
+### 2. **JSON Response Format**
+
+```json
+[
+  {
+    "title": "Non-Farm Payrolls",
+    "country": "USD",
+    "date": "2025-10-06 12:30:00",
+    "impact": "High",
+    "forecast": "150K",
+    "previous": "142K"
+  }
+]
+```
+
+### 3. **News Window Logic**
+
+```
+News Event Time: 12:30 UTC
+Buffer: 30 minutes
+
+Trading PAUSED from:
+  12:00 UTC (30 min before)
+  to
+  13:00 UTC (30 min after)
+```
+
+**During news window**:
+- EA skips `g_controller.Update()`
+- No new orders opened
+- Existing positions remain open
+- Logs: "Trading paused - News: [High] [USD] Non-Farm Payrolls"
+
+## Configuration
+
+### Input Parameters
+
+```mql5
+//--- News Filter
+input bool   InpNewsFilterEnabled   = false;  // Enable news filter
+input string InpNewsImpactFilter    = "High"; // Impact: High, Medium+, All
+input int    InpNewsBufferMinutes   = 30;     // Buffer before/after (minutes)
+```
+
+### Impact Filter Options
+
+| Filter | Events Filtered |
+|--------|----------------|
+| `High` | Only High impact events (NFP, FOMC, CPI) |
+| `Medium+` | High + Medium impact events |
+| `All` | All events (High, Medium, Low) |
+
+**Recommended**: Start with `High` filter only
+
+## API Integration
+
+### Rate Limiting & Retry Logic
+
+**To avoid server abuse**:
+
+1. **Cache Duration**: 1 hour (3600 sec)
+   - Events cached in memory
+   - Only refetch after 1 hour expires
+
+2. **Retry Logic**: Max 5 attempts with exponential backoff
+   ```
+   Attempt 1: immediate
+   Attempt 2: wait 2 seconds
+   Attempt 3: wait 4 seconds
+   Attempt 4: wait 8 seconds
+   Attempt 5: wait 16 seconds
+   ```
+
+3. **Error Logging**: Rate-limited to once per hour
+   - Prevents log spam if API continuously fails
+   - Clear notification to user about WebRequest permission
+
+### WebRequest Permission Required
+
+**IMPORTANT**: Must enable WebRequest for ForexFactory URL in MT5
+
+**Steps**:
+1. Tools → Options → Expert Advisors
+2. Check "Allow WebRequest for listed URL"
+3. Add: `https://nfs.faireconomy.media`
+
+**Without permission**: WebRequest returns error -1, EA logs warning once per hour
+
+### Error Handling
+
+| Error Code | Meaning | Action |
+|-----------|---------|--------|
+| -1 | WebRequest not allowed | Log: "Enable WebRequest permission for: https://nfs.faireconomy.media" |
+| 200 | Success | Parse JSON, cache events |
+| 404/500 | Server error | Retry up to 5 times, then skip until next hour |
+| Timeout | Network timeout (5 sec) | Retry with backoff |
+
+## Implementation Details
+
+### News Filter State Machine
+
+```
+[IDLE]
+  ↓ (every hour)
+[FETCH API] → (retry up to 5x if fail)
+  ↓ (success)
+[PARSE JSON] → cache events
+  ↓
+[CHECK NEWS WINDOW each tick]
+  ↓
+  ├─ Within buffer? → PAUSE TRADING
+  └─ Outside buffer? → ALLOW TRADING
+```
+
+### Integration with Main EA
+
+**OnInit()**:
+```mql5
+g_news_filter = new CNewsFilter(InpNewsFilterEnabled,
+                                 InpNewsImpactFilter,
+                                 InpNewsBufferMinutes,
+                                 g_logger);
+```
+
+**OnTick()**:
+```mql5
+string active_event = "";
+if (g_news_filter != NULL && g_news_filter.IsNewsTime(active_event)) {
+   // Skip trading during news
+   return;
+}
+
+// Normal trading
+g_controller.Update();
+```
+
+**OnDeinit()**:
+```mql5
+if (g_news_filter != NULL) {
+   delete g_news_filter;
+   g_news_filter = NULL;
+}
+```
+
+## Logging Examples
+
+### Successful API Fetch
+```
+[NewsFilter] Loaded 47 events (filter: High impact)
+[NewsFilter] Next: [High] [USD] Non-Farm Payrolls @ 12:30 UTC
+```
+
+### News Window Entered
+```
+[NewsFilter] NEWS WINDOW ENTERED: [High] [USD] Non-Farm Payrolls @ 12:30 UTC (buffer: 30 min)
+[RGDv2] Trading paused - News: [High] [USD] Non-Farm Payrolls
+```
+
+### News Window Exited
+```
+[NewsFilter] NEWS WINDOW EXITED: Non-Farm Payrolls
+[RGDv2] Trading resumed
+```
+
+### API Error (with permission issue)
+```
+[NewsFilter] WebRequest failed: error 4060 - Enable WebRequest for URL: https://nfs.faireconomy.media
+[NewsFilter] Go to: Tools → Options → Expert Advisors → Allow WebRequest
+```
+
+## Testing
+
+### Test on Demo First
+
+1. **Enable filter**: `InpNewsFilterEnabled = true`
+2. **Set to High only**: `InpNewsImpactFilter = "High"`
+3. **Use 30 min buffer**: `InpNewsBufferMinutes = 30`
+4. **Check logs**: Verify API fetch successful
+5. **Wait for news**: Confirm trading pauses before/after event
+
+### Manual Testing
+
+**Force API fetch** (for testing):
+- Restart EA → triggers immediate fetch
+- Check logs for "Loaded X events"
+- Use "Next event" log to see upcoming news
+
+### Backtest Limitations
+
+⚠️ **News filter DISABLED in Strategy Tester**:
+- WebRequest not available in backtest
+- Filter automatically disabled
+- Focus on live/forward testing only
+
+## Performance Impact
+
+- **Memory**: ~10KB for 100 cached events
+- **API calls**: 1 request per hour maximum
+- **CPU**: Negligible (simple string comparison each tick)
+- **Network**: 5-10KB JSON download per hour
+
+## Safety Notes
+
+✅ **What filter does**:
+- Prevents opening NEW positions during news
+- Logs news windows clearly
+
+❌ **What filter does NOT do**:
+- Does NOT close existing positions before news
+- Does NOT modify existing orders/SL/TP
+- Does NOT guarantee zero slippage (positions still open)
+
+**Recommendation**: Consider manual intervention for major events (NFP, FOMC) if large positions open
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| "WebRequest failed: error 4060" | Enable WebRequest permission in MT5 settings |
+| "Loaded 0 events" | Check internet connection, verify API URL accessible |
+| News filter not working | Check `InpNewsFilterEnabled = true` |
+| Too many pauses | Switch from "All" → "High" impact filter |
+| Missing events | API updates weekly - may not have future week data yet |
+
+## Example Configuration
+
+### Conservative (Recommended)
+```mql5
+InpNewsFilterEnabled   = true
+InpNewsImpactFilter    = "High"      // Only major events
+InpNewsBufferMinutes   = 30          // 30 min before/after
+```
+
+### Aggressive (More trading time)
+```mql5
+InpNewsFilterEnabled   = true
+InpNewsImpactFilter    = "High"
+InpNewsBufferMinutes   = 15          // Shorter buffer
+```
+
+### Very Conservative
+```mql5
+InpNewsFilterEnabled   = true
+InpNewsImpactFilter    = "Medium+"   // High + Medium
+InpNewsBufferMinutes   = 60          // 1 hour buffer
+```
+
+## Future Enhancements
+
+Possible improvements (not implemented yet):
+- [ ] Auto-close positions X minutes before major news
+- [ ] Symbol-specific filtering (only USD news for EURUSD)
+- [ ] Tighten SL before news (reduce risk)
+- [ ] Historical CSV support for backtesting
+- [ ] Custom news list (user-defined events)
