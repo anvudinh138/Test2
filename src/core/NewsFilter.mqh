@@ -40,6 +40,11 @@ private:
    int            m_retry_count;           // Current retry attempt
    int            m_max_retries;           // Max retry attempts (5)
 
+   // Historical calendar support (for backtest)
+   bool           m_use_mql_calendar;      // Use MQL5 Calendar API (backtest mode)
+   datetime       m_history_start;         // Start time for historical fetch
+   datetime       m_history_end;           // End time for historical fetch
+
    string         Tag() const { return "[NewsFilter]"; }
 
    //+------------------------------------------------------------------+
@@ -237,6 +242,135 @@ private:
      }
 
    //+------------------------------------------------------------------+
+   //| Fetch calendar from MQL5 Calendar API (historical data)          |
+   //+------------------------------------------------------------------+
+   bool           FetchMqlCalendar()
+     {
+      if(m_log != NULL)
+         m_log.Event(Tag(), "Fetching historical calendar from MQL5 Calendar API...");
+
+      // Get calendar database
+      MqlCalendarCountry countries[];
+      int country_count = CalendarCountries(countries);
+
+      if(country_count <= 0)
+        {
+         if(m_log != NULL)
+            m_log.Event(Tag(), "Calendar database not available - ensure MT5 calendar is synced");
+         return false;
+        }
+
+      if(m_log != NULL)
+         m_log.Event(Tag(), StringFormat("Calendar database: %d countries loaded", country_count));
+
+      // Define time range for historical fetch
+      // For backtest: fetch from backtest start to end + 1 week buffer
+      datetime now = TimeCurrent();
+      m_history_start = now - (30 * 86400);  // 30 days back
+      m_history_end = now + (7 * 86400);     // 7 days forward
+
+      if(m_log != NULL)
+        {
+         MqlDateTime dt_start, dt_end;
+         TimeToStruct(m_history_start, dt_start);
+         TimeToStruct(m_history_end, dt_end);
+         m_log.Event(Tag(), StringFormat("Fetching events from %04d.%02d.%02d to %04d.%02d.%02d",
+                                        dt_start.year, dt_start.mon, dt_start.day,
+                                        dt_end.year, dt_end.mon, dt_end.day));
+        }
+
+      // Fetch calendar values (economic events)
+      MqlCalendarValue values[];
+      int event_count = CalendarValueHistory(values, m_history_start, m_history_end);
+
+      if(event_count <= 0)
+        {
+         if(m_log != NULL)
+            m_log.Event(Tag(), StringFormat("No calendar events found in range (returned %d)", event_count));
+         return false;
+        }
+
+      if(m_log != NULL)
+         m_log.Event(Tag(), StringFormat("Retrieved %d raw calendar values from MQL5", event_count));
+
+      // Parse and filter events
+      return ParseMqlCalendarValues(values, event_count);
+     }
+
+   //+------------------------------------------------------------------+
+   //| Parse MQL5 Calendar values into our event structure              |
+   //+------------------------------------------------------------------+
+   bool           ParseMqlCalendarValues(const MqlCalendarValue &values[], int count)
+     {
+      ArrayResize(m_events, 0);
+
+      int filtered_count = 0;
+      int max_events = 500;  // Increased for historical data
+
+      for(int i = 0; i < count && filtered_count < max_events; i++)
+        {
+         // Get event details
+         MqlCalendarEvent event;
+         if(!CalendarEventById(values[i].event_id, event))
+            continue;
+
+         // Get country info
+         MqlCalendarCountry country;
+         if(!CalendarCountryById(event.country_id, country))
+            continue;
+
+         // Map importance to impact level
+         // MQL5 importance: 0=None, 1=Low, 2=Medium, 3=High
+         string impact = "Low";
+         if(event.importance == CALENDAR_IMPORTANCE_HIGH)
+            impact = "High";
+         else if(event.importance == CALENDAR_IMPORTANCE_MODERATE)
+            impact = "Medium";
+         else if(event.importance == CALENDAR_IMPORTANCE_LOW)
+            impact = "Low";
+         else
+            continue;  // Skip events with no importance
+
+         // Filter by impact
+         if(!ShouldIncludeEvent(impact))
+            continue;
+
+         // Add event to our list
+         ArrayResize(m_events, filtered_count + 1);
+         m_events[filtered_count].event_time = values[i].time;
+         m_events[filtered_count].currency = country.currency;
+         m_events[filtered_count].title = event.name;
+         m_events[filtered_count].impact = impact;
+         m_events[filtered_count].is_active = false;
+         filtered_count++;
+        }
+
+      if(m_log != NULL)
+        {
+         m_log.Event(Tag(), StringFormat("Loaded %d events from MQL5 Calendar (filter: %s impact)",
+                                        filtered_count, m_impact_filter));
+
+         // Log next upcoming event
+         SNewsEvent next;
+         if(GetNextEvent(next))
+           {
+            MqlDateTime dt;
+            TimeToStruct(next.event_time, dt);
+            int time_until = (int)((next.event_time - TimeCurrent()) / 60);  // minutes
+            m_log.Event(Tag(), StringFormat("Next: [%s] [%s] %s @ %02d:%02d UTC (in %d minutes)",
+                                           next.impact, next.currency, next.title,
+                                           dt.hour, dt.min, time_until));
+           }
+         else
+           {
+            m_log.Event(Tag(), "No upcoming events found in MQL5 calendar");
+           }
+        }
+
+      return filtered_count > 0;
+     }
+
+   //+------------------------------------------------------------------+
    //| Parse ForexFactory JSON response                                 |
    //+------------------------------------------------------------------+
    bool           ParseCalendarJSON(const string json)
@@ -335,7 +469,10 @@ public:
                          m_last_error_log(0),
                          m_error_log_interval(3600),      // 1 hour
                          m_retry_count(0),
-                         m_max_retries(5)                 // Max 5 retry attempts
+                         m_max_retries(5),                // Max 5 retry attempts
+                         m_use_mql_calendar(false),       // Auto-detect mode
+                         m_history_start(0),
+                         m_history_end(0)
      {
       ArrayResize(m_events, 0);
 
@@ -369,10 +506,57 @@ public:
               }
            }
 
-         if(FetchCalendar())
-            m_last_fetch = now;
-         else if(m_log != NULL)
-            m_log.Event(Tag(), "API fetch failed - using cached events (if any)");
+         // Fallback strategy: API → MQL5 Calendar → cached events
+         bool fetch_success = false;
+
+         // Try ForexFactory API first (works in live/demo)
+         if(!m_use_mql_calendar)
+           {
+            if(m_log != NULL)
+               m_log.Event(Tag(), "Attempting ForexFactory API...");
+
+            fetch_success = FetchCalendar();
+
+            if(fetch_success)
+              {
+               m_last_fetch = now;
+               if(m_log != NULL)
+                  m_log.Event(Tag(), "Calendar loaded from ForexFactory API");
+              }
+            else
+              {
+               // API failed - try MQL5 Calendar as fallback
+               if(m_log != NULL)
+                  m_log.Event(Tag(), "ForexFactory API failed - trying MQL5 Calendar API...");
+
+               fetch_success = FetchMqlCalendar();
+
+               if(fetch_success)
+                 {
+                  m_last_fetch = now;
+                  m_use_mql_calendar = true;  // Remember to use MQL calendar from now on
+                  if(m_log != NULL)
+                     m_log.Event(Tag(), "Calendar loaded from MQL5 Calendar API (will use this source going forward)");
+                 }
+               else if(m_log != NULL)
+                 {
+                  m_log.Event(Tag(), "Both API sources failed - using cached events (if any)");
+                 }
+              }
+           }
+         else
+           {
+            // Already using MQL5 Calendar - continue with it
+            if(m_log != NULL)
+               m_log.Event(Tag(), "Using MQL5 Calendar API...");
+
+            fetch_success = FetchMqlCalendar();
+
+            if(fetch_success)
+               m_last_fetch = now;
+            else if(m_log != NULL)
+               m_log.Event(Tag(), "MQL5 Calendar fetch failed - using cached events (if any)");
+           }
         }
 
       // Check if within buffer window of any event

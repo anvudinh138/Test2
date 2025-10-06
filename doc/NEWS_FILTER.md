@@ -6,14 +6,46 @@ The News Filter pauses trading during high-impact economic news events to avoid 
 
 ## How It Works
 
-### 1. **News Calendar API**
+### 1. **News Calendar Sources (Automatic Fallback)**
 
+The news filter uses a **smart fallback strategy** to ensure calendar data is available in all modes:
+
+**Priority 1: ForexFactory API** (Live/Demo only)
 - **Source**: ForexFactory Calendar API
 - **URL**: `https://nfs.faireconomy.media/ff_calendar_thisweek.json`
 - **Update Frequency**: Every 1 hour (3600 seconds)
-- **Data Cached**: Events stored in memory, refreshed periodically
+- **Availability**: Live and demo trading only (WebRequest required)
 
-### 2. **JSON Response Format**
+**Priority 2: MQL5 Calendar API** (Backtest + Live/Demo)
+- **Source**: Built-in MT5 Calendar database
+- **Functions**: `CalendarValueHistory()`, `CalendarEventById()`, `CalendarCountryById()`
+- **Update Frequency**: Every 1 hour (3600 seconds)
+- **Availability**: Works in backtest, live, and demo modes
+- **Range**: Fetches 30 days back + 7 days forward
+
+**Priority 3: Cached Events**
+- **Source**: Last successful fetch from either API
+- **Availability**: Always (as long as one previous fetch succeeded)
+
+### 2. **Automatic Source Selection**
+
+```
+┌─────────────────────┐
+│  IsNewsTime()       │
+└──────────┬──────────┘
+           │
+           ├─→ First attempt: ForexFactory API
+           │   ├─ Success? → Use ForexFactory (live/demo)
+           │   └─ Failed?  → Try MQL5 Calendar
+           │
+           └─→ MQL5 Calendar API
+               ├─ Success? → Use MQL5 Calendar permanently
+               └─ Failed?  → Use cached events (if any)
+```
+
+The filter automatically detects which source works and sticks with it.
+
+### 3. **ForexFactory JSON Response Format**
 
 ```json
 [
@@ -28,7 +60,47 @@ The News Filter pauses trading during high-impact economic news events to avoid 
 ]
 ```
 
-### 3. **News Window Logic**
+### 4. **MQL5 Calendar API Structure**
+
+The MQL5 Calendar API provides structured economic calendar data:
+
+```mql5
+MqlCalendarValue {
+   ulong event_id;        // Event identifier
+   datetime time;         // Event time (UTC)
+   datetime period;       // Period
+   int revision;          // Revision
+   long actual_value;     // Actual value
+   long prev_value;       // Previous value
+   long revised_prev_value;
+   long forecast_value;   // Forecast value
+   ENUM_CALENDAR_EVENT_IMPACT impact_type;
+};
+
+MqlCalendarEvent {
+   ulong id;                          // Event ID
+   ENUM_CALENDAR_EVENT_TYPE type;     // Event type
+   ENUM_CALENDAR_EVENT_SECTOR sector; // Sector
+   ENUM_CALENDAR_EVENT_FREQUENCY frequency;
+   ENUM_CALENDAR_EVENT_TIMEMODE time_mode;
+   ulong country_id;                  // Country identifier
+   ENUM_CALENDAR_EVENT_UNIT unit;     // Unit
+   ENUM_CALENDAR_EVENT_IMPORTANCE importance;  // LOW, MODERATE, HIGH
+   ENUM_CALENDAR_EVENT_MULTIPLIER multiplier;
+   ENUM_CALENDAR_EVENT_IMPACT impact_type;
+   string name;                       // Event name
+   string source_url;
+   string event_code;
+   string currency_code;
+};
+```
+
+**Importance Mapping**:
+- `CALENDAR_IMPORTANCE_HIGH` → `"High"`
+- `CALENDAR_IMPORTANCE_MODERATE` → `"Medium"`
+- `CALENDAR_IMPORTANCE_LOW` → `"Low"`
+
+### 5. **News Window Logic**
 
 ```
 News Event Time: 12:30 UTC
@@ -159,10 +231,43 @@ if (g_news_filter != NULL) {
 
 ## Logging Examples
 
-### Successful API Fetch
+### Successful ForexFactory API Fetch (Live/Demo)
 ```
+[NewsFilter] First fetch - loading news calendar...
+[NewsFilter] Attempting ForexFactory API...
+[NewsFilter] Fetching calendar from API (attempt 1/5)...
+[NewsFilter] API fetch successful (attempt 1/5) - JSON size: 45231 bytes
 [NewsFilter] Loaded 47 events (filter: High impact)
-[NewsFilter] Next: [High] [USD] Non-Farm Payrolls @ 12:30 UTC
+[NewsFilter] Calendar loaded from ForexFactory API
+[NewsFilter] Next: [High] [USD] Non-Farm Payrolls @ 12:30 UTC (in 125 minutes)
+```
+
+### Fallback to MQL5 Calendar (Live/Demo when API fails)
+```
+[NewsFilter] First fetch - loading news calendar...
+[NewsFilter] Attempting ForexFactory API...
+[NewsFilter] WebRequest failed (attempt 1/5): error 4060
+[NewsFilter] ForexFactory API failed - trying MQL5 Calendar API...
+[NewsFilter] Fetching historical calendar from MQL5 Calendar API...
+[NewsFilter] Calendar database: 195 countries loaded
+[NewsFilter] Fetching events from 2025.09.06 to 2025.10.13
+[NewsFilter] Retrieved 1247 raw calendar values from MQL5
+[NewsFilter] Loaded 89 events from MQL5 Calendar (filter: High impact)
+[NewsFilter] Calendar loaded from MQL5 Calendar API (will use this source going forward)
+[NewsFilter] Next: [High] [USD] Non-Farm Payrolls @ 12:30 UTC (in 125 minutes)
+```
+
+### MQL5 Calendar in Backtest
+```
+[NewsFilter] First fetch - loading news calendar...
+[NewsFilter] Attempting ForexFactory API...
+[NewsFilter] ForexFactory API failed - trying MQL5 Calendar API...
+[NewsFilter] Fetching historical calendar from MQL5 Calendar API...
+[NewsFilter] Calendar database: 195 countries loaded
+[NewsFilter] Fetching events from 2024.01.01 to 2024.02.07
+[NewsFilter] Retrieved 2341 raw calendar values from MQL5
+[NewsFilter] Loaded 156 events from MQL5 Calendar (filter: High impact)
+[NewsFilter] Next: [High] [USD] CPI @ 14:30 UTC (in 342 minutes)
 ```
 
 ### News Window Entered
@@ -200,12 +305,22 @@ if (g_news_filter != NULL) {
 - Check logs for "Loaded X events"
 - Use "Next event" log to see upcoming news
 
-### Backtest Limitations
+### Backtest Support
 
-⚠️ **News filter DISABLED in Strategy Tester**:
-- WebRequest not available in backtest
-- Filter automatically disabled
-- Focus on live/forward testing only
+✅ **News filter NOW WORKS in Strategy Tester**:
+- Uses MQL5 Calendar API (historical data)
+- Automatically falls back from ForexFactory → MQL5 Calendar
+- Calendar database must be synced in MT5 (usually auto-syncs)
+- Fetches historical events for backtest period (30 days back + 7 days forward)
+
+**Requirements for Backtest**:
+1. MT5 Calendar database synced (check Tools → Calendar)
+2. Enable news filter: `InpNewsFilterEnabled = true`
+3. Calendar data available for backtest period
+
+**Fallback behavior**:
+- Live/Demo: Tries ForexFactory API first → falls back to MQL5 Calendar
+- Backtest: Uses MQL5 Calendar directly (WebRequest blocked in Strategy Tester)
 
 ## Performance Impact
 
@@ -231,11 +346,13 @@ if (g_news_filter != NULL) {
 
 | Issue | Solution |
 |-------|----------|
-| "WebRequest failed: error 4060" | Enable WebRequest permission in MT5 settings |
-| "Loaded 0 events" | Check internet connection, verify API URL accessible |
+| "WebRequest failed: error 4060" | Normal in backtest - EA will auto-fallback to MQL5 Calendar. For live/demo, enable WebRequest permission |
+| "Calendar database not available" | Check Tools → Calendar in MT5, ensure calendar is synced |
+| "Loaded 0 events" | Check internet connection (live) or calendar sync (backtest) |
 | News filter not working | Check `InpNewsFilterEnabled = true` |
 | Too many pauses | Switch from "All" → "High" impact filter |
-| Missing events | API updates weekly - may not have future week data yet |
+| Missing historical events in backtest | Ensure MT5 calendar database is synced (usually automatic) |
+| "Both API sources failed" | Check internet + calendar sync, will use cached events if available |
 
 ## Example Configuration
 
@@ -260,11 +377,19 @@ InpNewsImpactFilter    = "Medium+"   // High + Medium
 InpNewsBufferMinutes   = 60          // 1 hour buffer
 ```
 
+## Recent Updates
+
+**v2.0 - Historical News Support** ✅
+- [x] MQL5 Calendar API integration for backtest support
+- [x] Automatic fallback: ForexFactory API → MQL5 Calendar → cached events
+- [x] Works seamlessly in live, demo, AND backtest modes
+- [x] Comprehensive logging for both API sources
+
 ## Future Enhancements
 
 Possible improvements (not implemented yet):
 - [ ] Auto-close positions X minutes before major news
 - [ ] Symbol-specific filtering (only USD news for EURUSD)
 - [ ] Tighten SL before news (reduce risk)
-- [ ] Historical CSV support for backtesting
 - [ ] Custom news list (user-defined events)
+- [ ] Configurable historical range (currently 30 days back + 7 days forward)
