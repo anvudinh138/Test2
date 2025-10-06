@@ -12,6 +12,7 @@
 #include <RECOVERY-GRID-DIRECTION_v3/core/GridBasket.mqh>
 #include <RECOVERY-GRID-DIRECTION_v3/core/LifecycleController.mqh>
 #include <RECOVERY-GRID-DIRECTION_v3/core/NewsFilter.mqh>
+#include <RECOVERY-GRID-DIRECTION_v3/core/JobManager.mqh>
 
 //--- Inputs
 //--- Identity
@@ -68,6 +69,24 @@ input int               InpSlippagePips     = 0;     // Max slippage (pips)
 input bool              InpRespectStops     = false; // Respect broker stops level (false for backtest)
 input double            InpCommissionPerLot = 0.0;   // Commission per lot (for PnL calc only, does NOT affect live)
 
+//--- Multi-Job System (Phase 2 - Experimental)
+input group             "=== Multi-Job System (v3.0 - EXPERIMENTAL) ==="
+input bool              InpMultiJobEnabled  = false; // Enable multi-job system (OFF by default)
+input int               InpMaxJobs          = 5;     // Max concurrent jobs (5-10 recommended)
+input double            InpJobSL_USD        = 50.0;  // SL per job in USD (0=disabled)
+input double            InpJobDDThreshold   = 30.0;  // Abandon job if DD >= this % (e.g., 30%)
+input double            InpGlobalDDLimit    = 50.0;  // Stop spawning if global DD >= this % (e.g., 50%)
+
+input group             "=== Magic Number (Job Isolation) ==="
+input long              InpMagicOffset      = 421;   // Magic offset between jobs (e.g., 421)
+
+input group             "=== Spawn Triggers ==="
+input bool              InpSpawnOnGridFull  = true;  // Spawn new job when grid full
+input bool              InpSpawnOnTSL       = true;  // Spawn new job when TSL active
+input bool              InpSpawnOnJobDD     = true;  // Spawn new job when job DD >= threshold
+input int               InpSpawnCooldownSec = 30;    // Cooldown between spawns (seconds)
+input int               InpMaxSpawns        = 10;    // Max spawns per session
+
 //--- Globals
 SParams              g_params;
 CLogger             *g_logger        = NULL;
@@ -75,6 +94,7 @@ CSpacingEngine      *g_spacing       = NULL;
 COrderValidator     *g_validator     = NULL;
 COrderExecutor      *g_executor      = NULL;
 CLifecycleController*g_controller    = NULL;
+CJobManager         *g_job_manager   = NULL;
 CNewsFilter         *g_news_filter   = NULL;
 
 void BuildParams()
@@ -110,6 +130,20 @@ void BuildParams()
 
    g_params.magic              =InpMagic;
 
+   // Multi-job system params
+   g_params.multi_job_enabled  =InpMultiJobEnabled;
+   g_params.max_jobs           =InpMaxJobs;
+   g_params.job_sl_usd         =InpJobSL_USD;
+   g_params.job_dd_threshold   =InpJobDDThreshold;
+   g_params.global_dd_limit    =InpGlobalDDLimit;
+   g_params.magic_start        =InpMagic;
+   g_params.magic_offset       =InpMagicOffset;
+   g_params.spawn_on_grid_full =InpSpawnOnGridFull;
+   g_params.spawn_on_tsl       =InpSpawnOnTSL;
+   g_params.spawn_on_job_dd    =InpSpawnOnJobDD;
+   g_params.spawn_cooldown_sec =InpSpawnCooldownSec;
+   g_params.max_spawns         =InpMaxSpawns;
+
    // THEN apply preset overrides (if not CUSTOM)
    // Preset will override only the critical params (spacing, grid, target, cooldown)
    if(InpSymbolPreset != PRESET_CUSTOM)
@@ -129,13 +163,38 @@ int OnInit()
    if(g_executor!=NULL)
       g_executor.SetMagic(g_params.magic);
    g_news_filter = new CNewsFilter(InpNewsFilterEnabled,InpNewsImpactFilter,InpNewsBufferMinutes,g_logger);
-   g_controller = new CLifecycleController(_Symbol,g_params,g_spacing,g_executor,g_logger,g_params.magic);
 
-   if(g_controller==NULL || !g_controller.Init())
+   // Multi-job system (Phase 2) or legacy single lifecycle
+   if(g_params.multi_job_enabled)
      {
+      // Multi-job mode
+      g_job_manager = new CJobManager(_Symbol,g_params,g_spacing,g_executor,g_logger,
+                                      g_params.magic_start,g_params.magic_offset,
+                                      g_params.global_dd_limit,g_params.job_sl_usd,g_params.job_dd_threshold,
+                                      g_params.spawn_cooldown_sec,g_params.max_spawns,
+                                      g_params.spawn_on_grid_full,g_params.spawn_on_tsl,g_params.spawn_on_job_dd);
+
+      if(g_job_manager==NULL || !g_job_manager.Init())
+        {
+         if(g_logger!=NULL)
+            g_logger.Event("[RGDv2]","JobManager init failed");
+         return(INIT_FAILED);
+        }
+
       if(g_logger!=NULL)
-         g_logger.Event("[RGDv2]","Controller init failed");
-      return(INIT_FAILED);
+         g_logger.Event("[RGDv2]","Multi-Job System: ENABLED (EXPERIMENTAL)");
+     }
+   else
+     {
+      // Legacy single lifecycle mode
+      g_controller = new CLifecycleController(_Symbol,g_params,g_spacing,g_executor,g_logger,g_params.magic);
+
+      if(g_controller==NULL || !g_controller.Init())
+        {
+         if(g_logger!=NULL)
+            g_logger.Event("[RGDv2]","Controller init failed");
+         return(INIT_FAILED);
+        }
      }
    
    // Debug info
@@ -199,12 +258,22 @@ void OnTick()
       return;
      }
 
-   if(g_controller!=NULL)
-      g_controller.Update();
+   // Update lifecycle (multi-job or legacy)
+   if(g_params.multi_job_enabled)
+     {
+      if(g_job_manager!=NULL)
+         g_job_manager.Update();
+     }
+   else
+     {
+      if(g_controller!=NULL)
+         g_controller.Update();
+     }
   }
 
 void OnDeinit(const int reason)
   {
+   if(g_job_manager!=NULL){ g_job_manager.Shutdown(); delete g_job_manager; g_job_manager=NULL; }
    if(g_controller!=NULL){ g_controller.Shutdown(); delete g_controller; g_controller=NULL; }
    if(g_news_filter!=NULL){ delete g_news_filter; g_news_filter=NULL; }
    if(g_executor!=NULL){ delete g_executor; g_executor=NULL; }

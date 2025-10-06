@@ -47,6 +47,24 @@ struct SParams
 
    // misc
    long         magic;
+
+   // multi-job system (Phase 2)
+   bool         multi_job_enabled;       // enable multi-job system (experimental)
+   int          max_jobs;                // max concurrent jobs (5-10 recommended)
+   double       job_sl_usd;              // SL per job in USD (0=disabled)
+   double       job_dd_threshold;        // abandon job if DD >= this % (e.g., 30%)
+   double       global_dd_limit;         // stop spawning if global DD >= this % (e.g., 50%)
+
+   // magic number (job isolation)
+   long         magic_start;             // starting magic number for Job 1
+   long         magic_offset;            // magic offset between jobs (e.g., 421)
+
+   // spawn triggers
+   bool         spawn_on_grid_full;      // spawn new job when grid full
+   bool         spawn_on_tsl;            // spawn new job when TSL active
+   bool         spawn_on_job_dd;         // spawn new job when job DD >= threshold
+   int          spawn_cooldown_sec;      // cooldown between spawns (seconds)
+   int          max_spawns;              // max spawns per session
   };
 
 #endif // __RGD_V2_PARAMS_MQH__

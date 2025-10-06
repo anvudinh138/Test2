@@ -635,6 +635,14 @@ public:
 
    double         NormalizeLot(const double volume) const { return NormalizeVolumeValue(volume); }
 
+   // TSL detection (placeholder for multi-job spawn trigger)
+   bool           IsTSLActive() const
+     {
+      // TODO: Implement TSL logic when feature is added
+      // For now, always return false
+      return false;
+     }
+
    SBasketSummary Snapshot() const
      {
       SBasketSummary snap;

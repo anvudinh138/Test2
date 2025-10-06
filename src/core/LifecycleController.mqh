@@ -30,6 +30,9 @@ private:
    datetime          m_cooldown_until;        // Cooldown end time
    bool              m_in_cooldown;           // Currently in cooldown
 
+   // P&L tracking (for multi-job system)
+   double            m_total_realized_pnl;    // Cumulative realized profit
+
    string            Tag() const { return StringFormat("[RGDv2][%s][LC]",m_symbol); }
 
    double           CurrentPrice(const EDirection dir) const
@@ -203,7 +206,8 @@ public:
                          m_sell(NULL),
                          m_halted(false),
                          m_cooldown_until(0),
-                         m_in_cooldown(false)
+                         m_in_cooldown(false),
+                         m_total_realized_pnl(0.0)
      {
      }
 
@@ -269,6 +273,7 @@ public:
       if(m_buy!=NULL && m_buy.ClosedRecently())
         {
          double realized=m_buy.TakeRealizedProfit();
+         m_total_realized_pnl+=realized;  // Track cumulative realized PnL
          if(realized>0 && m_sell!=NULL)
             m_sell.ReduceTargetBy(realized);
          TryReseedBasket(m_buy,DIR_BUY);
@@ -276,6 +281,7 @@ public:
       if(m_sell!=NULL && m_sell.ClosedRecently())
         {
          double realized=m_sell.TakeRealizedProfit();
+         m_total_realized_pnl+=realized;  // Track cumulative realized PnL
          if(realized>0 && m_buy!=NULL)
             m_buy.ReduceTargetBy(realized);
          TryReseedBasket(m_sell,DIR_SELL);
@@ -295,6 +301,50 @@ public:
          m_sell=NULL;
         }
      }
+
+   // P&L tracking methods (for multi-job system)
+   double            GetUnrealizedPnL() const
+     {
+      double pnl=0.0;
+      if(m_buy!=NULL)
+         pnl+=m_buy.BasketPnL();
+      if(m_sell!=NULL)
+         pnl+=m_sell.BasketPnL();
+      return pnl;
+     }
+
+   double            GetRealizedPnL() const
+     {
+      return m_total_realized_pnl;
+     }
+
+   double            GetTotalPnL() const
+     {
+      return GetUnrealizedPnL()+GetRealizedPnL();
+     }
+
+   bool              IsTSLActive() const
+     {
+      bool tsl_active=false;
+      if(m_buy!=NULL)
+         tsl_active=tsl_active || m_buy.IsTSLActive();
+      if(m_sell!=NULL)
+         tsl_active=tsl_active || m_sell.IsTSLActive();
+      return tsl_active;
+     }
+
+   bool              IsGridFull() const
+     {
+      bool grid_full=false;
+      if(m_buy!=NULL)
+         grid_full=grid_full || m_buy.IsGridFull();
+      if(m_sell!=NULL)
+         grid_full=grid_full || m_sell.IsGridFull();
+      return grid_full;
+     }
+
+   string            Symbol() const { return m_symbol; }
+   SParams           Params() const { return m_params; }
   };
 
 #endif // __RGD_V2_LIFECYCLE_CONTROLLER_MQH__
