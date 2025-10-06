@@ -55,23 +55,27 @@ private:
      }
 
    //+------------------------------------------------------------------+
-   //| Get newest (latest) job                                         |
+   //| Get newest (latest) job index                                   |
    //+------------------------------------------------------------------+
-   SJob*             GetNewestJob()
+   int               GetNewestJobIndex()
      {
       int size=ArraySize(m_jobs);
       if(size==0)
-         return NULL;
-      return &m_jobs[size-1];  // Last job in array is newest
+         return -1;
+      return size-1;  // Last job in array is newest
      }
 
    //+------------------------------------------------------------------+
    //| Spawn new job trigger logic                                     |
    //+------------------------------------------------------------------+
-   bool              ShouldSpawnNew(const SJob &job)
+   bool              ShouldSpawnNew(const int job_idx)
      {
+      // Validate index
+      if(job_idx<0 || job_idx>=ArraySize(m_jobs))
+         return false;
+
       // Guard: Don't spawn if not ACTIVE
-      if(job.status!=JOB_ACTIVE)
+      if(m_jobs[job_idx].status!=JOB_ACTIVE)
          return false;
 
       // Guard: Cooldown between spawns
@@ -102,33 +106,33 @@ private:
         }
 
       // Trigger 1: Grid full
-      if(m_spawn_on_grid_full && job.controller!=NULL)
+      if(m_spawn_on_grid_full && m_jobs[job_idx].controller!=NULL)
         {
-         if(job.controller.IsGridFull())
+         if(m_jobs[job_idx].controller.IsGridFull())
            {
             if(m_log!=NULL)
-               m_log.Event(Tag(),StringFormat("Job %d: Grid full detected, spawning new job",job.job_id));
+               m_log.Event(Tag(),StringFormat("Job %d: Grid full detected, spawning new job",m_jobs[job_idx].job_id));
             return true;
            }
         }
 
       // Trigger 2: TSL active
-      if(m_spawn_on_tsl && job.is_tsl_active)
+      if(m_spawn_on_tsl && m_jobs[job_idx].is_tsl_active)
         {
          if(m_log!=NULL)
-            m_log.Event(Tag(),StringFormat("Job %d: TSL active, spawning new job",job.job_id));
+            m_log.Event(Tag(),StringFormat("Job %d: TSL active, spawning new job",m_jobs[job_idx].job_id));
          return true;
         }
 
       // Trigger 3: Job DD threshold
-      if(m_spawn_on_job_dd && job.peak_equity>0.0)
+      if(m_spawn_on_job_dd && m_jobs[job_idx].peak_equity>0.0)
         {
-         double job_dd_pct=((job.peak_equity-job.unrealized_pnl)/job.peak_equity)*100.0;
+         double job_dd_pct=((m_jobs[job_idx].peak_equity-m_jobs[job_idx].unrealized_pnl)/m_jobs[job_idx].peak_equity)*100.0;
          if(job_dd_pct>=m_job_dd_threshold)
            {
             if(m_log!=NULL)
                m_log.Event(Tag(),StringFormat("Job %d: DD %.1f%% >= threshold %.1f%%, spawning new job",
-                                             job.job_id,job_dd_pct,m_job_dd_threshold));
+                                             m_jobs[job_idx].job_id,job_dd_pct,m_job_dd_threshold));
             return true;
            }
         }
@@ -139,19 +143,23 @@ private:
    //+------------------------------------------------------------------+
    //| Job stop loss trigger                                           |
    //+------------------------------------------------------------------+
-   bool              ShouldStopJob(const SJob &job)
+   bool              ShouldStopJob(const int job_idx)
      {
-      if(job.status!=JOB_ACTIVE)
+      // Validate index
+      if(job_idx<0 || job_idx>=ArraySize(m_jobs))
+         return false;
+
+      if(m_jobs[job_idx].status!=JOB_ACTIVE)
          return false;
       if(m_job_sl_usd<=0.0)
          return false;  // SL disabled
 
       // Check if unrealized PnL <= -job_sl_usd
-      if(job.unrealized_pnl<=-m_job_sl_usd)
+      if(m_jobs[job_idx].unrealized_pnl<=-m_job_sl_usd)
         {
          if(m_log!=NULL)
             m_log.Event(Tag(),StringFormat("Job %d: SL hit (PnL:%.2f <= -%.2f)",
-                                          job.job_id,job.unrealized_pnl,m_job_sl_usd));
+                                          m_jobs[job_idx].job_id,m_jobs[job_idx].unrealized_pnl,m_job_sl_usd));
          return true;
         }
 
@@ -161,9 +169,13 @@ private:
    //+------------------------------------------------------------------+
    //| Job abandon trigger (DD too high, can't save)                   |
    //+------------------------------------------------------------------+
-   bool              ShouldAbandonJob(const SJob &job)
+   bool              ShouldAbandonJob(const int job_idx)
      {
-      if(job.status!=JOB_ACTIVE)
+      // Validate index
+      if(job_idx<0 || job_idx>=ArraySize(m_jobs))
+         return false;
+
+      if(m_jobs[job_idx].status!=JOB_ACTIVE)
          return false;
 
       // If job DD >= global DD limit → other jobs can't save this
@@ -171,14 +183,14 @@ private:
       if(account_equity<=0.0)
          return false;
 
-      double job_dd_usd=MathAbs(job.unrealized_pnl);
+      double job_dd_usd=MathAbs(m_jobs[job_idx].unrealized_pnl);
       double job_dd_pct=(job_dd_usd/account_equity)*100.0;
 
       if(job_dd_pct>=m_global_dd_limit)
         {
          if(m_log!=NULL)
             m_log.Event(Tag(),StringFormat("Job %d: DD %.1f%% >= global limit %.1f%%, abandoning",
-                                          job.job_id,job_dd_pct,m_global_dd_limit));
+                                          m_jobs[job_idx].job_id,job_dd_pct,m_global_dd_limit));
          return true;
         }
 
@@ -370,13 +382,13 @@ public:
            }
 
          // Check stop conditions
-         if(ShouldStopJob(m_jobs[i]))
+         if(ShouldStopJob(i))
            {
             StopJob(m_jobs[i].job_id,"SL hit");
             continue;
            }
 
-         if(ShouldAbandonJob(m_jobs[i]))
+         if(ShouldAbandonJob(i))
            {
             AbandonJob(m_jobs[i].job_id);
             continue;
@@ -384,8 +396,8 @@ public:
         }
 
       // 2. Check spawn trigger (only newest job can spawn)
-      SJob *newest=GetNewestJob();
-      if(newest!=NULL && ShouldSpawnNew(*newest))
+      int newest_idx=GetNewestJobIndex();
+      if(newest_idx>=0 && ShouldSpawnNew(newest_idx))
         {
          SpawnJob();
         }

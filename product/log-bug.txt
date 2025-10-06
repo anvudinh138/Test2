@@ -1,0 +1,582 @@
+2025.10.06 15:10:52.136	Experts	expert RecoveryGridDirection_v3 (EURUSD,H1) loaded successfully
+2025.10.06 15:10:58.172	Trades	'272492029': market buy 0.01 EURUSD
+2025.10.06 15:10:58.221	Trades	'272492029': accepted market buy 0.01 EURUSD
+2025.10.06 15:10:58.305	Trades	'272492029': deal #1458536956 buy 0.01 EURUSD at 1.16588 done (based on order #1548143323)
+2025.10.06 15:10:58.306	Trades	'272492029': order #1548143323 buy 0.01 / 0.01 EURUSD at 1.16588 done in 133.744 ms (ok)
+2025.10.06 15:10:58.307	Trades	'272492029': buy limit 0.02 EURUSD at 1.16338
+2025.10.06 15:10:58.354	Trades	'272492029': accepted buy limit 0.02 EURUSD at 1.16338
+2025.10.06 15:10:58.440	Trades	'272492029': order #1548143329 buy limit 0.02 / 0.02 EURUSD at 1.16338 done in 133.847 ms (ok)
+2025.10.06 15:10:58.441	Trades	'272492029': buy limit 0.04 EURUSD at 1.16088
+2025.10.06 15:10:58.487	Trades	'272492029': accepted buy limit 0.04 EURUSD at 1.16088
+2025.10.06 15:10:58.573	Trades	'272492029': order #1548143334 buy limit 0.04 / 0.04 EURUSD at 1.16088 done in 133.012 ms (ok)
+2025.10.06 15:10:58.574	Trades	'272492029': buy limit 0.08 EURUSD at 1.15838
+2025.10.06 15:10:58.621	Trades	'272492029': accepted buy limit 0.08 EURUSD at 1.15838
+2025.10.06 15:10:58.708	Trades	'272492029': order #1548143340 buy limit 0.08 / 0.08 EURUSD at 1.15838 done in 134.894 ms (ok)
+2025.10.06 15:10:58.709	Trades	'272492029': buy limit 0.16 EURUSD at 1.15588
+2025.10.06 15:10:58.756	Trades	'272492029': accepted buy limit 0.16 EURUSD at 1.15588
+2025.10.06 15:10:58.841	Trades	'272492029': order #1548143364 buy limit 0.16 / 0.16 EURUSD at 1.15588 done in 132.099 ms (ok)
+2025.10.06 15:10:58.841	Trades	'272492029': buy limit 0.32 EURUSD at 1.15338
+2025.10.06 15:10:58.890	Trades	'272492029': accepted buy limit 0.32 EURUSD at 1.15338
+2025.10.06 15:10:58.980	Trades	'272492029': order #1548143375 buy limit 0.32 / 0.32 EURUSD at 1.15338 done in 139.397 ms (ok)
+2025.10.06 15:10:58.980	Trades	'272492029': market sell 0.01 EURUSD
+2025.10.06 15:10:59.028	Trades	'272492029': accepted market sell 0.01 EURUSD
+2025.10.06 15:10:59.113	Trades	'272492029': deal #1458537012 sell 0.01 EURUSD at 1.16588 done (based on order #1548143390)
+2025.10.06 15:10:59.114	Trades	'272492029': order #1548143390 sell 0.01 / 0.01 EURUSD at 1.16588 done in 133.413 ms (ok)
+2025.10.06 15:10:59.114	Trades	'272492029': sell limit 0.02 EURUSD at 1.16837
+2025.10.06 15:10:59.161	Trades	'272492029': accepted sell limit 0.02 EURUSD at 1.16837
+2025.10.06 15:10:59.247	Trades	'272492029': order #1548143398 sell limit 0.02 / 0.02 EURUSD at 1.16837 done in 132.860 ms (ok)
+2025.10.06 15:10:59.247	Trades	'272492029': sell limit 0.04 EURUSD at 1.17087
+2025.10.06 15:10:59.295	Trades	'272492029': accepted sell limit 0.04 EURUSD at 1.17087
+2025.10.06 15:10:59.384	Trades	'272492029': order #1548143407 sell limit 0.04 / 0.04 EURUSD at 1.17087 done in 137.625 ms (ok)
+2025.10.06 15:10:59.385	Trades	'272492029': sell limit 0.08 EURUSD at 1.17337
+2025.10.06 15:10:59.432	Trades	'272492029': accepted sell limit 0.08 EURUSD at 1.17337
+2025.10.06 15:10:59.515	Trades	'272492029': order #1548143415 sell limit 0.08 / 0.08 EURUSD at 1.17337 done in 130.872 ms (ok)
+2025.10.06 15:10:59.516	Trades	'272492029': sell limit 0.16 EURUSD at 1.17587
+2025.10.06 15:10:59.562	Trades	'272492029': accepted sell limit 0.16 EURUSD at 1.17587
+2025.10.06 15:10:59.650	Trades	'272492029': order #1548143421 sell limit 0.16 / 0.16 EURUSD at 1.17587 done in 134.771 ms (ok)
+2025.10.06 15:10:59.650	Trades	'272492029': sell limit 0.32 EURUSD at 1.17837
+2025.10.06 15:10:59.700	Trades	'272492029': accepted sell limit 0.32 EURUSD at 1.17837
+2025.10.06 15:10:59.782	Trades	'272492029': order #1548143430 sell limit 0.32 / 0.32 EURUSD at 1.17837 done in 131.918 ms (ok)
+2025.10.06 15:25:03.845	Experts	expert RecoveryGridDirection_v3 (EURUSD,H1) removed
+2025.10.06 15:25:03.854	Experts	expert RecoveryGridDirection_v3 (EURUSD,H1) loaded successfully
+2025.10.06 15:25:04.080	Trades	'272492029': market buy 0.01 EURUSD
+2025.10.06 15:25:04.128	Trades	'272492029': accepted market buy 0.01 EURUSD
+2025.10.06 15:25:04.211	Trades	'272492029': deal #1458589203 buy 0.01 EURUSD at 1.16607 done (based on order #1548204084)
+2025.10.06 15:25:04.212	Trades	'272492029': order #1548204084 buy 0.01 / 0.01 EURUSD at 1.16607 done in 131.584 ms (ok)
+2025.10.06 15:25:04.212	Trades	'272492029': buy limit 0.02 EURUSD at 1.16361
+2025.10.06 15:25:04.259	Trades	'272492029': accepted buy limit 0.02 EURUSD at 1.16361
+2025.10.06 15:25:04.347	Trades	'272492029': order #1548204093 buy limit 0.02 / 0.02 EURUSD at 1.16361 done in 134.817 ms (ok)
+2025.10.06 15:25:04.347	Trades	'272492029': buy limit 0.04 EURUSD at 1.16111
+2025.10.06 15:25:04.394	Trades	'272492029': accepted buy limit 0.04 EURUSD at 1.16111
+2025.10.06 15:25:04.482	Trades	'272492029': order #1548204101 buy limit 0.04 / 0.04 EURUSD at 1.16111 done in 134.559 ms (ok)
+2025.10.06 15:25:04.482	Trades	'272492029': buy limit 0.08 EURUSD at 1.15861
+2025.10.06 15:25:04.529	Trades	'272492029': accepted buy limit 0.08 EURUSD at 1.15861
+2025.10.06 15:25:04.615	Trades	'272492029': order #1548204107 buy limit 0.08 / 0.08 EURUSD at 1.15861 done in 133.352 ms (ok)
+2025.10.06 15:25:04.615	Trades	'272492029': buy limit 0.16 EURUSD at 1.15611
+2025.10.06 15:25:04.662	Trades	'272492029': accepted buy limit 0.16 EURUSD at 1.15611
+2025.10.06 15:25:04.750	Trades	'272492029': order #1548204112 buy limit 0.16 / 0.16 EURUSD at 1.15611 done in 134.255 ms (ok)
+2025.10.06 15:25:04.750	Trades	'272492029': buy limit 0.32 EURUSD at 1.15361
+2025.10.06 15:25:04.797	Trades	'272492029': accepted buy limit 0.32 EURUSD at 1.15361
+2025.10.06 15:25:04.883	Trades	'272492029': order #1548204119 buy limit 0.32 / 0.32 EURUSD at 1.15361 done in 132.925 ms (ok)
+2025.10.06 15:25:04.883	Trades	'272492029': market sell 0.01 EURUSD
+2025.10.06 15:25:04.930	Trades	'272492029': accepted market sell 0.01 EURUSD
+2025.10.06 15:25:05.016	Trades	'272492029': deal #1458589240 sell 0.01 EURUSD at 1.16601 done (based on order #1548204129)
+2025.10.06 15:25:05.016	Trades	'272492029': order #1548204129 sell 0.01 / 0.01 EURUSD at 1.16601 done in 133.485 ms (ok)
+2025.10.06 15:25:05.017	Trades	'272492029': sell limit 0.02 EURUSD at 1.16851
+2025.10.06 15:25:05.064	Trades	'272492029': accepted sell limit 0.02 EURUSD at 1.16851
+2025.10.06 15:25:05.148	Trades	'272492029': order #1548204137 sell limit 0.02 / 0.02 EURUSD at 1.16851 done in 131.460 ms (ok)
+2025.10.06 15:25:05.148	Trades	'272492029': sell limit 0.04 EURUSD at 1.17101
+2025.10.06 15:25:05.197	Trades	'272492029': accepted sell limit 0.04 EURUSD at 1.17101
+2025.10.06 15:25:05.280	Trades	'272492029': order #1548204142 sell limit 0.04 / 0.04 EURUSD at 1.17101 done in 132.076 ms (ok)
+2025.10.06 15:25:05.280	Trades	'272492029': sell limit 0.08 EURUSD at 1.17351
+2025.10.06 15:25:05.327	Trades	'272492029': accepted sell limit 0.08 EURUSD at 1.17351
+2025.10.06 15:25:05.412	Trades	'272492029': order #1548204145 sell limit 0.08 / 0.08 EURUSD at 1.17351 done in 131.637 ms (ok)
+2025.10.06 15:25:05.412	Trades	'272492029': sell limit 0.16 EURUSD at 1.17601
+2025.10.06 15:25:05.459	Trades	'272492029': accepted sell limit 0.16 EURUSD at 1.17601
+2025.10.06 15:25:05.547	Trades	'272492029': order #1548204155 sell limit 0.16 / 0.16 EURUSD at 1.17601 done in 135.198 ms (ok)
+2025.10.06 15:25:05.547	Trades	'272492029': sell limit 0.32 EURUSD at 1.17851
+2025.10.06 15:25:05.594	Trades	'272492029': accepted sell limit 0.32 EURUSD at 1.17851
+2025.10.06 15:25:05.679	Trades	'272492029': order #1548204164 sell limit 0.32 / 0.32 EURUSD at 1.17851 done in 132.261 ms (ok)
+2025.10.06 16:00:27.803	Experts	expert RecoveryGridDirection_v3 (EURUSD,H1) removed
+2025.10.06 16:00:27.812	Experts	expert RecoveryGridDirection_v3 (EURUSD,H1) loaded successfully
+2025.10.06 16:00:28.044	Trades	'272492029': market buy 0.01 EURUSD
+2025.10.06 16:00:28.081	Trades	'272492029': accepted market buy 0.01 EURUSD
+2025.10.06 16:00:28.165	Trades	'272492029': deal #1458755149 buy 0.01 EURUSD at 1.16672 done (based on order #1548390189)
+2025.10.06 16:00:28.166	Trades	'272492029': order #1548390189 buy 0.01 / 0.01 EURUSD at 1.16672 done in 122.623 ms (ok)
+2025.10.06 16:00:28.167	Trades	'272492029': buy limit 0.02 EURUSD at 1.16421
+2025.10.06 16:00:28.203	Trades	'272492029': accepted buy limit 0.02 EURUSD at 1.16421
+2025.10.06 16:00:28.289	Trades	'272492029': order #1548390197 buy limit 0.02 / 0.02 EURUSD at 1.16421 done in 122.401 ms (ok)
+2025.10.06 16:00:28.289	Trades	'272492029': buy limit 0.04 EURUSD at 1.16171
+2025.10.06 16:00:28.326	Trades	'272492029': accepted buy limit 0.04 EURUSD at 1.16171
+2025.10.06 16:00:28.414	Trades	'272492029': order #1548390206 buy limit 0.04 / 0.04 EURUSD at 1.16171 done in 124.442 ms (ok)
+2025.10.06 16:00:28.414	Trades	'272492029': buy limit 0.08 EURUSD at 1.15921
+2025.10.06 16:00:28.451	Trades	'272492029': accepted buy limit 0.08 EURUSD at 1.15921
+2025.10.06 16:00:28.537	Trades	'272492029': order #1548390220 buy limit 0.08 / 0.08 EURUSD at 1.15921 done in 122.766 ms (ok)
+2025.10.06 16:00:28.537	Trades	'272492029': buy limit 0.16 EURUSD at 1.15671
+2025.10.06 16:00:28.573	Trades	'272492029': accepted buy limit 0.16 EURUSD at 1.15671
+2025.10.06 16:00:28.657	Trades	'272492029': order #1548390227 buy limit 0.16 / 0.16 EURUSD at 1.15671 done in 119.958 ms (ok)
+2025.10.06 16:00:28.657	Trades	'272492029': buy limit 0.32 EURUSD at 1.15421
+2025.10.06 16:00:28.693	Trades	'272492029': accepted buy limit 0.32 EURUSD at 1.15421
+2025.10.06 16:00:28.779	Trades	'272492029': order #1548390235 buy limit 0.32 / 0.32 EURUSD at 1.15421 done in 122.695 ms (ok)
+2025.10.06 16:00:28.780	Trades	'272492029': market sell 0.01 EURUSD
+2025.10.06 16:00:28.816	Trades	'272492029': accepted market sell 0.01 EURUSD
+2025.10.06 16:00:28.902	Trades	'272492029': deal #1458755186 sell 0.01 EURUSD at 1.16666 done (based on order #1548390242)
+2025.10.06 16:00:28.903	Trades	'272492029': order #1548390242 sell 0.01 / 0.01 EURUSD at 1.16666 done in 122.680 ms (ok)
+2025.10.06 16:00:28.903	Trades	'272492029': sell limit 0.02 EURUSD at 1.16916
+2025.10.06 16:00:28.939	Trades	'272492029': accepted sell limit 0.02 EURUSD at 1.16916
+2025.10.06 16:00:29.026	Trades	'272492029': order #1548390245 sell limit 0.02 / 0.02 EURUSD at 1.16916 done in 123.361 ms (ok)
+2025.10.06 16:00:29.026	Trades	'272492029': sell limit 0.04 EURUSD at 1.17166
+2025.10.06 16:00:29.063	Trades	'272492029': accepted sell limit 0.04 EURUSD at 1.17166
+2025.10.06 16:00:29.149	Trades	'272492029': order #1548390253 sell limit 0.04 / 0.04 EURUSD at 1.17166 done in 122.498 ms (ok)
+2025.10.06 16:00:29.149	Trades	'272492029': sell limit 0.08 EURUSD at 1.17416
+2025.10.06 16:00:29.186	Trades	'272492029': accepted sell limit 0.08 EURUSD at 1.17416
+2025.10.06 16:00:29.273	Trades	'272492029': order #1548390259 sell limit 0.08 / 0.08 EURUSD at 1.17416 done in 123.931 ms (ok)
+2025.10.06 16:00:29.273	Trades	'272492029': sell limit 0.16 EURUSD at 1.17666
+2025.10.06 16:00:29.309	Trades	'272492029': accepted sell limit 0.16 EURUSD at 1.17666
+2025.10.06 16:00:29.393	Trades	'272492029': order #1548390272 sell limit 0.16 / 0.16 EURUSD at 1.17666 done in 120.392 ms (ok)
+2025.10.06 16:00:29.393	Trades	'272492029': sell limit 0.32 EURUSD at 1.17916
+2025.10.06 16:00:29.431	Trades	'272492029': accepted sell limit 0.32 EURUSD at 1.17916
+2025.10.06 16:00:29.519	Trades	'272492029': order #1548390278 sell limit 0.32 / 0.32 EURUSD at 1.17916 done in 126.108 ms (ok)
+2025.10.06 16:00:30.652	Experts	expert RecoveryGridDirection_v3 (EURUSD,H1) removed
+2025.10.06 16:00:30.661	Experts	expert RecoveryGridDirection_v3 (EURUSD,H1) loaded successfully
+2025.10.06 16:00:30.889	Trades	'272492029': market buy 0.01 EURUSD
+2025.10.06 16:00:30.926	Trades	'272492029': accepted market buy 0.01 EURUSD
+2025.10.06 16:00:31.017	Trades	'272492029': deal #1458755320 buy 0.01 EURUSD at 1.16672 done (based on order #1548390433)
+2025.10.06 16:00:31.017	Trades	'272492029': order #1548390433 buy 0.01 / 0.01 EURUSD at 1.16672 done in 127.966 ms (ok)
+2025.10.06 16:00:31.018	Trades	'272492029': buy limit 0.02 EURUSD at 1.16422
+2025.10.06 16:00:31.055	Trades	'272492029': accepted buy limit 0.02 EURUSD at 1.16422
+2025.10.06 16:00:31.140	Trades	'272492029': order #1548390437 buy limit 0.02 / 0.02 EURUSD at 1.16422 done in 121.373 ms (ok)
+2025.10.06 16:00:31.140	Trades	'272492029': buy limit 0.04 EURUSD at 1.16172
+2025.10.06 16:00:31.176	Trades	'272492029': accepted buy limit 0.04 EURUSD at 1.16172
+2025.10.06 16:00:31.261	Trades	'272492029': order #1548390445 buy limit 0.04 / 0.04 EURUSD at 1.16172 done in 121.605 ms (ok)
+2025.10.06 16:00:31.261	Trades	'272492029': buy limit 0.08 EURUSD at 1.15922
+2025.10.06 16:00:31.298	Trades	'272492029': accepted buy limit 0.08 EURUSD at 1.15922
+2025.10.06 16:00:31.382	Trades	'272492029': order #1548390451 buy limit 0.08 / 0.08 EURUSD at 1.15922 done in 120.631 ms (ok)
+2025.10.06 16:00:31.382	Trades	'272492029': buy limit 0.16 EURUSD at 1.15672
+2025.10.06 16:00:31.419	Trades	'272492029': accepted buy limit 0.16 EURUSD at 1.15672
+2025.10.06 16:00:31.506	Trades	'272492029': order #1548390470 buy limit 0.16 / 0.16 EURUSD at 1.15672 done in 124.344 ms (ok)
+2025.10.06 16:00:31.507	Trades	'272492029': buy limit 0.32 EURUSD at 1.15422
+2025.10.06 16:00:31.543	Trades	'272492029': accepted buy limit 0.32 EURUSD at 1.15422
+2025.10.06 16:00:31.628	Trades	'272492029': order #1548390481 buy limit 0.32 / 0.32 EURUSD at 1.15422 done in 121.254 ms (ok)
+2025.10.06 16:00:31.628	Trades	'272492029': market sell 0.01 EURUSD
+2025.10.06 16:00:31.664	Trades	'272492029': accepted market sell 0.01 EURUSD
+2025.10.06 16:00:31.753	Trades	'272492029': deal #1458755369 sell 0.01 EURUSD at 1.16661 done (based on order #1548390484)
+2025.10.06 16:00:31.755	Trades	'272492029': order #1548390484 sell 0.01 / 0.01 EURUSD at 1.16661 done in 126.793 ms (ok)
+2025.10.06 16:00:31.755	Trades	'272492029': sell limit 0.02 EURUSD at 1.16914
+2025.10.06 16:00:31.791	Trades	'272492029': accepted sell limit 0.02 EURUSD at 1.16914
+2025.10.06 16:00:31.875	Trades	'272492029': order #1548390495 sell limit 0.02 / 0.02 EURUSD at 1.16914 done in 120.360 ms (ok)
+2025.10.06 16:00:31.875	Trades	'272492029': sell limit 0.04 EURUSD at 1.17164
+2025.10.06 16:00:31.912	Trades	'272492029': accepted sell limit 0.04 EURUSD at 1.17164
+2025.10.06 16:00:31.996	Trades	'272492029': order #1548390502 sell limit 0.04 / 0.04 EURUSD at 1.17164 done in 120.399 ms (ok)
+2025.10.06 16:00:31.996	Trades	'272492029': sell limit 0.08 EURUSD at 1.17414
+2025.10.06 16:00:32.032	Trades	'272492029': accepted sell limit 0.08 EURUSD at 1.17414
+2025.10.06 16:00:32.120	Trades	'272492029': order #1548390504 sell limit 0.08 / 0.08 EURUSD at 1.17414 done in 124.426 ms (ok)
+2025.10.06 16:00:32.120	Trades	'272492029': sell limit 0.16 EURUSD at 1.17664
+2025.10.06 16:00:32.157	Trades	'272492029': accepted sell limit 0.16 EURUSD at 1.17664
+2025.10.06 16:00:32.242	Trades	'272492029': order #1548390511 sell limit 0.16 / 0.16 EURUSD at 1.17664 done in 121.379 ms (ok)
+2025.10.06 16:00:32.242	Trades	'272492029': sell limit 0.32 EURUSD at 1.17914
+2025.10.06 16:00:32.278	Trades	'272492029': accepted sell limit 0.32 EURUSD at 1.17914
+2025.10.06 16:00:32.365	Trades	'272492029': order #1548390522 sell limit 0.32 / 0.32 EURUSD at 1.17914 done in 123.033 ms (ok)
+2025.10.06 16:54:13.440	Experts	expert RecoveryGridDirection_v3 (EURUSD,H1) removed
+2025.10.06 16:54:13.452	Experts	expert RecoveryGridDirection_v3 (EURUSD,H1) loaded successfully
+2025.10.06 16:54:13.681	Trades	'272492029': market buy 0.01 EURUSD
+2025.10.06 16:54:13.729	Trades	'272492029': accepted market buy 0.01 EURUSD
+2025.10.06 16:54:13.811	Trades	'272492029': deal #1458967821 buy 0.01 EURUSD at 1.16635 done (based on order #1548620771)
+2025.10.06 16:54:13.811	Trades	'272492029': order #1548620771 buy 0.01 / 0.01 EURUSD at 1.16635 done in 131.003 ms (ok)
+2025.10.06 16:54:13.812	Trades	'272492029': buy limit 0.02 EURUSD at 1.16385
+2025.10.06 16:54:13.860	Trades	'272492029': accepted buy limit 0.02 EURUSD at 1.16385
+2025.10.06 16:54:13.943	Trades	'272492029': order #1548620777 buy limit 0.02 / 0.02 EURUSD at 1.16385 done in 130.618 ms (ok)
+2025.10.06 16:54:13.943	Trades	'272492029': buy limit 0.04 EURUSD at 1.16135
+2025.10.06 16:54:13.990	Trades	'272492029': accepted buy limit 0.04 EURUSD at 1.16135
+2025.10.06 16:54:14.071	Trades	'272492029': order #1548620781 buy limit 0.04 / 0.04 EURUSD at 1.16135 done in 128.194 ms (ok)
+2025.10.06 16:54:14.071	Trades	'272492029': buy limit 0.08 EURUSD at 1.15885
+2025.10.06 16:54:14.118	Trades	'272492029': accepted buy limit 0.08 EURUSD at 1.15885
+2025.10.06 16:54:14.197	Trades	'272492029': order #1548620784 buy limit 0.08 / 0.08 EURUSD at 1.15885 done in 126.069 ms (ok)
+2025.10.06 16:54:14.197	Trades	'272492029': buy limit 0.16 EURUSD at 1.15635
+2025.10.06 16:54:14.245	Trades	'272492029': accepted buy limit 0.16 EURUSD at 1.15635
+2025.10.06 16:54:14.326	Trades	'272492029': order #1548620786 buy limit 0.16 / 0.16 EURUSD at 1.15635 done in 129.443 ms (ok)
+2025.10.06 16:54:14.327	Trades	'272492029': buy limit 0.32 EURUSD at 1.15385
+2025.10.06 16:54:14.374	Trades	'272492029': accepted buy limit 0.32 EURUSD at 1.15385
+2025.10.06 16:54:14.456	Trades	'272492029': order #1548620788 buy limit 0.32 / 0.32 EURUSD at 1.15385 done in 129.149 ms (ok)
+2025.10.06 16:54:14.456	Trades	'272492029': market sell 0.01 EURUSD
+2025.10.06 16:54:14.504	Trades	'272492029': accepted market sell 0.01 EURUSD
+2025.10.06 16:54:14.584	Trades	'272492029': deal #1458967834 sell 0.01 EURUSD at 1.16629 done (based on order #1548620789)
+2025.10.06 16:54:14.584	Trades	'272492029': order #1548620789 sell 0.01 / 0.01 EURUSD at 1.16629 done in 128.583 ms (ok)
+2025.10.06 16:54:14.585	Trades	'272492029': sell limit 0.02 EURUSD at 1.16879
+2025.10.06 16:54:14.632	Trades	'272492029': accepted sell limit 0.02 EURUSD at 1.16879
+2025.10.06 16:54:14.712	Trades	'272492029': order #1548620794 sell limit 0.02 / 0.02 EURUSD at 1.16879 done in 127.603 ms (ok)
+2025.10.06 16:54:14.712	Trades	'272492029': sell limit 0.04 EURUSD at 1.17129
+2025.10.06 16:54:14.760	Trades	'272492029': accepted sell limit 0.04 EURUSD at 1.17129
+2025.10.06 16:54:14.839	Trades	'272492029': order #1548620798 sell limit 0.04 / 0.04 EURUSD at 1.17129 done in 126.813 ms (ok)
+2025.10.06 16:54:14.839	Trades	'272492029': sell limit 0.08 EURUSD at 1.17379
+2025.10.06 16:54:14.886	Trades	'272492029': accepted sell limit 0.08 EURUSD at 1.17379
+2025.10.06 16:54:14.966	Trades	'272492029': order #1548620799 sell limit 0.08 / 0.08 EURUSD at 1.17379 done in 126.991 ms (ok)
+2025.10.06 16:54:14.966	Trades	'272492029': sell limit 0.16 EURUSD at 1.17629
+2025.10.06 16:54:15.013	Trades	'272492029': accepted sell limit 0.16 EURUSD at 1.17629
+2025.10.06 16:54:15.096	Trades	'272492029': order #1548620806 sell limit 0.16 / 0.16 EURUSD at 1.17629 done in 129.622 ms (ok)
+2025.10.06 16:54:15.096	Trades	'272492029': sell limit 0.32 EURUSD at 1.17879
+2025.10.06 16:54:15.144	Trades	'272492029': accepted sell limit 0.32 EURUSD at 1.17879
+2025.10.06 16:54:15.229	Trades	'272492029': order #1548620817 sell limit 0.32 / 0.32 EURUSD at 1.17879 done in 133.332 ms (ok)
+2025.10.06 17:02:57.213	Experts	expert RecoveryGridDirection_v3 (EURUSD,H1) removed
+2025.10.06 17:02:57.224	Experts	expert RecoveryGridDirection_v3 (EURUSD,H1) loaded successfully
+2025.10.06 17:02:57.347	Trades	'272492029': market buy 0.01 EURUSD
+2025.10.06 17:02:57.396	Trades	'272492029': accepted market buy 0.01 EURUSD
+2025.10.06 17:02:57.476	Trades	'272492029': deal #1459000431 buy 0.01 EURUSD at 1.16638 done (based on order #1548655466)
+2025.10.06 17:02:57.477	Trades	'272492029': order #1548655466 buy 0.01 / 0.01 EURUSD at 1.16638 done in 129.494 ms (ok)
+2025.10.06 17:02:57.477	Trades	'272492029': buy limit 0.02 EURUSD at 1.16388
+2025.10.06 17:02:57.525	Trades	'272492029': accepted buy limit 0.02 EURUSD at 1.16388
+2025.10.06 17:02:57.603	Trades	'272492029': order #1548655494 buy limit 0.02 / 0.02 EURUSD at 1.16388 done in 125.678 ms (ok)
+2025.10.06 17:02:57.603	Trades	'272492029': buy limit 0.04 EURUSD at 1.16138
+2025.10.06 17:02:57.650	Trades	'272492029': accepted buy limit 0.04 EURUSD at 1.16138
+2025.10.06 17:02:57.734	Trades	'272492029': order #1548655516 buy limit 0.04 / 0.04 EURUSD at 1.16138 done in 130.842 ms (ok)
+2025.10.06 17:02:57.734	Trades	'272492029': buy limit 0.08 EURUSD at 1.15888
+2025.10.06 17:02:57.781	Trades	'272492029': accepted buy limit 0.08 EURUSD at 1.15888
+2025.10.06 17:02:57.859	Trades	'272492029': order #1548655550 buy limit 0.08 / 0.08 EURUSD at 1.15888 done in 125.140 ms (ok)
+2025.10.06 17:02:57.859	Trades	'272492029': buy limit 0.16 EURUSD at 1.15638
+2025.10.06 17:02:57.906	Trades	'272492029': accepted buy limit 0.16 EURUSD at 1.15638
+2025.10.06 17:02:57.987	Trades	'272492029': order #1548655567 buy limit 0.16 / 0.16 EURUSD at 1.15638 done in 127.868 ms (ok)
+2025.10.06 17:02:57.987	Trades	'272492029': buy limit 0.32 EURUSD at 1.15388
+2025.10.06 17:02:58.035	Trades	'272492029': accepted buy limit 0.32 EURUSD at 1.15388
+2025.10.06 17:02:58.114	Trades	'272492029': order #1548655602 buy limit 0.32 / 0.32 EURUSD at 1.15388 done in 127.185 ms (ok)
+2025.10.06 17:02:58.114	Trades	'272492029': buy limit 0.64 EURUSD at 1.15138
+2025.10.06 17:02:58.162	Trades	'272492029': accepted buy limit 0.64 EURUSD at 1.15138
+2025.10.06 17:02:58.241	Trades	'272492029': order #1548655618 buy limit 0.64 / 0.64 EURUSD at 1.15138 done in 126.900 ms (ok)
+2025.10.06 17:02:58.241	Trades	'272492029': buy limit 1.28 EURUSD at 1.14888
+2025.10.06 17:02:58.289	Trades	'272492029': accepted buy limit 1.28 EURUSD at 1.14888
+2025.10.06 17:02:58.368	Trades	'272492029': order #1548655641 buy limit 1.28 / 1.28 EURUSD at 1.14888 done in 126.504 ms (ok)
+2025.10.06 17:02:58.368	Trades	'272492029': buy limit 2.56 EURUSD at 1.14638
+2025.10.06 17:02:58.415	Trades	'272492029': accepted buy limit 2.56 EURUSD at 1.14638
+2025.10.06 17:02:58.497	Trades	'272492029': order #1548655655 buy limit 2.56 / 2.56 EURUSD at 1.14638 done in 129.326 ms (ok)
+2025.10.06 17:02:58.497	Trades	'272492029': buy limit 5.12 EURUSD at 1.14388
+2025.10.06 17:02:58.545	Trades	'272492029': accepted buy limit 5.12 EURUSD at 1.14388
+2025.10.06 17:02:58.626	Trades	'272492029': order #1548655659 buy limit 5.12 / 5.12 EURUSD at 1.14388 done in 128.489 ms (ok)
+2025.10.06 17:02:58.626	Trades	'272492029': market sell 0.01 EURUSD
+2025.10.06 17:02:58.681	Trades	'272492029': accepted market sell 0.01 EURUSD
+2025.10.06 17:02:58.756	Trades	'272492029': deal #1459000600 sell 0.01 EURUSD at 1.16632 done (based on order #1548655664)
+2025.10.06 17:02:58.757	Trades	'272492029': order #1548655664 sell 0.01 / 0.01 EURUSD at 1.16632 done in 130.308 ms (ok)
+2025.10.06 17:02:58.757	Trades	'272492029': sell limit 0.02 EURUSD at 1.16882
+2025.10.06 17:02:58.805	Trades	'272492029': accepted sell limit 0.02 EURUSD at 1.16882
+2025.10.06 17:02:58.887	Trades	'272492029': order #1548655674 sell limit 0.02 / 0.02 EURUSD at 1.16882 done in 130.115 ms (ok)
+2025.10.06 17:02:58.887	Trades	'272492029': sell limit 0.04 EURUSD at 1.17132
+2025.10.06 17:02:58.937	Trades	'272492029': accepted sell limit 0.04 EURUSD at 1.17132
+2025.10.06 17:02:59.016	Trades	'272492029': order #1548655684 sell limit 0.04 / 0.04 EURUSD at 1.17132 done in 129.056 ms (ok)
+2025.10.06 17:02:59.016	Trades	'272492029': sell limit 0.08 EURUSD at 1.17382
+2025.10.06 17:02:59.070	Trades	'272492029': accepted sell limit 0.08 EURUSD at 1.17382
+2025.10.06 17:02:59.146	Trades	'272492029': order #1548655690 sell limit 0.08 / 0.08 EURUSD at 1.17382 done in 129.822 ms (ok)
+2025.10.06 17:02:59.146	Trades	'272492029': sell limit 0.16 EURUSD at 1.17632
+2025.10.06 17:02:59.194	Trades	'272492029': accepted sell limit 0.16 EURUSD at 1.17632
+2025.10.06 17:02:59.275	Trades	'272492029': order #1548655732 sell limit 0.16 / 0.16 EURUSD at 1.17632 done in 129.509 ms (ok)
+2025.10.06 17:02:59.276	Trades	'272492029': sell limit 0.32 EURUSD at 1.17882
+2025.10.06 17:02:59.323	Trades	'272492029': accepted sell limit 0.32 EURUSD at 1.17882
+2025.10.06 17:02:59.402	Trades	'272492029': order #1548655744 sell limit 0.32 / 0.32 EURUSD at 1.17882 done in 126.057 ms (ok)
+2025.10.06 17:02:59.402	Trades	'272492029': sell limit 0.64 EURUSD at 1.18132
+2025.10.06 17:02:59.450	Trades	'272492029': accepted sell limit 0.64 EURUSD at 1.18132
+2025.10.06 17:02:59.528	Trades	'272492029': order #1548655766 sell limit 0.64 / 0.64 EURUSD at 1.18132 done in 126.481 ms (ok)
+2025.10.06 17:02:59.528	Trades	'272492029': sell limit 1.28 EURUSD at 1.18382
+2025.10.06 17:02:59.576	Trades	'272492029': accepted sell limit 1.28 EURUSD at 1.18382
+2025.10.06 17:02:59.659	Trades	'272492029': order #1548655783 sell limit 1.28 / 1.28 EURUSD at 1.18382 done in 130.779 ms (ok)
+2025.10.06 17:02:59.659	Trades	'272492029': sell limit 2.56 EURUSD at 1.18632
+2025.10.06 17:02:59.710	Trades	'272492029': accepted sell limit 2.56 EURUSD at 1.18632
+2025.10.06 17:02:59.788	Trades	'272492029': order #1548655799 sell limit 2.56 / 2.56 EURUSD at 1.18632 done in 128.738 ms (ok)
+2025.10.06 17:02:59.788	Trades	'272492029': sell limit 5.12 EURUSD at 1.18882
+2025.10.06 17:02:59.836	Trades	'272492029': accepted sell limit 5.12 EURUSD at 1.18882
+2025.10.06 17:02:59.916	Trades	'272492029': order #1548655810 sell limit 5.12 / 5.12 EURUSD at 1.18882 done in 128.426 ms (ok)
+2025.10.06 17:11:08.236	Experts	expert RecoveryGridDirection_v3 (EURUSD,H1) removed
+2025.10.06 17:11:08.245	Experts	expert RecoveryGridDirection_v3 (EURUSD,H1) loaded successfully
+2025.10.06 17:11:08.373	Trades	'272492029': market buy 0.01 EURUSD
+2025.10.06 17:11:08.421	Trades	'272492029': accepted market buy 0.01 EURUSD
+2025.10.06 17:11:08.494	Trades	'272492029': deal #1459045453 buy 0.01 EURUSD at 1.16559 done (based on order #1548702620)
+2025.10.06 17:11:08.495	Trades	'272492029': order #1548702620 buy 0.01 / 0.01 EURUSD at 1.16559 done in 122.132 ms (ok)
+2025.10.06 17:11:08.495	Trades	'272492029': buy limit 0.02 EURUSD at 1.16309
+2025.10.06 17:11:08.543	Trades	'272492029': accepted buy limit 0.02 EURUSD at 1.16309
+2025.10.06 17:11:08.618	Trades	'272492029': order #1548702628 buy limit 0.02 / 0.02 EURUSD at 1.16309 done in 122.834 ms (ok)
+2025.10.06 17:11:08.618	Trades	'272492029': buy limit 0.04 EURUSD at 1.16059
+2025.10.06 17:11:08.666	Trades	'272492029': accepted buy limit 0.04 EURUSD at 1.16059
+2025.10.06 17:11:08.740	Trades	'272492029': order #1548702632 buy limit 0.04 / 0.04 EURUSD at 1.16059 done in 121.590 ms (ok)
+2025.10.06 17:11:08.740	Trades	'272492029': buy limit 0.08 EURUSD at 1.15809
+2025.10.06 17:11:08.787	Trades	'272492029': accepted buy limit 0.08 EURUSD at 1.15809
+2025.10.06 17:11:08.860	Trades	'272492029': order #1548702637 buy limit 0.08 / 0.08 EURUSD at 1.15809 done in 120.232 ms (ok)
+2025.10.06 17:11:08.860	Trades	'272492029': buy limit 0.16 EURUSD at 1.15559
+2025.10.06 17:11:08.908	Trades	'272492029': accepted buy limit 0.16 EURUSD at 1.15559
+2025.10.06 17:11:08.983	Trades	'272492029': order #1548702641 buy limit 0.16 / 0.16 EURUSD at 1.15559 done in 123.174 ms (ok)
+2025.10.06 17:11:08.983	Trades	'272492029': buy limit 0.32 EURUSD at 1.15309
+2025.10.06 17:11:09.032	Trades	'272492029': accepted buy limit 0.32 EURUSD at 1.15309
+2025.10.06 17:11:09.106	Trades	'272492029': order #1548702670 buy limit 0.32 / 0.32 EURUSD at 1.15309 done in 122.226 ms (ok)
+2025.10.06 17:11:09.106	Trades	'272492029': buy limit 0.64 EURUSD at 1.15059
+2025.10.06 17:11:09.154	Trades	'272492029': accepted buy limit 0.64 EURUSD at 1.15059
+2025.10.06 17:11:09.225	Trades	'272492029': order #1548702686 buy limit 0.64 / 0.64 EURUSD at 1.15059 done in 119.622 ms (ok)
+2025.10.06 17:11:09.225	Trades	'272492029': buy limit 1.28 EURUSD at 1.14809
+2025.10.06 17:11:09.273	Trades	'272492029': accepted buy limit 1.28 EURUSD at 1.14809
+2025.10.06 17:11:09.345	Trades	'272492029': order #1548702717 buy limit 1.28 / 1.28 EURUSD at 1.14809 done in 120.150 ms (ok)
+2025.10.06 17:11:09.346	Trades	'272492029': buy limit 2.56 EURUSD at 1.14559
+2025.10.06 17:11:09.393	Trades	'272492029': accepted buy limit 2.56 EURUSD at 1.14559
+2025.10.06 17:11:09.466	Trades	'272492029': order #1548702731 buy limit 2.56 / 2.56 EURUSD at 1.14559 done in 120.437 ms (ok)
+2025.10.06 17:11:09.466	Trades	'272492029': buy limit 5.12 EURUSD at 1.14309
+2025.10.06 17:11:09.514	Trades	'272492029': accepted buy limit 5.12 EURUSD at 1.14309
+2025.10.06 17:11:09.588	Trades	'272492029': order #1548702744 buy limit 5.12 / 5.12 EURUSD at 1.14309 done in 121.938 ms (ok)
+2025.10.06 17:11:09.589	Trades	'272492029': market sell 0.01 EURUSD
+2025.10.06 17:11:09.637	Trades	'272492029': accepted market sell 0.01 EURUSD
+2025.10.06 17:11:09.708	Trades	'272492029': deal #1459045585 sell 0.01 EURUSD at 1.16553 done (based on order #1548702767)
+2025.10.06 17:11:09.709	Trades	'272492029': order #1548702767 sell 0.01 / 0.01 EURUSD at 1.16553 done in 120.073 ms (ok)
+2025.10.06 17:11:09.709	Trades	'272492029': sell limit 0.02 EURUSD at 1.16803
+2025.10.06 17:11:09.756	Trades	'272492029': accepted sell limit 0.02 EURUSD at 1.16803
+2025.10.06 17:11:09.829	Trades	'272492029': order #1548702774 sell limit 0.02 / 0.02 EURUSD at 1.16803 done in 120.469 ms (ok)
+2025.10.06 17:11:09.829	Trades	'272492029': sell limit 0.04 EURUSD at 1.17053
+2025.10.06 17:11:09.877	Trades	'272492029': accepted sell limit 0.04 EURUSD at 1.17053
+2025.10.06 17:11:09.948	Trades	'272492029': order #1548702786 sell limit 0.04 / 0.04 EURUSD at 1.17053 done in 119.083 ms (ok)
+2025.10.06 17:11:09.948	Trades	'272492029': sell limit 0.08 EURUSD at 1.17303
+2025.10.06 17:11:09.996	Trades	'272492029': accepted sell limit 0.08 EURUSD at 1.17303
+2025.10.06 17:11:10.069	Trades	'272492029': order #1548702796 sell limit 0.08 / 0.08 EURUSD at 1.17303 done in 120.279 ms (ok)
+2025.10.06 17:11:10.069	Trades	'272492029': sell limit 0.16 EURUSD at 1.17553
+2025.10.06 17:11:10.117	Trades	'272492029': accepted sell limit 0.16 EURUSD at 1.17553
+2025.10.06 17:11:10.192	Trades	'272492029': order #1548702805 sell limit 0.16 / 0.16 EURUSD at 1.17553 done in 122.993 ms (ok)
+2025.10.06 17:11:10.192	Trades	'272492029': sell limit 0.32 EURUSD at 1.17803
+2025.10.06 17:11:10.239	Trades	'272492029': accepted sell limit 0.32 EURUSD at 1.17803
+2025.10.06 17:11:10.312	Trades	'272492029': order #1548702812 sell limit 0.32 / 0.32 EURUSD at 1.17803 done in 119.940 ms (ok)
+2025.10.06 17:11:10.312	Trades	'272492029': sell limit 0.64 EURUSD at 1.18053
+2025.10.06 17:11:10.360	Trades	'272492029': accepted sell limit 0.64 EURUSD at 1.18053
+2025.10.06 17:11:10.432	Trades	'272492029': order #1548702821 sell limit 0.64 / 0.64 EURUSD at 1.18053 done in 120.667 ms (ok)
+2025.10.06 17:11:10.432	Trades	'272492029': sell limit 1.28 EURUSD at 1.18303
+2025.10.06 17:11:10.480	Trades	'272492029': accepted sell limit 1.28 EURUSD at 1.18303
+2025.10.06 17:11:10.554	Trades	'272492029': order #1548702829 sell limit 1.28 / 1.28 EURUSD at 1.18303 done in 122.096 ms (ok)
+2025.10.06 17:11:10.555	Trades	'272492029': sell limit 2.56 EURUSD at 1.18553
+2025.10.06 17:11:10.602	Trades	'272492029': accepted sell limit 2.56 EURUSD at 1.18553
+2025.10.06 17:11:10.674	Trades	'272492029': order #1548702838 sell limit 2.56 / 2.56 EURUSD at 1.18553 done in 119.332 ms (ok)
+2025.10.06 17:11:10.674	Trades	'272492029': sell limit 5.12 EURUSD at 1.18803
+2025.10.06 17:11:10.722	Trades	'272492029': accepted sell limit 5.12 EURUSD at 1.18803
+2025.10.06 17:11:10.795	Trades	'272492029': order #1548702847 sell limit 5.12 / 5.12 EURUSD at 1.18803 done in 121.338 ms (ok)
+2025.10.06 17:57:41.469	Trades	'272492029': market buy 0.01 EURUSD
+2025.10.06 17:57:41.510	Trades	'272492029': accepted market buy 0.01 EURUSD
+2025.10.06 17:57:41.594	Trades	'272492029': deal #1459238901 buy 0.01 EURUSD at 1.16651 done (based on order #1548911368)
+2025.10.06 17:57:41.595	Trades	'272492029': order #1548911368 buy 0.01 / 0.01 EURUSD at 1.16651 done in 125.953 ms (ok)
+2025.10.06 17:57:41.596	Trades	'272492029': buy limit 0.02 EURUSD at 1.16401
+2025.10.06 17:57:41.636	Trades	'272492029': accepted buy limit 0.02 EURUSD at 1.16401
+2025.10.06 17:57:41.719	Trades	'272492029': order #1548911435 buy limit 0.02 / 0.02 EURUSD at 1.16401 done in 123.887 ms (ok)
+2025.10.06 17:57:41.720	Trades	'272492029': buy limit 0.04 EURUSD at 1.16151
+2025.10.06 17:57:41.760	Trades	'272492029': accepted buy limit 0.04 EURUSD at 1.16151
+2025.10.06 17:57:41.845	Trades	'272492029': order #1548911439 buy limit 0.04 / 0.04 EURUSD at 1.16151 done in 125.657 ms (ok)
+2025.10.06 17:57:41.845	Trades	'272492029': buy limit 0.08 EURUSD at 1.15901
+2025.10.06 17:57:41.886	Trades	'272492029': accepted buy limit 0.08 EURUSD at 1.15901
+2025.10.06 17:57:41.971	Trades	'272492029': order #1548911441 buy limit 0.08 / 0.08 EURUSD at 1.15901 done in 125.614 ms (ok)
+2025.10.06 17:57:41.971	Trades	'272492029': buy limit 0.16 EURUSD at 1.15651
+2025.10.06 17:57:42.011	Trades	'272492029': accepted buy limit 0.16 EURUSD at 1.15651
+2025.10.06 17:57:42.098	Trades	'272492029': order #1548911446 buy limit 0.16 / 0.16 EURUSD at 1.15651 done in 127.386 ms (ok)
+2025.10.06 17:57:42.099	Trades	'272492029': buy limit 0.32 EURUSD at 1.15401
+2025.10.06 17:57:42.139	Trades	'272492029': accepted buy limit 0.32 EURUSD at 1.15401
+2025.10.06 17:57:42.225	Trades	'272492029': order #1548911449 buy limit 0.32 / 0.32 EURUSD at 1.15401 done in 126.910 ms (ok)
+2025.10.06 17:57:42.226	Trades	'272492029': market sell 0.01 EURUSD
+2025.10.06 17:57:42.266	Trades	'272492029': accepted market sell 0.01 EURUSD
+2025.10.06 17:57:42.352	Trades	'272492029': deal #1459238913 sell 0.01 EURUSD at 1.16642 done (based on order #1548911453)
+2025.10.06 17:57:42.353	Trades	'272492029': order #1548911453 sell 0.01 / 0.01 EURUSD at 1.16642 done in 126.963 ms (ok)
+2025.10.06 17:57:42.353	Trades	'272492029': sell limit 0.02 EURUSD at 1.16892
+2025.10.06 17:57:42.400	Trades	'272492029': accepted sell limit 0.02 EURUSD at 1.16892
+2025.10.06 17:57:42.488	Trades	'272492029': order #1548911460 sell limit 0.02 / 0.02 EURUSD at 1.16892 done in 135.632 ms (ok)
+2025.10.06 17:57:42.489	Trades	'272492029': sell limit 0.04 EURUSD at 1.17142
+2025.10.06 17:57:42.529	Trades	'272492029': accepted sell limit 0.04 EURUSD at 1.17142
+2025.10.06 17:57:42.617	Trades	'272492029': order #1548911466 sell limit 0.04 / 0.04 EURUSD at 1.17142 done in 128.393 ms (ok)
+2025.10.06 17:57:42.617	Trades	'272492029': sell limit 0.08 EURUSD at 1.17392
+2025.10.06 17:57:42.657	Trades	'272492029': accepted sell limit 0.08 EURUSD at 1.17392
+2025.10.06 17:57:42.742	Trades	'272492029': order #1548911469 sell limit 0.08 / 0.08 EURUSD at 1.17392 done in 125.473 ms (ok)
+2025.10.06 17:57:42.743	Trades	'272492029': sell limit 0.16 EURUSD at 1.17642
+2025.10.06 17:57:42.783	Trades	'272492029': accepted sell limit 0.16 EURUSD at 1.17642
+2025.10.06 17:57:42.871	Trades	'272492029': order #1548911471 sell limit 0.16 / 0.16 EURUSD at 1.17642 done in 129.010 ms (ok)
+2025.10.06 17:57:42.872	Trades	'272492029': sell limit 0.32 EURUSD at 1.17892
+2025.10.06 17:57:42.912	Trades	'272492029': accepted sell limit 0.32 EURUSD at 1.17892
+2025.10.06 17:57:42.997	Trades	'272492029': order #1548911480 sell limit 0.32 / 0.32 EURUSD at 1.17892 done in 125.734 ms (ok)
+2025.10.06 18:19:40.125	Trades	'272492029': market sell 0.01 EURUSD, close #1548911368 buy 0.01 EURUSD 1.16651
+2025.10.06 18:19:40.173	Trades	'272492029': accepted market sell 0.01 EURUSD, close #1548911368 buy 0.01 EURUSD 1.16651
+2025.10.06 18:19:40.253	Trades	'272492029': deal #1459362151 sell 0.01 EURUSD at 1.16690 done (based on order #1549040634)
+2025.10.06 18:19:40.254	Trades	'272492029': order #1549040634 sell 0.01 / 0.01 EURUSD at 1.16690 done in 129.036 ms (ok)
+2025.10.06 18:19:40.254	Trades	'272492029': market sell 0.01 EURUSD, close #1548726575 buy 0.01 EURUSD 1.16579
+2025.10.06 18:19:40.302	Trades	'272492029': accepted market sell 0.01 EURUSD, close #1548726575 buy 0.01 EURUSD 1.16579
+2025.10.06 18:19:40.380	Trades	'272492029': deal #1459362159 sell 0.01 EURUSD at 1.16690 done (based on order #1549040643)
+2025.10.06 18:19:40.381	Trades	'272492029': order #1549040643 sell 0.01 / 0.01 EURUSD at 1.16690 done in 126.853 ms (ok)
+2025.10.06 18:19:40.381	Trades	'272492029': market sell 0.01 EURUSD, close #1548702620 buy 0.01 EURUSD 1.16559
+2025.10.06 18:19:40.429	Trades	'272492029': accepted market sell 0.01 EURUSD, close #1548702620 buy 0.01 EURUSD 1.16559
+2025.10.06 18:19:40.507	Trades	'272492029': deal #1459362171 sell 0.01 EURUSD at 1.16690 done (based on order #1549040659)
+2025.10.06 18:19:40.508	Trades	'272492029': order #1549040659 sell 0.01 / 0.01 EURUSD at 1.16690 done in 126.852 ms (ok)
+2025.10.06 18:19:40.508	Trades	'272492029': market sell 0.01 EURUSD, close #1548655466 buy 0.01 EURUSD 1.16638
+2025.10.06 18:19:40.556	Trades	'272492029': accepted market sell 0.01 EURUSD, close #1548655466 buy 0.01 EURUSD 1.16638
+2025.10.06 18:19:40.636	Trades	'272492029': deal #1459362181 sell 0.01 EURUSD at 1.16690 done (based on order #1549040674)
+2025.10.06 18:19:40.636	Trades	'272492029': order #1549040674 sell 0.01 / 0.01 EURUSD at 1.16690 done in 128.432 ms (ok)
+2025.10.06 18:19:40.637	Trades	'272492029': market sell 0.01 EURUSD, close #1548620771 buy 0.01 EURUSD 1.16635
+2025.10.06 18:19:40.685	Trades	'272492029': accepted market sell 0.01 EURUSD, close #1548620771 buy 0.01 EURUSD 1.16635
+2025.10.06 18:19:40.762	Trades	'272492029': deal #1459362186 sell 0.01 EURUSD at 1.16690 done (based on order #1549040681)
+2025.10.06 18:19:40.763	Trades	'272492029': order #1549040681 sell 0.01 / 0.01 EURUSD at 1.16690 done in 126.285 ms (ok)
+2025.10.06 18:19:40.763	Trades	'272492029': market sell 0.01 EURUSD, close #1548390433 buy 0.01 EURUSD 1.16672
+2025.10.06 18:19:40.810	Trades	'272492029': accepted market sell 0.01 EURUSD, close #1548390433 buy 0.01 EURUSD 1.16672
+2025.10.06 18:19:40.888	Trades	'272492029': deal #1459362197 sell 0.01 EURUSD at 1.16690 done (based on order #1549040687)
+2025.10.06 18:19:40.889	Trades	'272492029': order #1549040687 sell 0.01 / 0.01 EURUSD at 1.16690 done in 125.813 ms (ok)
+2025.10.06 18:19:40.889	Trades	'272492029': market sell 0.01 EURUSD, close #1548390189 buy 0.01 EURUSD 1.16672
+2025.10.06 18:19:40.936	Trades	'272492029': accepted market sell 0.01 EURUSD, close #1548390189 buy 0.01 EURUSD 1.16672
+2025.10.06 18:19:41.016	Trades	'272492029': deal #1459362209 sell 0.01 EURUSD at 1.16690 done (based on order #1549040696)
+2025.10.06 18:19:41.016	Trades	'272492029': order #1549040696 sell 0.01 / 0.01 EURUSD at 1.16690 done in 127.876 ms (ok)
+2025.10.06 18:19:41.017	Trades	'272492029': market sell 0.01 EURUSD, close #1548204084 buy 0.01 EURUSD 1.16607
+2025.10.06 18:19:41.064	Trades	'272492029': accepted market sell 0.01 EURUSD, close #1548204084 buy 0.01 EURUSD 1.16607
+2025.10.06 18:19:41.146	Trades	'272492029': deal #1459362218 sell 0.01 EURUSD at 1.16690 done (based on order #1549040708)
+2025.10.06 18:19:41.146	Trades	'272492029': order #1549040708 sell 0.01 / 0.01 EURUSD at 1.16690 done in 129.785 ms (ok)
+2025.10.06 18:19:41.146	Trades	'272492029': market sell 0.01 EURUSD, close #1548143323 buy 0.01 EURUSD 1.16588
+2025.10.06 18:19:41.194	Trades	'272492029': accepted market sell 0.01 EURUSD, close #1548143323 buy 0.01 EURUSD 1.16588
+2025.10.06 18:19:41.277	Trades	'272492029': deal #1459362230 sell 0.01 EURUSD at 1.16690 done (based on order #1549040718)
+2025.10.06 18:19:41.278	Trades	'272492029': order #1549040718 sell 0.01 / 0.01 EURUSD at 1.16690 done in 131.228 ms (ok)
+2025.10.06 18:19:41.278	Trades	'272492029': cancel order #1548911449 buy limit 0.32 EURUSD at 1.15401
+2025.10.06 18:19:41.325	Trades	'272492029': accepted cancel order #1548911449 buy limit 0.32 EURUSD at 1.15401
+2025.10.06 18:19:41.326	Trades	'272492029': cancel #1548911449 buy limit 0.32 EURUSD at market done in 48.311 ms (ok)
+2025.10.06 18:19:41.326	Trades	'272492029': cancel order #1548911446 buy limit 0.16 EURUSD at 1.15651
+2025.10.06 18:19:41.374	Trades	'272492029': accepted cancel order #1548911446 buy limit 0.16 EURUSD at 1.15651
+2025.10.06 18:19:41.375	Trades	'272492029': cancel #1548911446 buy limit 0.16 EURUSD at market done in 48.498 ms (ok)
+2025.10.06 18:19:41.375	Trades	'272492029': cancel order #1548911441 buy limit 0.08 EURUSD at 1.15901
+2025.10.06 18:19:41.423	Trades	'272492029': accepted cancel order #1548911441 buy limit 0.08 EURUSD at 1.15901
+2025.10.06 18:19:41.424	Trades	'272492029': cancel #1548911441 buy limit 0.08 EURUSD at market done in 49.417 ms (ok)
+2025.10.06 18:19:41.424	Trades	'272492029': cancel order #1548911439 buy limit 0.04 EURUSD at 1.16151
+2025.10.06 18:19:41.471	Trades	'272492029': accepted cancel order #1548911439 buy limit 0.04 EURUSD at 1.16151
+2025.10.06 18:19:41.473	Trades	'272492029': cancel #1548911439 buy limit 0.04 EURUSD at market done in 48.491 ms (ok)
+2025.10.06 18:19:41.473	Trades	'272492029': cancel order #1548911435 buy limit 0.02 EURUSD at 1.16401
+2025.10.06 18:19:41.520	Trades	'272492029': accepted cancel order #1548911435 buy limit 0.02 EURUSD at 1.16401
+2025.10.06 18:19:41.521	Trades	'272492029': cancel #1548911435 buy limit 0.02 EURUSD at market done in 48.390 ms (ok)
+2025.10.06 18:19:41.521	Trades	'272492029': cancel order #1548726616 buy limit 0.32 EURUSD at 1.15331
+2025.10.06 18:19:41.568	Trades	'272492029': accepted cancel order #1548726616 buy limit 0.32 EURUSD at 1.15331
+2025.10.06 18:19:41.569	Trades	'272492029': cancel #1548726616 buy limit 0.32 EURUSD at market done in 48.355 ms (ok)
+2025.10.06 18:19:41.570	Trades	'272492029': cancel order #1548726611 buy limit 0.16 EURUSD at 1.15581
+2025.10.06 18:19:41.617	Trades	'272492029': accepted cancel order #1548726611 buy limit 0.16 EURUSD at 1.15581
+2025.10.06 18:19:41.618	Trades	'272492029': cancel #1548726611 buy limit 0.16 EURUSD at market done in 48.456 ms (ok)
+2025.10.06 18:19:41.618	Trades	'272492029': cancel order #1548726606 buy limit 0.08 EURUSD at 1.15831
+2025.10.06 18:19:41.666	Trades	'272492029': accepted cancel order #1548726606 buy limit 0.08 EURUSD at 1.15831
+2025.10.06 18:19:41.667	Trades	'272492029': cancel #1548726606 buy limit 0.08 EURUSD at market done in 48.593 ms (ok)
+2025.10.06 18:19:41.667	Trades	'272492029': cancel order #1548726599 buy limit 0.04 EURUSD at 1.16081
+2025.10.06 18:19:41.714	Trades	'272492029': accepted cancel order #1548726599 buy limit 0.04 EURUSD at 1.16081
+2025.10.06 18:19:41.715	Trades	'272492029': cancel #1548726599 buy limit 0.04 EURUSD at market done in 48.181 ms (ok)
+2025.10.06 18:19:41.715	Trades	'272492029': cancel order #1548726587 buy limit 0.02 EURUSD at 1.16331
+2025.10.06 18:19:41.762	Trades	'272492029': accepted cancel order #1548726587 buy limit 0.02 EURUSD at 1.16331
+2025.10.06 18:19:41.763	Trades	'272492029': cancel #1548726587 buy limit 0.02 EURUSD at market done in 48.469 ms (ok)
+2025.10.06 18:19:41.763	Trades	'272492029': cancel order #1548702744 buy limit 5.12 EURUSD at 1.14309
+2025.10.06 18:19:41.811	Trades	'272492029': accepted cancel order #1548702744 buy limit 5.12 EURUSD at 1.14309
+2025.10.06 18:19:41.812	Trades	'272492029': cancel #1548702744 buy limit 5.12 EURUSD at market done in 48.705 ms (ok)
+2025.10.06 18:19:41.812	Trades	'272492029': cancel order #1548702731 buy limit 2.56 EURUSD at 1.14559
+2025.10.06 18:19:41.859	Trades	'272492029': accepted cancel order #1548702731 buy limit 2.56 EURUSD at 1.14559
+2025.10.06 18:19:41.860	Trades	'272492029': cancel #1548702731 buy limit 2.56 EURUSD at market done in 48.376 ms (ok)
+2025.10.06 18:19:41.860	Trades	'272492029': cancel order #1548702717 buy limit 1.28 EURUSD at 1.14809
+2025.10.06 18:19:41.908	Trades	'272492029': accepted cancel order #1548702717 buy limit 1.28 EURUSD at 1.14809
+2025.10.06 18:19:41.909	Trades	'272492029': cancel #1548702717 buy limit 1.28 EURUSD at market done in 48.589 ms (ok)
+2025.10.06 18:19:41.909	Trades	'272492029': cancel order #1548702686 buy limit 0.64 EURUSD at 1.15059
+2025.10.06 18:19:41.957	Trades	'272492029': accepted cancel order #1548702686 buy limit 0.64 EURUSD at 1.15059
+2025.10.06 18:19:41.958	Trades	'272492029': cancel #1548702686 buy limit 0.64 EURUSD at market done in 48.671 ms (ok)
+2025.10.06 18:19:41.958	Trades	'272492029': cancel order #1548702670 buy limit 0.32 EURUSD at 1.15309
+2025.10.06 18:19:42.005	Trades	'272492029': accepted cancel order #1548702670 buy limit 0.32 EURUSD at 1.15309
+2025.10.06 18:19:42.006	Trades	'272492029': cancel #1548702670 buy limit 0.32 EURUSD at market done in 48.427 ms (ok)
+2025.10.06 18:19:42.006	Trades	'272492029': cancel order #1548702641 buy limit 0.16 EURUSD at 1.15559
+2025.10.06 18:19:42.054	Trades	'272492029': accepted cancel order #1548702641 buy limit 0.16 EURUSD at 1.15559
+2025.10.06 18:19:42.055	Trades	'272492029': cancel #1548702641 buy limit 0.16 EURUSD at market done in 48.430 ms (ok)
+2025.10.06 18:19:42.055	Trades	'272492029': cancel order #1548702637 buy limit 0.08 EURUSD at 1.15809
+2025.10.06 18:19:42.102	Trades	'272492029': accepted cancel order #1548702637 buy limit 0.08 EURUSD at 1.15809
+2025.10.06 18:19:42.103	Trades	'272492029': cancel #1548702637 buy limit 0.08 EURUSD at market done in 48.275 ms (ok)
+2025.10.06 18:19:42.103	Trades	'272492029': cancel order #1548702632 buy limit 0.04 EURUSD at 1.16059
+2025.10.06 18:19:42.151	Trades	'272492029': accepted cancel order #1548702632 buy limit 0.04 EURUSD at 1.16059
+2025.10.06 18:19:42.152	Trades	'272492029': cancel #1548702632 buy limit 0.04 EURUSD at market done in 48.626 ms (ok)
+2025.10.06 18:19:42.152	Trades	'272492029': cancel order #1548702628 buy limit 0.02 EURUSD at 1.16309
+2025.10.06 18:19:42.199	Trades	'272492029': accepted cancel order #1548702628 buy limit 0.02 EURUSD at 1.16309
+2025.10.06 18:19:42.200	Trades	'272492029': cancel #1548702628 buy limit 0.02 EURUSD at market done in 48.240 ms (ok)
+2025.10.06 18:19:42.200	Trades	'272492029': cancel order #1548655659 buy limit 5.12 EURUSD at 1.14388
+2025.10.06 18:19:42.248	Trades	'272492029': accepted cancel order #1548655659 buy limit 5.12 EURUSD at 1.14388
+2025.10.06 18:19:42.248	Trades	'272492029': cancel #1548655659 buy limit 5.12 EURUSD at market done in 48.590 ms (ok)
+2025.10.06 18:19:42.249	Trades	'272492029': cancel order #1548655655 buy limit 2.56 EURUSD at 1.14638
+2025.10.06 18:19:42.296	Trades	'272492029': accepted cancel order #1548655655 buy limit 2.56 EURUSD at 1.14638
+2025.10.06 18:19:42.298	Trades	'272492029': cancel #1548655655 buy limit 2.56 EURUSD at market done in 49.158 ms (ok)
+2025.10.06 18:19:42.298	Trades	'272492029': cancel order #1548655641 buy limit 1.28 EURUSD at 1.14888
+2025.10.06 18:19:42.345	Trades	'272492029': accepted cancel order #1548655641 buy limit 1.28 EURUSD at 1.14888
+2025.10.06 18:19:42.346	Trades	'272492029': cancel #1548655641 buy limit 1.28 EURUSD at market done in 48.352 ms (ok)
+2025.10.06 18:19:42.346	Trades	'272492029': cancel order #1548655618 buy limit 0.64 EURUSD at 1.15138
+2025.10.06 18:19:42.394	Trades	'272492029': accepted cancel order #1548655618 buy limit 0.64 EURUSD at 1.15138
+2025.10.06 18:19:42.395	Trades	'272492029': cancel #1548655618 buy limit 0.64 EURUSD at market done in 48.498 ms (ok)
+2025.10.06 18:19:42.395	Trades	'272492029': cancel order #1548655602 buy limit 0.32 EURUSD at 1.15388
+2025.10.06 18:19:42.442	Trades	'272492029': accepted cancel order #1548655602 buy limit 0.32 EURUSD at 1.15388
+2025.10.06 18:19:42.443	Trades	'272492029': cancel #1548655602 buy limit 0.32 EURUSD at market done in 48.436 ms (ok)
+2025.10.06 18:19:42.443	Trades	'272492029': cancel order #1548655567 buy limit 0.16 EURUSD at 1.15638
+2025.10.06 18:19:42.491	Trades	'272492029': accepted cancel order #1548655567 buy limit 0.16 EURUSD at 1.15638
+2025.10.06 18:19:42.491	Trades	'272492029': cancel #1548655567 buy limit 0.16 EURUSD at market done in 48.403 ms (ok)
+2025.10.06 18:19:42.492	Trades	'272492029': cancel order #1548655550 buy limit 0.08 EURUSD at 1.15888
+2025.10.06 18:19:42.539	Trades	'272492029': accepted cancel order #1548655550 buy limit 0.08 EURUSD at 1.15888
+2025.10.06 18:19:42.540	Trades	'272492029': cancel #1548655550 buy limit 0.08 EURUSD at market done in 48.452 ms (ok)
+2025.10.06 18:19:42.540	Trades	'272492029': cancel order #1548655516 buy limit 0.04 EURUSD at 1.16138
+2025.10.06 18:19:42.588	Trades	'272492029': accepted cancel order #1548655516 buy limit 0.04 EURUSD at 1.16138
+2025.10.06 18:19:42.589	Trades	'272492029': cancel #1548655516 buy limit 0.04 EURUSD at market done in 48.508 ms (ok)
+2025.10.06 18:19:42.589	Trades	'272492029': cancel order #1548655494 buy limit 0.02 EURUSD at 1.16388
+2025.10.06 18:19:42.636	Trades	'272492029': accepted cancel order #1548655494 buy limit 0.02 EURUSD at 1.16388
+2025.10.06 18:19:42.637	Trades	'272492029': cancel #1548655494 buy limit 0.02 EURUSD at market done in 48.430 ms (ok)
+2025.10.06 18:19:42.637	Trades	'272492029': cancel order #1548620788 buy limit 0.32 EURUSD at 1.15385
+2025.10.06 18:19:42.684	Trades	'272492029': accepted cancel order #1548620788 buy limit 0.32 EURUSD at 1.15385
+2025.10.06 18:19:42.685	Trades	'272492029': cancel #1548620788 buy limit 0.32 EURUSD at market done in 48.375 ms (ok)
+2025.10.06 18:19:42.685	Trades	'272492029': cancel order #1548620786 buy limit 0.16 EURUSD at 1.15635
+2025.10.06 18:19:42.733	Trades	'272492029': accepted cancel order #1548620786 buy limit 0.16 EURUSD at 1.15635
+2025.10.06 18:19:42.734	Trades	'272492029': cancel #1548620786 buy limit 0.16 EURUSD at market done in 48.502 ms (ok)
+2025.10.06 18:19:42.734	Trades	'272492029': cancel order #1548620784 buy limit 0.08 EURUSD at 1.15885
+2025.10.06 18:19:42.781	Trades	'272492029': accepted cancel order #1548620784 buy limit 0.08 EURUSD at 1.15885
+2025.10.06 18:19:42.782	Trades	'272492029': cancel #1548620784 buy limit 0.08 EURUSD at market done in 48.416 ms (ok)
+2025.10.06 18:19:42.782	Trades	'272492029': cancel order #1548620781 buy limit 0.04 EURUSD at 1.16135
+2025.10.06 18:19:42.830	Trades	'272492029': accepted cancel order #1548620781 buy limit 0.04 EURUSD at 1.16135
+2025.10.06 18:19:42.831	Trades	'272492029': cancel #1548620781 buy limit 0.04 EURUSD at market done in 48.467 ms (ok)
+2025.10.06 18:19:42.831	Trades	'272492029': cancel order #1548620777 buy limit 0.02 EURUSD at 1.16385
+2025.10.06 18:19:42.879	Trades	'272492029': accepted cancel order #1548620777 buy limit 0.02 EURUSD at 1.16385
+2025.10.06 18:19:42.880	Trades	'272492029': cancel #1548620777 buy limit 0.02 EURUSD at market done in 48.689 ms (ok)
+2025.10.06 18:19:42.880	Trades	'272492029': cancel order #1548390481 buy limit 0.32 EURUSD at 1.15422
+2025.10.06 18:19:42.927	Trades	'272492029': accepted cancel order #1548390481 buy limit 0.32 EURUSD at 1.15422
+2025.10.06 18:19:42.929	Trades	'272492029': cancel #1548390481 buy limit 0.32 EURUSD at market done in 49.184 ms (ok)
+2025.10.06 18:19:42.929	Trades	'272492029': cancel order #1548390470 buy limit 0.16 EURUSD at 1.15672
+2025.10.06 18:19:42.977	Trades	'272492029': accepted cancel order #1548390470 buy limit 0.16 EURUSD at 1.15672
+2025.10.06 18:19:42.977	Trades	'272492029': cancel #1548390470 buy limit 0.16 EURUSD at market done in 48.685 ms (ok)
+2025.10.06 18:19:42.978	Trades	'272492029': cancel order #1548390451 buy limit 0.08 EURUSD at 1.15922
+2025.10.06 18:19:43.025	Trades	'272492029': accepted cancel order #1548390451 buy limit 0.08 EURUSD at 1.15922
+2025.10.06 18:19:43.026	Trades	'272492029': cancel #1548390451 buy limit 0.08 EURUSD at market done in 48.402 ms (ok)
+2025.10.06 18:19:43.026	Trades	'272492029': cancel order #1548390445 buy limit 0.04 EURUSD at 1.16172
+2025.10.06 18:19:43.073	Trades	'272492029': accepted cancel order #1548390445 buy limit 0.04 EURUSD at 1.16172
+2025.10.06 18:19:43.074	Trades	'272492029': cancel #1548390445 buy limit 0.04 EURUSD at market done in 48.414 ms (ok)
+2025.10.06 18:19:43.074	Trades	'272492029': cancel order #1548390437 buy limit 0.02 EURUSD at 1.16422
+2025.10.06 18:19:43.122	Trades	'272492029': accepted cancel order #1548390437 buy limit 0.02 EURUSD at 1.16422
+2025.10.06 18:19:43.123	Trades	'272492029': cancel #1548390437 buy limit 0.02 EURUSD at market done in 49.070 ms (ok)
+2025.10.06 18:19:43.123	Trades	'272492029': cancel order #1548390235 buy limit 0.32 EURUSD at 1.15421
+2025.10.06 18:19:43.171	Trades	'272492029': accepted cancel order #1548390235 buy limit 0.32 EURUSD at 1.15421
+2025.10.06 18:19:43.172	Trades	'272492029': cancel #1548390235 buy limit 0.32 EURUSD at market done in 48.586 ms (ok)
+2025.10.06 18:19:43.173	Trades	'272492029': cancel order #1548390227 buy limit 0.16 EURUSD at 1.15671
+2025.10.06 18:19:43.221	Trades	'272492029': accepted cancel order #1548390227 buy limit 0.16 EURUSD at 1.15671
+2025.10.06 18:19:43.222	Trades	'272492029': cancel #1548390227 buy limit 0.16 EURUSD at market done in 48.617 ms (ok)
+2025.10.06 18:19:43.222	Trades	'272492029': cancel order #1548390220 buy limit 0.08 EURUSD at 1.15921
+2025.10.06 18:19:43.269	Trades	'272492029': accepted cancel order #1548390220 buy limit 0.08 EURUSD at 1.15921
+2025.10.06 18:19:43.270	Trades	'272492029': cancel #1548390220 buy limit 0.08 EURUSD at market done in 48.270 ms (ok)
+2025.10.06 18:19:43.270	Trades	'272492029': cancel order #1548390206 buy limit 0.04 EURUSD at 1.16171
+2025.10.06 18:19:43.317	Trades	'272492029': accepted cancel order #1548390206 buy limit 0.04 EURUSD at 1.16171
+2025.10.06 18:19:43.318	Trades	'272492029': cancel #1548390206 buy limit 0.04 EURUSD at market done in 48.562 ms (ok)
+2025.10.06 18:19:43.319	Trades	'272492029': cancel order #1548390197 buy limit 0.02 EURUSD at 1.16421
+2025.10.06 18:19:43.366	Trades	'272492029': accepted cancel order #1548390197 buy limit 0.02 EURUSD at 1.16421
+2025.10.06 18:19:43.367	Trades	'272492029': cancel #1548390197 buy limit 0.02 EURUSD at market done in 48.655 ms (ok)
+2025.10.06 18:19:43.367	Trades	'272492029': cancel order #1548204119 buy limit 0.32 EURUSD at 1.15361
+2025.10.06 18:19:43.414	Trades	'272492029': accepted cancel order #1548204119 buy limit 0.32 EURUSD at 1.15361
+2025.10.06 18:19:43.416	Trades	'272492029': cancel #1548204119 buy limit 0.32 EURUSD at market done in 48.508 ms (ok)
+2025.10.06 18:19:43.416	Trades	'272492029': cancel order #1548204112 buy limit 0.16 EURUSD at 1.15611
+2025.10.06 18:19:43.463	Trades	'272492029': accepted cancel order #1548204112 buy limit 0.16 EURUSD at 1.15611
+2025.10.06 18:19:43.464	Trades	'272492029': cancel #1548204112 buy limit 0.16 EURUSD at market done in 48.571 ms (ok)
+2025.10.06 18:19:43.464	Trades	'272492029': cancel order #1548204107 buy limit 0.08 EURUSD at 1.15861
+2025.10.06 18:19:43.512	Trades	'272492029': accepted cancel order #1548204107 buy limit 0.08 EURUSD at 1.15861
+2025.10.06 18:19:43.513	Trades	'272492029': cancel #1548204107 buy limit 0.08 EURUSD at market done in 48.636 ms (ok)
+2025.10.06 18:19:43.513	Trades	'272492029': cancel order #1548204101 buy limit 0.04 EURUSD at 1.16111
+2025.10.06 18:19:43.561	Trades	'272492029': accepted cancel order #1548204101 buy limit 0.04 EURUSD at 1.16111
+2025.10.06 18:19:43.562	Trades	'272492029': cancel #1548204101 buy limit 0.04 EURUSD at market done in 49.037 ms (ok)
+2025.10.06 18:19:43.562	Trades	'272492029': cancel order #1548204093 buy limit 0.02 EURUSD at 1.16361
+2025.10.06 18:19:43.610	Trades	'272492029': accepted cancel order #1548204093 buy limit 0.02 EURUSD at 1.16361
+2025.10.06 18:19:43.610	Trades	'272492029': cancel #1548204093 buy limit 0.02 EURUSD at market done in 48.414 ms (ok)
+2025.10.06 18:19:43.611	Trades	'272492029': cancel order #1548143375 buy limit 0.32 EURUSD at 1.15338
+2025.10.06 18:19:43.658	Trades	'272492029': accepted cancel order #1548143375 buy limit 0.32 EURUSD at 1.15338
+2025.10.06 18:19:43.659	Trades	'272492029': cancel #1548143375 buy limit 0.32 EURUSD at market done in 48.752 ms (ok)
+2025.10.06 18:19:43.659	Trades	'272492029': cancel order #1548143364 buy limit 0.16 EURUSD at 1.15588
+2025.10.06 18:19:43.707	Trades	'272492029': accepted cancel order #1548143364 buy limit 0.16 EURUSD at 1.15588
+2025.10.06 18:19:43.708	Trades	'272492029': cancel #1548143364 buy limit 0.16 EURUSD at market done in 48.845 ms (ok)
+2025.10.06 18:19:43.708	Trades	'272492029': cancel order #1548143340 buy limit 0.08 EURUSD at 1.15838
+2025.10.06 18:19:43.756	Trades	'272492029': accepted cancel order #1548143340 buy limit 0.08 EURUSD at 1.15838
+2025.10.06 18:19:43.756	Trades	'272492029': cancel #1548143340 buy limit 0.08 EURUSD at market done in 48.300 ms (ok)
+2025.10.06 18:19:43.756	Trades	'272492029': cancel order #1548143334 buy limit 0.04 EURUSD at 1.16088
+2025.10.06 18:19:43.804	Trades	'272492029': accepted cancel order #1548143334 buy limit 0.04 EURUSD at 1.16088
+2025.10.06 18:19:43.805	Trades	'272492029': cancel #1548143334 buy limit 0.04 EURUSD at market done in 48.460 ms (ok)
+2025.10.06 18:19:43.805	Trades	'272492029': cancel order #1548143329 buy limit 0.02 EURUSD at 1.16338
+2025.10.06 18:19:43.853	Trades	'272492029': accepted cancel order #1548143329 buy limit 0.02 EURUSD at 1.16338
+2025.10.06 18:19:43.854	Trades	'272492029': cancel #1548143329 buy limit 0.02 EURUSD at market done in 48.630 ms (ok)
+2025.10.06 18:19:43.855	Trades	'272492029': market buy 0.01 EURUSD
+2025.10.06 18:19:43.903	Trades	'272492029': accepted market buy 0.01 EURUSD
+2025.10.06 18:19:43.982	Trades	'272492029': deal #1459362394 buy 0.01 EURUSD at 1.16695 done (based on order #1549040897)
+2025.10.06 18:19:43.983	Trades	'272492029': order #1549040897 buy 0.01 / 0.01 EURUSD at 1.16695 done in 127.998 ms (ok)
+2025.10.06 18:19:43.983	Trades	'272492029': buy limit 0.02 EURUSD at 1.16445
+2025.10.06 18:19:44.030	Trades	'272492029': accepted buy limit 0.02 EURUSD at 1.16445
+2025.10.06 18:19:44.111	Trades	'272492029': order #1549040905 buy limit 0.02 / 0.02 EURUSD at 1.16445 done in 128.219 ms (ok)
+2025.10.06 18:19:44.111	Trades	'272492029': buy limit 0.04 EURUSD at 1.16195
+2025.10.06 18:19:44.158	Trades	'272492029': accepted buy limit 0.04 EURUSD at 1.16195
+2025.10.06 18:19:44.241	Trades	'272492029': order #1549040909 buy limit 0.04 / 0.04 EURUSD at 1.16195 done in 130.275 ms (ok)
+2025.10.06 18:19:44.241	Trades	'272492029': buy limit 0.08 EURUSD at 1.15945
+2025.10.06 18:19:44.289	Trades	'272492029': accepted buy limit 0.08 EURUSD at 1.15945
+2025.10.06 18:19:44.372	Trades	'272492029': order #1549040912 buy limit 0.08 / 0.08 EURUSD at 1.15945 done in 130.547 ms (ok)
+2025.10.06 18:19:44.372	Trades	'272492029': buy limit 0.16 EURUSD at 1.15695
+2025.10.06 18:19:44.421	Trades	'272492029': accepted buy limit 0.16 EURUSD at 1.15695
+2025.10.06 18:19:44.501	Trades	'272492029': order #1549040918 buy limit 0.16 / 0.16 EURUSD at 1.15695 done in 128.915 ms (ok)
+2025.10.06 18:19:44.501	Trades	'272492029': buy limit 0.32 EURUSD at 1.15445
+2025.10.06 18:19:44.548	Trades	'272492029': accepted buy limit 0.32 EURUSD at 1.15445
+2025.10.06 18:19:44.626	Trades	'272492029': order #1549040929 buy limit 0.32 / 0.32 EURUSD at 1.15445 done in 125.092 ms (ok)
+2025.10.06 18:35:01.724	Trades	'272492029': deal #1459453094 sell 0.02 EURUSD at 1.16775 done (based on order #1548708964)
+2025.10.06 19:11:23.146	Trades	'272492029': deal #1459663963 sell 0.02 EURUSD at 1.16822 done (based on order #1548726623)
+2025.10.06 19:57:45.423	Trades	'272492029': deal #1459997482 sell 0.02 EURUSD at 1.16892 done (based on order #1548911460)
