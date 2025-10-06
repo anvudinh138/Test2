@@ -1,0 +1,29 @@
+Example configuration (tune for your symbol & broker)
+
+spacing_mode: HYBRID
+spacing_pips: 25
+spacing_atr_mult: 0.6
+min_spacing_pips: 12
+
+grid_levels: 6
+lot_base: 0.10
+lot_scale: 1.0 # keep flat; avoid martingale at first
+
+target_cycle_usd: 3.00 # BE + $3 when closing loser basket
+
+tsl_enabled: true
+tsl_start_points: 1000 # corresponds to 'TSL START: 1000' on the UI
+tsl_step_points: 200
+
+recovery_steps: [1000, 2000, 3000]
+recovery_lot: 0.10
+
+dd_open_usd: 8.00
+offset_ratio: 0.5
+
+exposure_cap_lots: 2.0
+max_cycles_per_side: 3
+session_sl_usd: 30.0
+cooldown_bars: 5
+slippage_pips: 1
+commission_per_lot: 7.0

@@ -1,0 +1,25 @@
+2) Ghép ý nghĩa vào 8 hình của bạn
+
+H1 – Khởi động
+Mở hai grid limit chồng nhau (BUY & SELL). Kẻ sẵn các mốc RECOVERY và vạch TSL START: 1000.
+
+H2 – Giá tăng
+Các lệnh BUY gần dưới giá được khớp và chốt lãi lặt vặt; SELL basket vừa hình thành đang -£1.71.
+
+H3–H4 – Giá “đâm thủng” lưới SELL
+Nhiều lệnh SELL limit tiếp tục khớp → Basket SELL [8] tổng 1.4 lot đang -£30.50. Thanh đỏ (TP gộp) nằm xa phía trên – muốn về hòa vốn phải có một cú giảm sâu.
+
+H5 – Bật hedge/recovery
+Thuật toán mở 1 basket BUY (thường là market 1 lệnh + đặt thêm BUY limits) ngay quanh vùng breakeven của SELL basket.
+Mục đích: nếu còn tăng, BUY sẽ có lãi; lãi này dùng để kéo TP của SELL xuống gần giá. (Thấy tag TSL ở basket BUY).
+
+H6 – Giá hồi xuống
+BUY bắt đầu đóng lãi → TP của SELL được kéo xuống sát giá (thấy Basket SELL giờ hiện £+1.06). Một phần BUY limit cũng đã khớp.
+
+H7 – Đóng rổ SELL cũ, đảo vai
+Nhịp giảm chạm thanh TP đỏ → đóng toàn bộ SELL basket với £+15.99 (9 lệnh).
+Ngay sau đó bot mở 1 SELL grid/basket mới để cover phần BUY còn đang âm sau cú giảm.
+
+H8 – Giá lại tăng
+BUY basket (vai “hedge”) đạt TP → hiện £+18.60 (12 lệnh) đã chốt.
+Basket SELL mới đang âm nhẹ (thanh đỏ “Basket SELL [3] … £-2.98”), chuẩn bị lặp lại chu kỳ trên: nếu giá hồi xuống, SELL sẽ được kéo TP về và đóng; nếu còn tăng, BUY lại bật lên để tiếp tục “gặt”.

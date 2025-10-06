@@ -1,0 +1,83 @@
+1) Các khái niệm/label trên UI
+
+Grid BUY / Grid SELL (limit): hai lưới pending đặt hai bên giá hiện tại, chồng lên nhau. Khi giá chạm mức nào thì khớp lệnh ở mức đó.
+
+Basket BUY / Basket SELL [n] | lot | £P/L | TSL
+“Basket” = tập hợp các lệnh đang mở cùng một hướng.
+
+[n] = số lệnh trong basket.
+
+lot = tổng khối lượng basket.
+
+£… = P/L đang chạy của cả basket.
+
+Thanh đỏ (SELL) / xanh (BUY) ngang trên biểu đồ = mức TP gộp nơi toàn bộ basket sẽ đóng đồng thời để đạt hòa vốn + một ít.
+
+Chữ TSL = có bật Trailing Stop Loss cho basket.
+
+TSL START: 1000: vạch đứt đoạn ghi nơi bắt đầu kích hoạt trailing (độ dịch chuyển ~1000 point/tick). Khi basket đi đúng hướng đủ xa, SL của basket bắt đầu bám theo để khóa lợi nhuận.
+
+RECOVERY #k | 1000/2000/3000 … | 0.1 | £…: các lệnh/nhóm dự phòng đặt xa hơn (bước 1000, 2000, 3000 …). Khi xu hướng kéo dài, các “recovery” này sẽ được kích hoạt để:
+
+bổ sung vị thế cùng hướng (DCA nhẹ), hoặc
+
+khởi tạo lưới đối hướng để hedge,
+và mục tiêu là kéo TP gộp của basket đang âm lại gần giá (dùng lợi nhuận của basket đối hướng để bù lỗ).
+
+Tóm tắt tư duy: luôn có một basket đang âm (theo xu hướng hiện tại) và một basket nhỏ hơn đi ngược xu hướng để “gặt” các nhịp hồi, lấy tiền đó kéo đường TP của basket đang âm lại gần → đến khi chạm thì đóng toàn bộ basket âm với lãi nhỏ, rồi đổi vai (stop-and-reverse).
+
+2) Ghép ý nghĩa vào 8 hình của bạn
+
+H1 – Khởi động
+Mở hai grid limit chồng nhau (BUY & SELL). Kẻ sẵn các mốc RECOVERY và vạch TSL START: 1000.
+
+H2 – Giá tăng
+Các lệnh BUY gần dưới giá được khớp và chốt lãi lặt vặt; SELL basket vừa hình thành đang -£1.71.
+
+H3–H4 – Giá “đâm thủng” lưới SELL
+Nhiều lệnh SELL limit tiếp tục khớp → Basket SELL [8] tổng 1.4 lot đang -£30.50. Thanh đỏ (TP gộp) nằm xa phía trên – muốn về hòa vốn phải có một cú giảm sâu.
+
+H5 – Bật hedge/recovery
+Thuật toán mở 1 basket BUY (thường là market 1 lệnh + đặt thêm BUY limits) ngay quanh vùng breakeven của SELL basket.
+Mục đích: nếu còn tăng, BUY sẽ có lãi; lãi này dùng để kéo TP của SELL xuống gần giá. (Thấy tag TSL ở basket BUY).
+
+H6 – Giá hồi xuống
+BUY bắt đầu đóng lãi → TP của SELL được kéo xuống sát giá (thấy Basket SELL giờ hiện £+1.06). Một phần BUY limit cũng đã khớp.
+
+H7 – Đóng rổ SELL cũ, đảo vai
+Nhịp giảm chạm thanh TP đỏ → đóng toàn bộ SELL basket với £+15.99 (9 lệnh).
+Ngay sau đó bot mở 1 SELL grid/basket mới để cover phần BUY còn đang âm sau cú giảm.
+
+H8 – Giá lại tăng
+BUY basket (vai “hedge”) đạt TP → hiện £+18.60 (12 lệnh) đã chốt.
+Basket SELL mới đang âm nhẹ (thanh đỏ “Basket SELL [3] … £-2.98”), chuẩn bị lặp lại chu kỳ trên: nếu giá hồi xuống, SELL sẽ được kéo TP về và đóng; nếu còn tăng, BUY lại bật lên để tiếp tục “gặt”.
+
+3) Cách vận hành (đoán thuật toán)
+
+Khởi tạo neutral-grid hai chiều.
+
+Khi một phía bị drawdown, bot:
+
+mở basket đối hướng nhỏ (hedge) + đặt trailing (TSL),
+
+đóng dần hedge khi có lãi và dịch TP gộp của rổ đang âm về gần giá,
+
+khi TP gộp của rổ âm bị chạm → đóng toàn rổ bằng lợi nhuận ròng nhỏ,
+
+đảo vai: rổ còn lại trở thành rổ “âm” mới, mở rổ đối hướng để hedge nó.
+
+Recovery # là các mức gia tăng/khởi tạo thêm lệnh theo kế hoạch khi giá đi xa (1000/2000/3000… point), để luôn có “đòn bẩy” kéo TP gộp về.
+
+Rủi ro cốt lõi: vẫn là mean-reversion + DCA/hedge. Nếu thị trường trend dài & ít hồi, basket thua lỗ phình to (như hình 4). Tham số then chốt: bước lưới, số lớp recovery, lot tăng/giảm, ngưỡng kích TSL, mục tiêu TP gộp.
+
+4) Gợi ý đọc UI nhanh
+
+Thanh dài màu đỏ/xanh = TP gộp của rổ đó (điểm đóng cả rổ).
+
+Số trong ngoặc [n] = bao nhiêu lệnh đang mở của rổ.
+
+TSL START: 1000 = vị trí bắt đầu trailing cho rổ đang bật TSL.
+
+RECOVERY #k = lớp kế tiếp sẽ kích hoạt nếu giá đi thêm khoảng cách ghi trên nhãn.
+
+Nói ngắn gọn: bot không đoán hướng; nó “đánh qua đánh lại” hai rổ, dùng rổ nhỏ ngược hướng để thu lợi trên nhịp hồi rồi kéo rổ đang âm về hòa vốn + chút lãi, sau đó đảo vai và lặp lại.
