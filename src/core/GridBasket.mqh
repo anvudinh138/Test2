@@ -666,6 +666,11 @@ public:
      {
       m_active=false;
      }
+
+   void           SetActive(const bool active)
+     {
+      m_active=active;
+     }
   };
 
 #endif // __RGD_V2_GRID_BASKET_MQH__

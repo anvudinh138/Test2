@@ -65,6 +65,9 @@ struct SParams
    bool         spawn_on_job_dd;         // spawn new job when job DD >= threshold
    int          spawn_cooldown_sec;      // cooldown between spawns (seconds)
    int          max_spawns;              // max spawns per session
+
+   // timeframe preservation (prevent duplicate positions on TF switch)
+   bool         preserve_on_tf_switch;   // preserve positions on timeframe switch (default: true)
   };
 
 #endif // __RGD_V2_PARAMS_MQH__

@@ -87,6 +87,7 @@ input bool              InpSpawnOnJobDD     = true;  // Spawn new job when job D
 input int               InpSpawnCooldownSec = 30;    // Cooldown between spawns (seconds)
 input int               InpMaxSpawns        = 10;    // Max spawns per session
 
+
 //--- Globals
 SParams              g_params;
 CLogger             *g_logger        = NULL;
@@ -143,6 +144,9 @@ void BuildParams()
    g_params.spawn_on_job_dd    =InpSpawnOnJobDD;
    g_params.spawn_cooldown_sec =InpSpawnCooldownSec;
    g_params.max_spawns         =InpMaxSpawns;
+
+   // Timeframe preservation (bug fix - always enabled)
+   g_params.preserve_on_tf_switch=true;
 
    // THEN apply preset overrides (if not CUSTOM)
    // Preset will override only the critical params (spacing, grid, target, cooldown)
