@@ -647,6 +647,12 @@ public:
 
    double         NormalizeLot(const double volume) const { return NormalizeVolumeValue(volume); }
 
+   // Public wrapper for CloseBasket (for TrendAction)
+   void           ForceClose(const string reason)
+     {
+      CloseBasket(reason);
+     }
+
    // TSL detection (placeholder for multi-job spawn trigger)
    bool           IsTSLActive() const
      {
