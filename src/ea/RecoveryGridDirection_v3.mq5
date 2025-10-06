@@ -93,8 +93,8 @@ input bool              InpTrendFilterEnabled = false;          // Enable trend 
 input ENUM_TIMEFRAMES   InpTrendEMA_Timeframe = PERIOD_H4;     // EMA timeframe
 input int               InpTrendEMA_Period    = 200;           // EMA period
 input int               InpTrendADX_Period    = 14;            // ADX period
-input double            InpTrendADX_Threshold = 25.0;          // ADX threshold (strong trend)
-input double            InpTrendBufferPips    = 200.0;         // Distance buffer from EMA (pips)
+input double            InpTrendADX_Threshold = 30.0;          // ADX threshold (strong trend) - Increased from 25.0 to reduce false signals
+input double            InpTrendBufferPips    = 100.0;         // Distance buffer from EMA (pips) - Reduced from 200 to detect trend earlier
 
 //--- Globals
 SParams              g_params;

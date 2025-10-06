@@ -39,6 +39,7 @@ private:
    // Cache
    ETrendState       m_last_state;
    datetime          m_last_check_time;
+   datetime          m_last_state_change_time;  // Hysteresis: time of last state change
 
    string            Tag() const
      {
@@ -95,7 +96,8 @@ public:
                          m_ema_handle(INVALID_HANDLE),
                          m_adx_handle(INVALID_HANDLE),
                          m_last_state(TREND_NEUTRAL),
-                         m_last_check_time(0)
+                         m_last_check_time(0),
+                         m_last_state_change_time(0)
      {
      }
 
@@ -271,6 +273,7 @@ public:
            }
 
          m_last_state=current_state;
+         m_last_state_change_time=TimeCurrent();  // Track state change time for hysteresis
         }
 
       m_last_check_time=TimeCurrent();
@@ -284,6 +287,15 @@ public:
       if(!m_enabled)
          return true;
 
+      // Hysteresis: If recently changed to NEUTRAL from DOWNTREND, wait 10 minutes before allowing BUY
+      datetime now=TimeCurrent();
+      if(m_last_state==TREND_NEUTRAL && (now-m_last_state_change_time)<600)
+        {
+         // Check if previous state was DOWNTREND by checking current downtrend condition
+         if(IsStrongDowntrend())
+            return false;  // Still too close to downtrend, wait
+        }
+
       // Block BUY during strong downtrend
       return !IsStrongDowntrend();
      }
@@ -295,6 +307,15 @@ public:
      {
       if(!m_enabled)
          return true;
+
+      // Hysteresis: If recently changed to NEUTRAL from UPTREND, wait 10 minutes before allowing SELL
+      datetime now=TimeCurrent();
+      if(m_last_state==TREND_NEUTRAL && (now-m_last_state_change_time)<600)
+        {
+         // Check if previous state was UPTREND by checking current uptrend condition
+         if(IsStrongUptrend())
+            return false;  // Still too close to uptrend, wait
+        }
 
       // Block SELL during strong uptrend
       return !IsStrongUptrend();
