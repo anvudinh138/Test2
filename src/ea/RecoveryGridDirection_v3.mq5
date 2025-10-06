@@ -162,7 +162,7 @@ int OnInit()
       // Log active preset
       string preset_name = CPresetManager::GetPresetName(InpSymbolPreset);
       if(InpSymbolPreset == PRESET_CUSTOM)
-         g_logger.Event("[RGDv2]",StringFormat("Preset: CUSTOM (manual inputs)"));
+         g_logger.Event("[RGDv2]","Preset: CUSTOM (manual inputs)");
       else
          g_logger.Event("[RGDv2]",StringFormat("Preset: %s (Spacing=%.1f, ATR=%s, Cooldown=%d min)",
                                                preset_name,
