@@ -155,6 +155,9 @@ private:
      {
       m_api_url = "https://nfs.faireconomy.media/ff_calendar_thisweek.json";
 
+      if(m_log != NULL)
+         m_log.Event(Tag(), StringFormat("Fetching calendar from API (attempt 1/%d)...", m_max_retries));
+
       // Retry logic with exponential backoff
       for(m_retry_count = 1; m_retry_count <= m_max_retries; m_retry_count++)
         {
@@ -202,14 +205,11 @@ private:
            {
             // Success - parse JSON
             string json = CharArrayToString(result);
+            if(m_log != NULL)
+               m_log.Event(Tag(), StringFormat("API fetch successful (attempt %d/%d) - JSON size: %d bytes",
+                                              m_retry_count, m_max_retries, StringLen(json)));
+
             bool parsed = ParseCalendarJSON(json);
-
-            if(parsed && m_log != NULL)
-              {
-               m_log.Event(Tag(), StringFormat("API fetch successful (attempt %d/%d)",
-                                              m_retry_count, m_max_retries));
-              }
-
             return parsed;
            }
          else
@@ -294,19 +294,25 @@ private:
         }
 
       if(m_log != NULL)
+        {
          m_log.Event(Tag(), StringFormat("Loaded %d events (filter: %s impact)",
                                         event_count, m_impact_filter));
 
-      // Log next upcoming event
-      SNewsEvent next;
-      if(GetNextEvent(next))
-        {
-         MqlDateTime dt;
-         TimeToStruct(next.event_time, dt);
-         if(m_log != NULL)
-            m_log.Event(Tag(), StringFormat("Next: [%s] [%s] %s @ %02d:%02d UTC",
+         // Log next upcoming event
+         SNewsEvent next;
+         if(GetNextEvent(next))
+           {
+            MqlDateTime dt;
+            TimeToStruct(next.event_time, dt);
+            int time_until = (int)((next.event_time - TimeCurrent()) / 60);  // minutes
+            m_log.Event(Tag(), StringFormat("Next: [%s] [%s] %s @ %02d:%02d UTC (in %d minutes)",
                                            next.impact, next.currency, next.title,
-                                           dt.hour, dt.min));
+                                           dt.hour, dt.min, time_until));
+           }
+         else
+           {
+            m_log.Event(Tag(), "No upcoming events found in calendar");
+           }
         }
 
       return event_count > 0;
@@ -348,10 +354,25 @@ public:
 
       // Fetch calendar if needed (every hour or if empty)
       datetime now = TimeCurrent();
-      if(ArraySize(m_events) == 0 || (now - m_last_fetch >= m_fetch_interval_sec))
+      bool need_fetch = (ArraySize(m_events) == 0) || ((now - m_last_fetch) >= m_fetch_interval_sec);
+
+      if(need_fetch)
         {
+         if(m_log != NULL)
+           {
+            if(ArraySize(m_events) == 0)
+               m_log.Event(Tag(), "First fetch - loading news calendar...");
+            else
+              {
+               int minutes_since = (int)((now - m_last_fetch) / 60);
+               m_log.Event(Tag(), StringFormat("Refreshing calendar (%d min since last fetch)", minutes_since));
+              }
+           }
+
          if(FetchCalendar())
             m_last_fetch = now;
+         else if(m_log != NULL)
+            m_log.Event(Tag(), "API fetch failed - using cached events (if any)");
         }
 
       // Check if within buffer window of any event

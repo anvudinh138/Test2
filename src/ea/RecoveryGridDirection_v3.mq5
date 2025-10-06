@@ -126,6 +126,13 @@ int OnInit()
       g_logger.Event("[RGDv2]",StringFormat("Init OK - Ask=%.5f Bid=%.5f LotBase=%.2f GridLevels=%d Dynamic=%s",
                                             ask,bid,g_params.lot_base,g_params.grid_levels,
                                             g_params.grid_dynamic_enabled?"ON":"OFF"));
+
+      // Log news filter status
+      if(InpNewsFilterEnabled)
+         g_logger.Event("[RGDv2]",StringFormat("News Filter: ENABLED (Impact=%s, Buffer=%d min)",
+                                               InpNewsImpactFilter,InpNewsBufferMinutes));
+      else
+         g_logger.Event("[RGDv2]","News Filter: DISABLED");
      }
 
    return(INIT_SUCCEEDED);
