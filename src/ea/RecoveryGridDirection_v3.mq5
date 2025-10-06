@@ -78,46 +78,43 @@ CNewsFilter         *g_news_filter   = NULL;
 
 void BuildParams()
   {
-   // Strategy: Apply preset FIRST, then manual inputs can override if CUSTOM mode
-   // This ensures preset values take precedence when user selects a preset
+   // Initialize ALL params with manual inputs FIRST (default values)
+   g_params.spacing_mode       =(ESpacingMode)InpSpacingMode;
+   g_params.spacing_pips       =InpSpacingStepPips;
+   g_params.spacing_atr_mult   =InpSpacingAtrMult;
+   g_params.min_spacing_pips   =InpMinSpacingPips;
+   g_params.atr_period         =InpAtrPeriod;
+   g_params.atr_timeframe      =InpAtrTimeframe;
 
-   if(InpSymbolPreset != PRESET_CUSTOM)
-     {
-      // Apply preset configuration (auto-detect or explicit preset)
-      CPresetManager::ApplyPreset(g_params, InpSymbolPreset, _Symbol);
-     }
-   else
-     {
-      // CUSTOM mode - use manual inputs
-      g_params.spacing_mode       =(ESpacingMode)InpSpacingMode;
-      g_params.spacing_pips       =InpSpacingStepPips;
-      g_params.spacing_atr_mult   =InpSpacingAtrMult;
-      g_params.min_spacing_pips   =InpMinSpacingPips;
-      g_params.atr_period         =InpAtrPeriod;
-      g_params.atr_timeframe      =InpAtrTimeframe;
-
-      g_params.grid_dynamic_enabled=InpDynamicGrid;
-      g_params.grid_warm_levels   =InpWarmLevels;
-      g_params.grid_refill_threshold=InpRefillThreshold;
-      g_params.grid_refill_batch  =InpRefillBatch;
-      g_params.grid_max_pendings  =InpMaxPendings;
-
-      g_params.target_cycle_usd   =InpTargetCycleUSD;
-
-      g_params.grid_protection_enabled=InpGridProtection;
-      g_params.grid_cooldown_minutes=InpCooldownMinutes;
-     }
-
-   // These inputs ALWAYS apply (regardless of preset)
    g_params.grid_levels        =InpGridLevels;
    g_params.lot_base           =InpLotBase;
    g_params.lot_scale          =InpLotScale;
+
+   g_params.grid_dynamic_enabled=InpDynamicGrid;
+   g_params.grid_warm_levels   =InpWarmLevels;
+   g_params.grid_refill_threshold=InpRefillThreshold;
+   g_params.grid_refill_batch  =InpRefillBatch;
+   g_params.grid_max_pendings  =InpMaxPendings;
+
+   g_params.target_cycle_usd   =InpTargetCycleUSD;
    g_params.session_sl_usd     =InpSessionSL_USD;
+
+   g_params.grid_protection_enabled=InpGridProtection;
+   g_params.grid_cooldown_minutes=InpCooldownMinutes;
+
    g_params.slippage_pips      =InpSlippagePips;
    g_params.order_cooldown_sec =InpOrderCooldownSec;
    g_params.respect_stops_level=InpRespectStops;
    g_params.commission_per_lot =InpCommissionPerLot;
+
    g_params.magic              =InpMagic;
+
+   // THEN apply preset overrides (if not CUSTOM)
+   // Preset will override only the critical params (spacing, grid, target, cooldown)
+   if(InpSymbolPreset != PRESET_CUSTOM)
+     {
+      CPresetManager::ApplyPreset(g_params, InpSymbolPreset, _Symbol);
+     }
   }
 
 int OnInit()

@@ -114,12 +114,15 @@ private:
    static void ApplyEURUSD(SParams &params)
      {
       // Spacing (conservative for low volatility)
+      params.spacing_mode = SPACING_HYBRID;
       params.spacing_pips = 25.0;
       params.spacing_atr_mult = 0.6;
       params.min_spacing_pips = 12.0;
+      params.atr_period = 14;
       params.atr_timeframe = PERIOD_M15;
 
       // Dynamic Grid
+      params.grid_dynamic_enabled = true;
       params.grid_warm_levels = 5;
       params.grid_refill_threshold = 2;
       params.grid_refill_batch = 3;
@@ -129,10 +132,8 @@ private:
       params.target_cycle_usd = 6.0;
 
       // Grid Protection
+      params.grid_protection_enabled = true;
       params.grid_cooldown_minutes = 30;
-
-      // Execution
-      // slippage_pips: Use input value (0 for EURUSD)
      }
 
    //+------------------------------------------------------------------+
@@ -141,12 +142,15 @@ private:
    static void ApplyXAUUSD(SParams &params)
      {
       // Spacing (wide for high volatility)
+      params.spacing_mode = SPACING_HYBRID;
       params.spacing_pips = 150.0;        // 6x wider than EURUSD
       params.spacing_atr_mult = 1.0;      // Full ATR responsiveness
       params.min_spacing_pips = 80.0;     // Higher safety floor
+      params.atr_period = 14;
       params.atr_timeframe = PERIOD_H1;   // Capture longer trends
 
       // Dynamic Grid (conservative)
+      params.grid_dynamic_enabled = true;
       params.grid_warm_levels = 3;        // Fewer pending orders
       params.grid_refill_threshold = 1;   // Refill earlier
       params.grid_refill_batch = 2;       // Smaller batches
@@ -156,10 +160,8 @@ private:
       params.target_cycle_usd = 10.0;     // Higher spread
 
       // Grid Protection
+      params.grid_protection_enabled = true;
       params.grid_cooldown_minutes = 60;  // XAU trends last longer
-
-      // Execution
-      // slippage_pips: Use input value (20 for XAUUSD)
      }
 
    //+------------------------------------------------------------------+
@@ -168,12 +170,15 @@ private:
    static void ApplyGBPUSD(SParams &params)
      {
       // Spacing (medium - between EUR and XAU)
+      params.spacing_mode = SPACING_HYBRID;
       params.spacing_pips = 50.0;         // 2x EURUSD
       params.spacing_atr_mult = 0.8;
       params.min_spacing_pips = 25.0;
+      params.atr_period = 14;
       params.atr_timeframe = PERIOD_M30;
 
       // Dynamic Grid
+      params.grid_dynamic_enabled = true;
       params.grid_warm_levels = 4;
       params.grid_refill_threshold = 2;
       params.grid_refill_batch = 2;
@@ -183,10 +188,8 @@ private:
       params.target_cycle_usd = 8.0;      // GBP spread higher than EUR
 
       // Grid Protection
+      params.grid_protection_enabled = true;
       params.grid_cooldown_minutes = 45;
-
-      // Execution
-      // slippage_pips: Use input value (10 recommended)
      }
 
    //+------------------------------------------------------------------+
@@ -195,12 +198,15 @@ private:
    static void ApplyUSDJPY(SParams &params)
      {
       // Spacing (medium)
+      params.spacing_mode = SPACING_HYBRID;
       params.spacing_pips = 40.0;
       params.spacing_atr_mult = 0.7;
       params.min_spacing_pips = 20.0;
+      params.atr_period = 14;
       params.atr_timeframe = PERIOD_M30;
 
       // Dynamic Grid
+      params.grid_dynamic_enabled = true;
       params.grid_warm_levels = 4;
       params.grid_refill_threshold = 2;
       params.grid_refill_batch = 3;
@@ -210,10 +216,8 @@ private:
       params.target_cycle_usd = 7.0;
 
       // Grid Protection
+      params.grid_protection_enabled = true;
       params.grid_cooldown_minutes = 40;
-
-      // Execution
-      // slippage_pips: Use input value (5 recommended)
      }
   };
 
