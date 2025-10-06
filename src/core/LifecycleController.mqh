@@ -361,10 +361,29 @@ public:
          bool allow_buy=m_trend_filter.AllowBuyBasket();
          bool allow_sell=m_trend_filter.AllowSellBasket();
 
-         if(m_buy!=NULL)
-            m_buy.SetTradingEnabled(allow_buy);
-         if(m_sell!=NULL)
-            m_sell.SetTradingEnabled(allow_sell);
+         // For NONE and CLOSE_ALL: Block both seed and refill
+         // For NO_REFILL: Allow seed, block refill (handled in GridBasket via trend_action param)
+         if(m_params.trend_action==TREND_ACTION_NONE || m_params.trend_action==TREND_ACTION_CLOSE_ALL)
+           {
+            if(m_buy!=NULL)
+               m_buy.SetTradingEnabled(allow_buy);
+            if(m_sell!=NULL)
+               m_sell.SetTradingEnabled(allow_sell);
+           }
+         else if(m_params.trend_action==TREND_ACTION_NO_REFILL)
+           {
+            // NO_REFILL: Always allow trading (seed/reseed), but control refill separately
+            if(m_buy!=NULL)
+              {
+               m_buy.SetTradingEnabled(true);  // Always allow seed/reseed
+               m_buy.SetRefillEnabled(allow_buy);  // Block refill during counter-trend
+              }
+            if(m_sell!=NULL)
+              {
+               m_sell.SetTradingEnabled(true);  // Always allow seed/reseed
+               m_sell.SetRefillEnabled(allow_sell);  // Block refill during counter-trend
+              }
+           }
 
          // CLOSE_ALL action: Close counter-trend basket when strong trend detected
          if(m_params.trend_action==TREND_ACTION_CLOSE_ALL)

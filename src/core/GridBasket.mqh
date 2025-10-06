@@ -26,7 +26,8 @@ private:
 
    SGridLevel     m_levels[];
    bool           m_active;
-   bool           m_trading_enabled;  // Trend filter control
+   bool           m_trading_enabled;  // Trend filter control (seed/reseed)
+   bool           m_refill_enabled;   // Refill control (for NO_REFILL mode)
    bool           m_closed_recently;
    int            m_cycles_done;
 
@@ -410,6 +411,7 @@ public:
                          m_magic(magic),
                          m_active(false),
                          m_trading_enabled(true),
+                         m_refill_enabled(true),
                          m_closed_recently(false),
                          m_cycles_done(0),
                          m_total_lot(0.0),
@@ -471,7 +473,9 @@ public:
       if(!m_params.grid_dynamic_enabled)
          return;
       if(!m_trading_enabled)
-         return;  // Trend filter disabled trading
+         return;  // Trend filter disabled trading (NONE/CLOSE_ALL modes)
+      if(!m_refill_enabled)
+         return;  // NO_REFILL mode: block refill, allow existing positions
       if(m_levels_placed>=m_max_levels)
          return;
       if(m_pending_count>m_params.grid_refill_threshold)
@@ -698,6 +702,16 @@ public:
    bool           IsTradingEnabled() const
      {
       return m_trading_enabled;
+     }
+
+   void           SetRefillEnabled(const bool enabled)
+     {
+      m_refill_enabled=enabled;
+     }
+
+   bool           IsRefillEnabled() const
+     {
+      return m_refill_enabled;
      }
   };
 
