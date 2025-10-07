@@ -6,6 +6,7 @@
 
 #include <Trade/Trade.mqh>
 #include "Logger.mqh"
+#include "Types.mqh"
 
 //+------------------------------------------------------------------+
 //| Trend state enum                                                 |
@@ -368,6 +369,25 @@ public:
          default:
             return "UNKNOWN";
         }
+     }
+
+   //+------------------------------------------------------------------+
+   //| Check if direction is counter to current trend                   |
+   //+------------------------------------------------------------------+
+   bool              IsCounterTrend(EDirection dir)
+     {
+      if(!m_enabled)
+         return false;
+      
+      // BUY basket is counter-trend if strong downtrend
+      if(dir == DIR_BUY && IsStrongDowntrend())
+         return true;
+      
+      // SELL basket is counter-trend if strong uptrend
+      if(dir == DIR_SELL && IsStrongUptrend())
+         return true;
+      
+      return false;
      }
 
    //+------------------------------------------------------------------+

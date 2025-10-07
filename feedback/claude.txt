@@ -1,0 +1,300 @@
+🔍 ISSUES FOUND & FIXES NEEDED
+❌ Issue 1: GridBasket - Missing Implementations
+Problem: Một số methods được khai báo nhưng chưa implement đầy đủ:
+cpp// File: GridBasket.mqh
+
+// ❌ ISSUE: ComputeSpacing() không tồn tại trong SpacingEngine
+double spacing = m_spacing.ComputeSpacing();  // ERROR!
+
+// ✅ FIX: Use correct method name
+double spacing_pips = m_spacing.SpacingPips();
+double spacing_px = m_spacing.ToPrice(spacing_pips);
+Fix for GridBasket.mqh:
+cpp//+------------------------------------------------------------------+
+//| FIX 1: SeedInitialGrid() - Use correct spacing methods           |
+//+------------------------------------------------------------------+
+void SeedInitialGrid()
+{
+   if(!m_params.lazy_grid_enabled)
+   {
+      PlaceInitialOrders();
+      return;
+   }
+
+   Print("🌱 LAZY GRID: Seeding initial ", m_params.initial_warm_levels, " levels for ", DirectionLabel());
+
+   double current_price = (m_direction == DIR_BUY) ?
+                         SymbolInfoDouble(m_symbol, SYMBOL_ASK) :
+                         SymbolInfoDouble(m_symbol, SYMBOL_BID);
+
+   // ✅ FIX: Use correct spacing method
+   double spacing_pips = m_spacing.SpacingPips();
+   double spacing_px = m_spacing.ToPrice(spacing_pips);
+
+   // Place only initial warm levels
+   for(int i = 1; i <= m_params.initial_warm_levels && i < m_params.grid_levels; i++)
+   {
+      double level_price;
+      if(m_direction == DIR_BUY)
+         level_price = current_price - (spacing_px * i);
+      else
+         level_price = current_price + (spacing_px * i);
+
+      double lot = LevelLot(i);
+      AppendLevel(level_price, lot);
+   }
+
+   // Update grid state
+   m_grid_state.currentMaxLevel = m_params.initial_warm_levels;
+   m_grid_state.pendingCount = m_params.initial_warm_levels;
+   m_basket_state = GRID_STATE_ACTIVE;
+
+   // Place the orders
+   PlaceInitialOrders();
+}
+
+//+------------------------------------------------------------------+
+//| FIX 2: CheckForNextLevel() - Proper spacing calculation          |
+//+------------------------------------------------------------------+
+bool CheckForNextLevel()
+{
+   if(!m_params.lazy_grid_enabled) return false;
+
+   // Check trend FIRST
+   if(m_trend_filter && m_trend_filter.IsCounterTrend(m_direction))
+   {
+      Print("🛑 Counter-trend detected - HALT expansion for ", DirectionLabel());
+      m_basket_state = GRID_STATE_HALTED;
+      return false;
+   }
+
+   // Check DD threshold
+   double dd = GetDDPercent();
+   if(dd < m_params.max_dd_for_expansion)
+   {
+      Print("⚠️ DD threshold reached (", dd, "%) - HALT expansion");
+      m_basket_state = GRID_STATE_HALTED;
+      return false;
+   }
+
+   // Check if we've reached max levels
+   if(m_grid_state.currentMaxLevel >= m_params.grid_levels - 1)
+   {
+      Print("📊 Max levels reached - Grid full");
+      m_basket_state = GRID_STATE_GRID_FULL;
+      return false;
+   }
+
+   // OK to place next level
+   int next_level = m_grid_state.currentMaxLevel + 1;
+   
+   // ✅ FIX: Proper spacing calculation
+   double spacing_pips = m_spacing.SpacingPips();
+   double spacing_px = m_spacing.ToPrice(spacing_pips);
+
+   double next_price;
+   if(m_direction == DIR_BUY)
+      next_price = m_grid_state.lastFilledPrice - spacing_px;
+   else
+      next_price = m_grid_state.lastFilledPrice + spacing_px;
+
+   // Verify price is reasonable
+   if(!IsPriceReasonable(next_price))
+   {
+      Print("⚠️ Next level price unreasonable - HALT");
+      return false;
+   }
+
+   // Place the next level
+   double lot = LevelLot(next_level);
+   AppendLevel(next_price, lot);
+
+   Print("➕ Placing next level ", next_level, " @ ", next_price);
+
+   // Update state
+   m_grid_state.currentMaxLevel = next_level;
+   m_grid_state.pendingCount++;
+
+   // ✅ FIX: Use proper executor method
+   if(m_executor != NULL)
+   {
+      m_executor.SetMagic(m_magic);
+      ulong ticket = (m_direction == DIR_BUY) ? 
+                     m_executor.Limit(DIR_BUY, next_price, lot, "LazyGrid-L" + IntegerToString(next_level)) :
+                     m_executor.Limit(DIR_SELL, next_price, lot, "LazyGrid-L" + IntegerToString(next_level));
+      
+      if(ticket > 0)
+      {
+         m_levels[next_level].ticket = ticket;
+         Print("✅ Order placed: ticket #", ticket);
+      }
+   }
+
+   return true;
+}
+
+❌ Issue 2: TrendFilter Integration Missing
+Problem: CTrendFilter có method IsCounterTrend() nhưng chưa được implement trong TrendFilter.mqh
+Fix for TrendFilter.mqh:
+cpp//+------------------------------------------------------------------+
+//| Add to TrendFilter.mqh                                           |
+//+------------------------------------------------------------------+
+class CTrendFilter
+{
+   // ... existing code ...
+
+public:
+   //+------------------------------------------------------------------+
+   //| NEW METHOD: Check if trend is counter to basket direction        |
+   //+------------------------------------------------------------------+
+   bool IsCounterTrend(EDirection basket_dir)
+   {
+      if(!m_enabled) return false;
+
+      ETrendState current_trend = GetTrendState();
+
+      // BUY basket counter-trend: Strong downtrend
+      if(basket_dir == DIR_BUY && current_trend == TREND_DOWN)
+         return true;
+
+      // SELL basket counter-trend: Strong uptrend
+      if(basket_dir == DIR_SELL && current_trend == TREND_UP)
+         return true;
+
+      return false;
+   }
+};
+
+❌ Issue 3: OrderExecutor Method Mismatch
+Problem: GridBasket gọi m_executor.PlaceOrder() nhưng OrderExecutor không có method này
+Fix for GridBasket.mqh:
+cpp//+------------------------------------------------------------------+
+//| FIX 3: Use correct executor methods                              |
+//+------------------------------------------------------------------+
+bool CheckForNextLevel()
+{
+   // ... previous checks ...
+
+   // ✅ CORRECT: Use Limit() method instead of PlaceOrder()
+   if(m_executor != NULL)
+   {
+      m_executor.SetMagic(m_magic);
+      
+      ulong ticket = 0;
+      if(m_direction == DIR_BUY)
+         ticket = m_executor.Limit(DIR_BUY, next_price, lot, "Lazy-L" + IntegerToString(next_level));
+      else
+         ticket = m_executor.Limit(DIR_SELL, next_price, lot, "Lazy-L" + IntegerToString(next_level));
+      
+      if(ticket > 0)
+      {
+         // Store ticket in levels array
+         if(next_level < ArraySize(m_levels))
+            m_levels[next_level].ticket = ticket;
+         
+         Print("✅ Lazy grid level ", next_level, " placed: #", ticket);
+         return true;
+      }
+      else
+      {
+         Print("❌ Failed to place lazy grid level ", next_level);
+         return false;
+      }
+   }
+
+   return false;
+}
+
+❌ Issue 4: ClosePositionByMagic() Method Missing
+Problem: CloseFarPositions() gọi m_executor.ClosePositionByMagic() nhưng method này không tồn tại
+Fix for GridBasket.mqh:
+cpp//+------------------------------------------------------------------+
+//| FIX 4: CloseFarPositions() - Use correct close method            |
+//+------------------------------------------------------------------+
+void CloseFarPositions()
+{
+   double current_price = (m_direction == DIR_BUY) ?
+                         SymbolInfoDouble(m_symbol, SYMBOL_BID) :
+                         SymbolInfoDouble(m_symbol, SYMBOL_ASK);
+
+   double threshold = m_params.max_position_distance;
+   double threshold_px = threshold * _Point * 10.0;  // Convert pips to price
+   
+   int closed_count = 0;
+   double total_loss = 0;
+
+   Print("✂️ Checking for far positions (threshold: ", threshold, " pips)");
+
+   // ✅ FIX: Use ClosePosition(ticket, reason) method
+   for(int i = 0; i < ArraySize(m_levels); i++)
+   {
+      if(!m_levels[i].filled || m_levels[i].ticket == 0) continue;
+
+      double distance = MathAbs(current_price - m_levels[i].price) / (_Point * 10.0);
+
+      if(distance > threshold)
+      {
+         // Get current position to check if it still exists
+         if(!PositionSelectByTicket(m_levels[i].ticket))
+            continue;
+
+         double profit = PositionGetDouble(POSITION_PROFIT);
+         total_loss += profit;
+
+         Print("  ├─ Closing L", i, " @ ", m_levels[i].price, " (", distance, " pips) | Loss: $", profit);
+
+         // ✅ CORRECT: Use ClosePosition(ticket, reason)
+         if(m_executor != NULL && m_executor.ClosePosition(m_levels[i].ticket, "FarPosition"))
+         {
+            m_levels[i].filled = false;
+            m_levels[i].ticket = 0;
+            closed_count++;
+         }
+      }
+   }
+
+   if(closed_count > 0)
+   {
+      Print("  └─ Closed ", closed_count, " far positions | Total loss: $", total_loss);
+      RefreshState();  // Recalculate metrics
+   }
+   else
+   {
+      Print("  └─ No far positions found");
+   }
+}
+
+❌ Issue 5: TrapDetector Integration Incomplete
+Problem: GridBasket tạo TrapDetector nhưng chưa initialize properly
+Fix for GridBasket.mqh (Constructor):
+cpp//+------------------------------------------------------------------+
+//| FIX 5: Proper TrapDetector initialization                        |
+//+------------------------------------------------------------------+
+CGridBasket::CGridBasket(/* ... parameters ... */)
+   : m_symbol(symbol),
+     // ... existing initializations ...
+     m_trap_detector(NULL),  // Will be created after trend filter is set
+     m_trend_filter(NULL)
+{
+   // ... existing code ...
+   
+   // ✅ DO NOT create trap detector here
+   // It will be created after SetTrendFilter() is called
+}
+
+//+------------------------------------------------------------------+
+//| Set trend filter and create trap detector                        |
+//+------------------------------------------------------------------+
+void CGridBasket::SetTrendFilter(CTrendFilter* filter)
+{
+   m_trend_filter = filter;
+   
+   // Create trap detector now that we have trend filter reference
+   if(m_trap_detector == NULL && m_params.trap_detection_enabled)
+   {
+      m_trap_detector = new CTrapDetector(m_params, m_trend_filter, m_direction);
+      
+      if(m_log != NULL)
+         m_log.Event(Tag(), "Trap detector initialized");
+   }
+}

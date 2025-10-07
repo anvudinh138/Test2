@@ -129,7 +129,8 @@ public:
    //+------------------------------------------------------------------+
    bool CheckCondition_CounterTrend()
      {
-      if(!m_trend_filter || !m_trend_filter.IsEnabled()) return false;
+      if(CheckPointer(m_trend_filter) == POINTER_INVALID) return false;
+      if(!m_trend_filter.IsEnabled()) return false;
       return m_trend_filter.IsCounterTrend(m_direction);
      }
 

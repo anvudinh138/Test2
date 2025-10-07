@@ -65,6 +65,9 @@ struct SParams
    int          trap_conditions_required;// min conditions to trigger (3/5)
    int          trap_stuck_minutes;      // minutes to consider "stuck"
 
+   // trend filter action
+   ETrendAction trend_action;            // action when trend detected
+
    // quick exit mode
    bool         quick_exit_enabled;      // enable quick exit
    ENUM_QUICK_EXIT_MODE quick_exit_mode; // exit mode (fixed/percentage/dynamic)

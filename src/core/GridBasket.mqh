@@ -429,7 +429,7 @@ private:
          return false;
 
       // Get current spacing in price units
-      double current_spacing_pips=(m_spacing!=NULL)?m_spacing.GetSpacing():m_params.spacing_pips;
+      double current_spacing_pips=(m_spacing!=NULL)?m_spacing.SpacingPips():m_params.spacing_pips;
       double point=SymbolInfoDouble(m_symbol,SYMBOL_POINT);
       double spacing_px=current_spacing_pips*point*10.0;
 
@@ -530,6 +530,16 @@ public:
            }
         }
       ArrayResize(m_levels,0);
+     }
+
+   ~CGridBasket()
+     {
+      // Clean up trap detector if it was created
+      if(m_trap_detector != NULL)
+        {
+         delete m_trap_detector;
+         m_trap_detector = NULL;
+        }
      }
 
    bool           Init(const double anchor_price)
@@ -753,43 +763,27 @@ public:
    //+------------------------------------------------------------------+
 
    // Initialize trap detector and trend filter
-   void           SetTrendFilter(CTrendFilter* filter) { m_trend_filter = filter; }
+   void           SetTrendFilter(CTrendFilter* filter)
+     {
+      m_trend_filter = filter;
 
-   // Lazy grid fill methods (declarations only - implemented below)
-   void           SeedInitialGrid();
-   void           OnLevelFilled(int level);
-   bool           CheckForNextLevel();
+      // Create trap detector now that we have trend filter reference
+      if(m_trap_detector == NULL && m_params.trap_detection_enabled)
+        {
+         m_trap_detector = new CTrapDetector(m_params, m_trend_filter, m_direction);
+         Print("🔍 Trap detector initialized for ", DirectionLabel());
+        }
+     }
+
+   // Lazy grid fill methods - implemented in class body below
+   // (declarations removed to avoid duplicate definition)
+
    int            GetLastFilledLevel() const { return m_grid_state.lastFilledLevel; }
-   bool           IsPriceReasonable(double pending_price) const;
-
-   // Quick exit mode methods (declarations only - implemented below)
-   void           ActivateQuickExitMode();
-   void           DeactivateQuickExitMode();
-   void           CheckQuickExitTP();
-   double         CalculateQuickExitTarget();
    bool           IsInQuickExitMode() const { return m_quick_exit_mode; }
    ENUM_GRID_STATE GetState() const { return m_basket_state; }
-
-   // Gap management methods (declarations only - implemented below)
-   double         CalculateGapSize();
-   void           FillBridgeLevels();
-   void           CloseFarPositions();
    bool           HasLargeGap() const { return m_last_gap_size > m_params.trap_gap_threshold; }
-
-   // Trap detection (declarations only - implemented below)
-   void           HandleTrapDetected();
-   bool           CheckTrapConditions();
-
-   // State management
    void           SetState(ENUM_GRID_STATE state) { m_basket_state = state; }
-   void           ReseedBasket();
-
-   // Position info (declarations only - implemented below)
-   int            GetPositionCount() const;
    double         GetFloatingPnL() const { return m_pnl_usd; }
-   double         GetDDPercent() const;
-   datetime       GetOldestPositionTime() const;
-   double         GetLevelPrice(int level) const;
 
    // TSL detection (placeholder for multi-job spawn trigger)
    bool           IsTSLActive() const
@@ -870,16 +864,17 @@ public:
                             SymbolInfoDouble(m_symbol, SYMBOL_ASK) :
                             SymbolInfoDouble(m_symbol, SYMBOL_BID);
 
-      double spacing = m_spacing.ComputeSpacing();
+      double spacing_pips = m_spacing.SpacingPips();
+      double spacing_px = spacing_pips * _Point * 10.0;  // Convert pips to price
 
       // Place only initial warm levels
       for(int i = 1; i <= m_params.initial_warm_levels && i < m_params.grid_levels; i++)
         {
          double level_price;
          if(m_direction == DIR_BUY)
-            level_price = current_price - (spacing * _Point * i);
+            level_price = current_price - (spacing_px * i);
          else
-            level_price = current_price + (spacing * _Point * i);
+            level_price = current_price + (spacing_px * i);
 
          double lot = LevelLot(i);
          AppendLevel(level_price, lot);
@@ -922,7 +917,7 @@ public:
       if(!m_params.lazy_grid_enabled) return false;
 
       // Check trend FIRST
-      if(m_trend_filter && m_trend_filter.IsCounterTrend(m_direction))
+      if(CheckPointer(m_trend_filter) != POINTER_INVALID && m_trend_filter.IsCounterTrend(m_direction))
         {
          Print("🛑 Counter-trend detected - HALT expansion for ", DirectionLabel());
          m_basket_state = GRID_STATE_HALTED;
@@ -948,13 +943,14 @@ public:
 
       // OK to place next level
       int next_level = m_grid_state.currentMaxLevel + 1;
-      double spacing = m_spacing.ComputeSpacing();
+      double spacing_pips = m_spacing.SpacingPips();
+      double spacing_px = spacing_pips * _Point * 10.0;  // Convert pips to price
 
       double next_price;
       if(m_direction == DIR_BUY)
-         next_price = m_grid_state.lastFilledPrice - (spacing * _Point);
+         next_price = m_grid_state.lastFilledPrice - spacing_px;
       else
-         next_price = m_grid_state.lastFilledPrice + (spacing * _Point);
+         next_price = m_grid_state.lastFilledPrice + spacing_px;
 
       // Verify price is reasonable
       if(!IsPriceReasonable(next_price))
@@ -974,8 +970,9 @@ public:
       m_grid_state.pendingCount++;
 
       // Execute the order
-      ENUM_ORDER_TYPE order_type = (m_direction == DIR_BUY) ? ORDER_TYPE_BUY_LIMIT : ORDER_TYPE_SELL_LIMIT;
-      m_executor.PlaceOrder(m_symbol, order_type, lot, next_price, 0, 0, m_magic, "L" + IntegerToString(next_level));
+      ulong ticket = (m_direction == DIR_BUY) ?
+                     m_executor.Limit(DIR_BUY, next_price, lot, "L" + IntegerToString(next_level)) :
+                     m_executor.Limit(DIR_SELL, next_price, lot, "L" + IntegerToString(next_level));
 
       return true;
      }
@@ -1178,17 +1175,23 @@ public:
 
       Print("✂️ Closing far positions (>", threshold, " pips)");
 
-      // Simplified - close positions tracked in levels array
+      // Close positions tracked in levels array
       for(int i = 0; i < ArraySize(m_levels); i++)
         {
-         if(!m_levels[i].filled) continue;
+         if(!m_levels[i].filled || m_levels[i].ticket == 0) continue;
 
-         double distance = MathAbs(current_price - m_levels[i].price) / _Point;
+         // Verify position still exists
+         if(!PositionSelectByTicket(m_levels[i].ticket))
+            continue;
+
+         double distance = MathAbs(current_price - m_levels[i].price) / (_Point * 10.0);  // Convert to pips
 
          if(distance > threshold)
            {
-            Print("  ├─ Close L", i, " @ ", m_levels[i].price);
-            if(m_executor.ClosePositionByMagic(m_magic, m_levels[i].ticket))
+            double profit = PositionGetDouble(POSITION_PROFIT);
+            Print("  ├─ Close L", i, " @ ", m_levels[i].price, " (", distance, " pips) | PnL: $", profit);
+
+            if(m_executor.ClosePosition(m_levels[i].ticket, "QUICK_EXIT_FAR"))
               {
                m_levels[i].filled = false;
                m_levels[i].ticket = 0;
