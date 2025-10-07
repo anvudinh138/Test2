@@ -1,202 +1,181 @@
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:53:40   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:53:41   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:54:11   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:54:11   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:54:11   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:54:12   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:54:42   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:54:42   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:54:42   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:54:43   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:55:13   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:55:13   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:55:13   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:55:14   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:55:44   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:55:44   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:55:44   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:55:45   [NewsFilter] First fetch - loading news calendar...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:55:45   [NewsFilter] Attempting ForexFactory API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:55:45   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:56:15   [NewsFilter] ForexFactory API failed - trying MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:56:15   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:56:15   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:56:15   [NewsFilter] Both API sources failed - using cached events (if any)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:56:15   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:56:15   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:56:45   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:56:45   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:56:45   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:56:45   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:57:15   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:57:15   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:57:15   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:57:15   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:57:45   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:57:45   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:57:45   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:57:46   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:58:16   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:58:16   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:58:16   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:58:17   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:58:47   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:58:47   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:58:47   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:58:47   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:17   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:17   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:17   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:18   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:48   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:48   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:48   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:48   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.30 00:00:16   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.30 00:00:16   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.30 00:00:16   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:55   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:55   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:55   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:55   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:56   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:56   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:56   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:56   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:57   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:57   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:57   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:57   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   [NewsFilter] Fetching calendar from API (attempt 1/5)...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   [NewsFilter] Fetching historical calendar from MQL5 Calendar API...
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   [NewsFilter] Calendar database not available - ensure MT5 calendar is synced
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   [RGDv2][XAUUSD][JM] Active Jobs: 0, Total Spawns: 4
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#55 buy 0.08 XAUUSD 2621.677]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #42 sell 0.08 XAUUSD at 3832.869 done (based on order #56)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#42 sell 0.08 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.08 at 3832.869 [#56 sell 0.08 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#54 buy 0.04 XAUUSD 2626.842]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #43 sell 0.04 XAUUSD at 3832.869 done (based on order #57)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#43 sell 0.04 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.04 at 3832.869 [#57 sell 0.04 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#53 buy 0.02 XAUUSD 2632.037]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #44 sell 0.02 XAUUSD at 3832.869 done (based on order #58)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#44 sell 0.02 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.02 at 3832.869 [#58 sell 0.02 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#52 buy 0.01 XAUUSD 2637.230]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #45 sell 0.01 XAUUSD at 3832.869 done (based on order #59)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#45 sell 0.01 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.01 at 3832.869 [#59 sell 0.01 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.981 [#50 sell 0.08 XAUUSD 2654.365]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #46 buy 0.08 XAUUSD at 3832.981 done (based on order #60)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#46 buy 0.08 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed buy 0.08 at 3832.981 [#60 buy 0.08 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.981 [#49 sell 0.04 XAUUSD 2649.289]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #47 buy 0.04 XAUUSD at 3832.981 done (based on order #61)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#47 buy 0.04 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed buy 0.04 at 3832.981 [#61 buy 0.04 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.981 [#48 sell 0.02 XAUUSD 2644.279]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #48 buy 0.02 XAUUSD at 3832.981 done (based on order #62)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#48 buy 0.02 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed buy 0.02 at 3832.981 [#62 buy 0.02 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.981 [#47 sell 0.01 XAUUSD 2639.279]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #49 buy 0.01 XAUUSD at 3832.981 done (based on order #63)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#49 buy 0.01 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed buy 0.01 at 3832.981 [#63 buy 0.01 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.981 [#45 sell 0.08 XAUUSD 2654.365]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #50 buy 0.08 XAUUSD at 3832.981 done (based on order #64)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#50 buy 0.08 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed buy 0.08 at 3832.981 [#64 buy 0.08 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.981 [#44 sell 0.04 XAUUSD 2649.289]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #51 buy 0.04 XAUUSD at 3832.981 done (based on order #65)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#51 buy 0.04 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed buy 0.04 at 3832.981 [#65 buy 0.04 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.981 [#43 sell 0.02 XAUUSD 2644.279]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #52 buy 0.02 XAUUSD at 3832.981 done (based on order #66)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#52 buy 0.02 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed buy 0.02 at 3832.981 [#66 buy 0.02 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.981 [#42 sell 0.01 XAUUSD 2639.279]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #53 buy 0.01 XAUUSD at 3832.981 done (based on order #67)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#53 buy 0.01 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed buy 0.01 at 3832.981 [#67 buy 0.01 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.981 [#40 sell 0.08 XAUUSD 2654.767]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #54 buy 0.08 XAUUSD at 3832.981 done (based on order #68)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#54 buy 0.08 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed buy 0.08 at 3832.981 [#68 buy 0.08 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.981 [#39 sell 0.04 XAUUSD 2649.873]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #55 buy 0.04 XAUUSD at 3832.981 done (based on order #69)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#55 buy 0.04 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed buy 0.04 at 3832.981 [#69 buy 0.04 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.981 [#38 sell 0.02 XAUUSD 2644.849]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #56 buy 0.02 XAUUSD at 3832.981 done (based on order #70)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#56 buy 0.02 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed buy 0.02 at 3832.981 [#70 buy 0.02 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.981 [#37 sell 0.01 XAUUSD 2639.861]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #57 buy 0.01 XAUUSD at 3832.981 done (based on order #71)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#57 buy 0.01 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed buy 0.01 at 3832.981 [#71 buy 0.01 XAUUSD at 3832.981]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#31 buy 0.08 XAUUSD 2625.880]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #58 sell 0.08 XAUUSD at 3832.869 done (based on order #72)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#58 sell 0.08 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.08 at 3832.869 [#72 sell 0.08 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#30 buy 0.04 XAUUSD 2630.795]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #59 sell 0.04 XAUUSD at 3832.869 done (based on order #73)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#59 sell 0.04 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.04 at 3832.869 [#73 sell 0.04 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#29 buy 0.02 XAUUSD 2635.697]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #60 sell 0.02 XAUUSD at 3832.869 done (based on order #74)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#60 sell 0.02 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.02 at 3832.869 [#74 sell 0.02 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#28 buy 0.01 XAUUSD 2640.641]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #61 sell 0.01 XAUUSD at 3832.869 done (based on order #75)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#61 sell 0.01 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.01 at 3832.869 [#75 sell 0.01 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#23 buy 0.08 XAUUSD 2626.288]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #62 sell 0.08 XAUUSD at 3832.869 done (based on order #76)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#62 sell 0.08 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.08 at 3832.869 [#76 sell 0.08 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#22 buy 0.04 XAUUSD 2631.187]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #63 sell 0.04 XAUUSD at 3832.869 done (based on order #77)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#63 sell 0.04 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.04 at 3832.869 [#77 sell 0.04 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#21 buy 0.02 XAUUSD 2636.054]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #64 sell 0.02 XAUUSD at 3832.869 done (based on order #78)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#64 sell 0.02 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.02 at 3832.869 [#78 sell 0.02 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#20 buy 0.01 XAUUSD 2640.987]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #65 sell 0.01 XAUUSD at 3832.869 done (based on order #79)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#65 sell 0.01 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.01 at 3832.869 [#79 sell 0.01 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#14 buy 0.16 XAUUSD 2614.664]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #66 sell 0.16 XAUUSD at 3832.869 done (based on order #80)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#66 sell 0.16 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.16 at 3832.869 [#80 sell 0.16 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#13 buy 0.08 XAUUSD 2619.880]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #67 sell 0.08 XAUUSD at 3832.869 done (based on order #81)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#67 sell 0.08 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.08 at 3832.869 [#81 sell 0.08 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#12 buy 0.04 XAUUSD 2625.194]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #68 sell 0.04 XAUUSD at 3832.869 done (based on order #82)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#68 sell 0.04 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.04 at 3832.869 [#82 sell 0.04 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#11 buy 0.02 XAUUSD 2630.449]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #69 sell 0.02 XAUUSD at 3832.869 done (based on order #83)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#69 sell 0.02 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.02 at 3832.869 [#83 sell 0.02 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#6 buy 0.08 XAUUSD 2626.599]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #70 sell 0.08 XAUUSD at 3832.869 done (based on order #84)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#70 sell 0.08 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.08 at 3832.869 [#84 sell 0.08 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#5 buy 0.04 XAUUSD 2631.452]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #71 sell 0.04 XAUUSD at 3832.869 done (based on order #85)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#71 sell 0.04 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.04 at 3832.869 [#85 sell 0.04 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#4 buy 0.02 XAUUSD 2636.269]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #72 sell 0.02 XAUUSD at 3832.869 done (based on order #86)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#72 sell 0.02 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.02 at 3832.869 [#86 sell 0.02 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   position closed due end of test at 3832.869 [#3 buy 0.01 XAUUSD 2641.137]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal #73 sell 0.01 XAUUSD at 3832.869 done (based on order #87)
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   deal performed [#73 sell 0.01 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	2025.09.29 23:59:58   order performed sell 0.01 at 3832.869 [#87 sell 0.01 XAUUSD at 3832.869]
-2025.10.06 21:14:34.028	Core 01	final balance 564860.36 pips
+2025.10.07 23:33:56.051	EURUSD,M1: history begins from 2024.01.01 21:00
+2025.10.07 23:33:56.065	EURUSD,M1 (Exness-MT5Trial14): generating based on real ticks
+2025.10.07 23:33:56.065	testing with execution delay 50 milliseconds
+2025.10.07 23:33:56.065	EURUSD,M1: testing of Experts\RECOVERY-GRID-DIRECTION_v3\RecoveryGridDirection_v3.ex5 from 2025.01.22 00:00 to 2025.09.01 00:00 started with inputs:
+2025.10.07 23:33:56.065	  InpMagic=990045
+2025.10.07 23:33:56.065	  InpSymbolPreset=0
+2025.10.07 23:33:56.065	  InpUseTestedPresets=true
+2025.10.07 23:33:56.065	  InpStatusInterval=60
+2025.10.07 23:33:56.065	  InpLogEvents=true
+2025.10.07 23:33:56.065	  InpAtrTimeframe=15
+2025.10.07 23:33:56.065	  InpAtrPeriod=14
+2025.10.07 23:33:56.065	  InpSpacingMode=2
+2025.10.07 23:33:56.065	  InpSpacingStepPips=25.0
+2025.10.07 23:33:56.065	  InpSpacingAtrMult=0.6
+2025.10.07 23:33:56.065	  InpMinSpacingPips=12.0
+2025.10.07 23:33:56.065	  InpGridLevels=5
+2025.10.07 23:33:56.065	  InpLotBase=0.01
+2025.10.07 23:33:56.065	  InpLotScale=2.0
+2025.10.07 23:33:56.065	  InpDynamicGrid=true
+2025.10.07 23:33:56.065	  InpWarmLevels=5
+2025.10.07 23:33:56.065	  InpRefillThreshold=2
+2025.10.07 23:33:56.065	  InpRefillBatch=3
+2025.10.07 23:33:56.065	  InpMaxPendings=15
+2025.10.07 23:33:56.065	  InpTargetCycleUSD=6.0
+2025.10.07 23:33:56.065	  InpSessionSL_USD=10000.0
+2025.10.07 23:33:56.065	  InpGridProtection=true
+2025.10.07 23:33:56.065	  InpCooldownMinutes=30
+2025.10.07 23:33:56.065	  InpNewsFilterEnabled=true
+2025.10.07 23:33:56.065	  InpNewsImpactFilter=High
+2025.10.07 23:33:56.065	  InpNewsBufferMinutes=30
+2025.10.07 23:33:56.065	  InpOrderCooldownSec=5
+2025.10.07 23:33:56.065	  InpSlippagePips=0
+2025.10.07 23:33:56.065	  InpRespectStops=false
+2025.10.07 23:33:56.065	  InpCommissionPerLot=0.0
+2025.10.07 23:33:56.065	  =
+2025.10.07 23:33:56.065	  InpMultiJobEnabled=false
+2025.10.07 23:33:56.065	  InpMaxJobs=5
+2025.10.07 23:33:56.065	  InpJobSL_USD=50.0
+2025.10.07 23:33:56.065	  InpJobDDThreshold=30.0
+2025.10.07 23:33:56.065	  InpGlobalDDLimit=50.0
+2025.10.07 23:33:56.065	  =
+2025.10.07 23:33:56.065	  InpMagicOffset=421
+2025.10.07 23:33:56.065	  =
+2025.10.07 23:33:56.065	  InpSpawnOnGridFull=false
+2025.10.07 23:33:56.065	  InpSpawnOnTSL=true
+2025.10.07 23:33:56.065	  InpSpawnOnJobDD=true
+2025.10.07 23:33:56.065	  InpSpawnCooldownSec=30
+2025.10.07 23:33:56.065	  InpMaxSpawns=10
+2025.10.07 23:33:56.065	  =
+2025.10.07 23:33:56.065	  InpBasketSL_Enabled=false
+2025.10.07 23:33:56.065	  InpBasketSL_Spacing=2.0
+2025.10.07 23:33:56.065	  InpReseedMode=1
+2025.10.07 23:33:56.065	  InpReseedCooldownMin=30
+2025.10.07 23:33:56.065	  =
+2025.10.07 23:33:56.065	  InpLazyGridEnabled=true
+2025.10.07 23:33:56.065	  InpInitialWarmLevels=1
+2025.10.07 23:33:56.065	  InpMaxLevelDistance=500
+2025.10.07 23:33:56.065	  InpMaxDDForExpansion=-20.0
+2025.10.07 23:33:56.065	  =
+2025.10.07 23:33:56.065	  InpTrapDetectionEnabled=false
+2025.10.07 23:33:56.065	  InpTrapGapThreshold=200.0
+2025.10.07 23:33:56.065	  InpTrapDDThreshold=-20.0
+2025.10.07 23:33:56.065	  InpTrapConditionsRequired=3
+2025.10.07 23:33:56.065	  InpTrapStuckMinutes=30
+2025.10.07 23:33:56.065	  =
+2025.10.07 23:33:56.065	  InpQuickExitEnabled=false
+2025.10.07 23:33:56.065	  InpQuickExitMode=0
+2025.10.07 23:33:56.065	  InpQuickExitLoss=-10.0
+2025.10.07 23:33:56.065	  InpQuickExitPercentage=0.3
+2025.10.07 23:33:56.065	  InpQuickExitCloseFar=true
+2025.10.07 23:33:56.065	  InpQuickExitReseed=true
+2025.10.07 23:33:56.065	  InpQuickExitTimeoutMinutes=60
+2025.10.07 23:33:56.065	  =
+2025.10.07 23:33:56.065	  InpAutoFillBridge=false
+2025.10.07 23:33:56.065	  InpMaxBridgeLevels=5
+2025.10.07 23:33:56.065	  InpMaxPositionDistance=300.0
+2025.10.07 23:33:56.065	  InpMaxAcceptableLoss=-100.0
+2025.10.07 23:33:56.065	  =
+2025.10.07 23:33:56.065	  InpBasketSL_USD=100.0
+2025.10.07 23:33:56.065	  InpAutoReseedAfterSL=true
+2025.10.07 23:33:56.147	EURUSD,M15: history cache allocated for 41572 bars and contains 26349 bars from 2024.01.01 21:00 to 2025.01.21 23:45
+2025.10.07 23:33:56.147	EURUSD,M15: history begins from 2024.01.01 21:00
+2025.10.07 23:33:56.148	2025.01.22 00:00:00   [NewsFilter] Initialized: filter=High, buffer=30 min, max_retries=5
+2025.10.07 23:33:56.149	2025.01.22 00:00:00   [RGDv2][EURUSD][TF] Trend filter DISABLED
+2025.10.07 23:33:56.150	2025.01.22 00:00:00   DEBUG: Lazy Grid ENABLED | initial_warm_levels=1 | max_levels=10
+2025.10.07 23:33:57.147	EURUSD : real ticks begin from 2025.01.05 00:00:00
+2025.10.07 23:33:57.153	2025.01.22 00:00:00   market buy 0.01 EURUSD (1.04055 / 1.04061)
+2025.10.07 23:33:57.153	2025.01.22 00:00:00   deal #2 buy 0.01 EURUSD at 1.04061 done (based on order #2)
+2025.10.07 23:33:57.153	2025.01.22 00:00:00   deal performed [#2 buy 0.01 EURUSD at 1.04061]
+2025.10.07 23:33:57.154	2025.01.22 00:00:00   order performed buy 0.01 at 1.04061 [#2 buy 0.01 EURUSD at 1.04061]
+2025.10.07 23:33:57.156	2025.01.22 00:00:00   CTrade::OrderSend: market buy 0.01 EURUSD [done at 1.04061]
+2025.10.07 23:33:57.156	2025.01.22 00:00:00   [RGDv2][EURUSD][BUY][PRI] DG/SEED dir=BUY level=0 price=1.04061 pendings=0 last=1.04061
+2025.10.07 23:33:57.157	2025.01.22 00:00:00   buy limit 0.02 EURUSD at 1.03811 (1.04055 / 1.04061)
+2025.10.07 23:33:57.159	2025.01.22 00:00:00   CTrade::OrderSend: buy limit 0.02 EURUSD at 1.03811 [done]
+2025.10.07 23:33:57.159	2025.01.22 00:00:00   [RGDv2][EURUSD][BUY][PRI] DG/SEED dir=BUY level=1 price=1.03811 pendings=1 last=1.03811
+2025.10.07 23:33:57.159	2025.01.22 00:00:00   [RGDv2][EURUSD][BUY][PRI] 🌱 Lazy grid initialized: seed + 1 pending levels (max: 10)
+2025.10.07 23:33:57.159	2025.01.22 00:00:00   DEBUG: Lazy Grid ENABLED | initial_warm_levels=1 | max_levels=10
+2025.10.07 23:33:57.159	2025.01.22 00:00:00   market sell 0.01 EURUSD (1.04055 / 1.04061)
+2025.10.07 23:33:57.159	2025.01.22 00:00:00   deal #3 sell 0.01 EURUSD at 1.04055 done (based on order #4)
+2025.10.07 23:33:57.159	2025.01.22 00:00:00   deal performed [#3 sell 0.01 EURUSD at 1.04055]
+2025.10.07 23:33:57.159	2025.01.22 00:00:00   order performed sell 0.01 at 1.04055 [#4 sell 0.01 EURUSD at 1.04055]
+2025.10.07 23:33:57.161	2025.01.22 00:00:00   CTrade::OrderSend: market sell 0.01 EURUSD [done at 1.04055]
+2025.10.07 23:33:57.161	2025.01.22 00:00:00   [RGDv2][EURUSD][SELL][PRI] DG/SEED dir=SELL level=0 price=1.04055 pendings=0 last=1.04055
+2025.10.07 23:33:57.161	2025.01.22 00:00:00   sell limit 0.02 EURUSD at 1.04305 (1.04055 / 1.04061)
+2025.10.07 23:33:57.162	2025.01.22 00:00:00   CTrade::OrderSend: sell limit 0.02 EURUSD at 1.04305 [done]
+2025.10.07 23:33:57.162	2025.01.22 00:00:00   [RGDv2][EURUSD][SELL][PRI] DG/SEED dir=SELL level=1 price=1.04305 pendings=1 last=1.04305
+2025.10.07 23:33:57.162	2025.01.22 00:00:00   [RGDv2][EURUSD][SELL][PRI] 🌱 Lazy grid initialized: seed + 1 pending levels (max: 10)
+2025.10.07 23:33:57.162	2025.01.22 00:00:00   [RGDv2][EURUSD][LC] Lifecycle bootstrapped
+2025.10.07 23:33:57.162	2025.01.22 00:00:00   [RGDv2] Init OK - Ask=1.04061 Bid=1.04055 LotBase=0.01 GridLevels=10 Dynamic=ON
+2025.10.07 23:33:57.162	2025.01.22 00:00:00   [RGDv2] News Filter: ENABLED (Impact=High, Buffer=30 min)
+2025.10.07 23:33:57.162	2025.01.22 00:00:00   [RGDv2] Grid Protection: ENABLED (Cooldown=30 min after grid full)
+2025.10.07 23:33:57.162	2025.01.22 00:00:00   [RGDv2] Preset: AUTO (Spacing=25.0, ATR=PERIOD_M15, Cooldown=30 min)
+2025.10.07 23:33:57.169	2025.01.22 00:00:00   [NewsFilter] WebRequest failed (attempt 1/5): error 4014
+2025.10.07 23:33:57.169	2025.01.22 00:00:00   [NewsFilter] Enable WebRequest for URL: https://nfs.faireconomy.media
+2025.10.07 23:33:57.169	2025.01.22 00:00:00   [NewsFilter] Go to: Tools → Options → Expert Advisors → Allow WebRequest
+2025.10.07 23:33:57.182	2025.01.22 00:00:30   📍 Level 0 filled for BUY
+2025.10.07 23:33:57.183	2025.01.22 00:00:30   ➕ Placing next level 1 @ 1.03811
+2025.10.07 23:33:57.183	2025.01.22 00:00:30   buy limit 0.02 EURUSD at 1.03811 (1.04076 / 1.04083)
+2025.10.07 23:33:57.184	2025.01.22 00:00:30   CTrade::OrderSend: buy limit 0.02 EURUSD at 1.03811 [done]
+2025.10.07 23:33:57.185	2025.01.22 00:00:30   📍 Level 0 filled for SELL
+2025.10.07 23:33:57.185	2025.01.22 00:00:30   ➕ Placing next level 1 @ 1.04305
+2025.10.07 23:33:57.406	2025.01.22 00:01:01   📍 Level 0 filled for BUY
+2025.10.07 23:33:57.406	2025.01.22 00:01:01   ➕ Placing next level 2 @ 1.03811
+2025.10.07 23:33:57.406	2025.01.22 00:01:01   buy limit 0.04 EURUSD at 1.03811 (1.04080 / 1.04087)
+2025.10.07 23:33:57.407	2025.01.22 00:01:01   CTrade::OrderSend: buy limit 0.04 EURUSD at 1.03811 [done]
+2025.10.07 23:33:57.407	2025.01.22 00:01:01   📍 Level 0 filled for SELL
+2025.10.07 23:33:57.407	2025.01.22 00:01:01   ➕ Placing next level 2 @ 1.04305
+2025.10.07 23:33:57.631	2025.01.22 00:01:32   📍 Level 0 filled for BUY
+2025.10.07 23:33:57.631	2025.01.22 00:01:32   ➕ Placing next level 3 @ 1.03811
+2025.10.07 23:33:57.631	2025.01.22 00:01:32   buy limit 0.08 EURUSD at 1.03811 (1.04086 / 1.04092)
+2025.10.07 23:33:57.633	2025.01.22 00:01:32   CTrade::OrderSend: buy limit 0.08 EURUSD at 1.03811 [done]
+2025.10.07 23:33:57.633	2025.01.22 00:01:32   📍 Level 0 filled for SELL
+2025.10.07 23:33:57.633	2025.01.22 00:01:32   ➕ Placing next level 3 @ 1.04305
+2025.10.07 23:33:57.856	2025.01.22 00:02:03   📍 Level 0 filled for BUY
+2025.10.07 23:33:57.856	2025.01.22 00:02:03   ➕ Placing next level 4 @ 1.03811
+2025.10.07 23:33:57.856	2025.01.22 00:02:03   buy limit 0.16 EURUSD at 1.03811 (1.04090 / 1.04096)
+2025.10.07 23:33:57.857	2025.01.22 00:02:03   CTrade::OrderSend: buy limit 0.16 EURUSD at 1.03811 [done]
+2025.10.07 23:33:57.857	2025.01.22 00:02:03   📍 Level 0 filled for SELL
+2025.10.07 23:33:57.857	2025.01.22 00:02:03   ➕ Placing next level 4 @ 1.04305
+2025.10.07 23:33:58.080	2025.01.22 00:02:39   📍 Level 0 filled for BUY
+2025.10.07 23:33:58.080	2025.01.22 00:02:39   ➕ Placing next level 5 @ 1.03811
+2025.10.07 23:33:58.080	2025.01.22 00:02:39   buy limit 0.32 EURUSD at 1.03811 (1.04101 / 1.04107)
+2025.10.07 23:33:58.081	2025.01.22 00:02:39   CTrade::OrderSend: buy limit 0.32 EURUSD at 1.03811 [done]
+2025.10.07 23:33:58.081	2025.01.22 00:02:39   📍 Level 0 filled for SELL
+2025.10.07 23:33:58.081	2025.01.22 00:02:39   ➕ Placing next level 5 @ 1.04305
+2025.10.07 23:33:58.304	2025.01.22 00:03:10   📍 Level 0 filled for BUY
+2025.10.07 23:33:58.304	2025.01.22 00:03:10   ➕ Placing next level 6 @ 1.03811
+2025.10.07 23:33:58.304	2025.01.22 00:03:10   buy limit 0.64 EURUSD at 1.03811 (1.04112 / 1.04118)
+2025.10.07 23:33:58.306	2025.01.22 00:03:10   CTrade::OrderSend: buy limit 0.64 EURUSD at 1.03811 [done]
+2025.10.07 23:33:58.306	2025.01.22 00:03:10   📍 Level 0 filled for SELL
+2025.10.07 23:33:58.306	2025.01.22 00:03:10   ➕ Placing next level 6 @ 1.04305
+2025.10.07 23:33:58.529	2025.01.22 00:03:41   📍 Level 0 filled for BUY
+2025.10.07 23:33:58.529	2025.01.22 00:03:41   ➕ Placing next level 7 @ 1.03811
+2025.10.07 23:33:58.529	2025.01.22 00:03:41   buy limit 1.28 EURUSD at 1.03811 (1.04120 / 1.04126)
+2025.10.07 23:33:58.530	2025.01.22 00:03:41   CTrade::OrderSend: buy limit 1.28 EURUSD at 1.03811 [done]
+2025.10.07 23:33:58.530	2025.01.22 00:03:41   📍 Level 0 filled for SELL
+2025.10.07 23:33:58.530	2025.01.22 00:03:41   ➕ Placing next level 7 @ 1.04305
+2025.10.07 23:33:58.752	2025.01.22 00:04:14   📍 Level 0 filled for BUY
+2025.10.07 23:33:58.752	2025.01.22 00:04:14   ➕ Placing next level 8 @ 1.03811
+2025.10.07 23:33:58.752	2025.01.22 00:04:14   buy limit 2.56 EURUSD at 1.03811 (1.04110 / 1.04116)
+2025.10.07 23:33:58.754	2025.01.22 00:04:14   CTrade::OrderSend: buy limit 2.56 EURUSD at 1.03811 [done]
+2025.10.07 23:33:58.754	2025.01.22 00:04:14   📍 Level 0 filled for SELL
+2025.10.07 23:33:58.754	2025.01.22 00:04:14   ➕ Placing next level 8 @ 1.04305
+2025.10.07 23:33:58.975	2025.01.22 00:04:48   📍 Level 0 filled for BUY
+2025.10.07 23:33:58.975	2025.01.22 00:04:48   ➕ Placing next level 9 @ 1.03811
+2025.10.07 23:33:58.975	2025.01.22 00:04:48   buy limit 5.12 EURUSD at 1.03811 (1.04125 / 1.04131)
+2025.10.07 23:33:58.977	2025.01.22 00:04:48   CTrade::OrderSend: buy limit 5.12 EURUSD at 1.03811 [done]
+2025.10.07 23:33:58.977	2025.01.22 00:04:48   📍 Level 0 filled for SELL
+2025.10.07 23:33:58.977	2025.01.22 00:04:48   ➕ Placing next level 9 @ 1.04305
+2025.10.07 23:33:59.200	2025.01.22 00:05:19   📍 Level 0 filled for BUY
+2025.10.07 23:33:59.200	2025.01.22 00:05:19   📊 Max levels reached - Grid full
+2025.10.07 23:33:59.200	2025.01.22 00:05:19   🛑 Expansion halted for BUY
+2025.10.07 23:33:59.200	2025.01.22 00:05:19   📍 Level 0 filled for SELL
+2025.10.07 23:33:59.200	2025.01.22 00:05:19   📊 Max levels reached - Grid full
+2025.10.07 23:33:59.200	2025.01.22 00:05:19   🛑 Expansion halted for SELL
+2025.10.07 23:33:59.422	2025.01.22 00:05:53   📍 Level 0 filled for BUY
+2025.10.07 23:33:59.422	2025.01.22 00:05:53   📊 Max levels reached - Grid full
+2025.10.07 23:33:59.422	2025.01.22 00:05:53   🛑 Expansion halted for BUY
+2025.10.07 23:33:59.422	2025.01.22 00:05:53   📍 Level 0 filled for SELL
+2025.10.07 23:33:59.422	2025.01.22 00:05:53   📊 Max levels reached - Grid full
+2025.10.07 23:33:59.422	2025.01.22 00:05:53   🛑 Expansion halted for SELL

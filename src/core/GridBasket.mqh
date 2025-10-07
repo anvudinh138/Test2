@@ -61,6 +61,7 @@ private:
    // Lazy grid fill tracking
    SGridState     m_grid_state;
    ENUM_GRID_STATE m_basket_state;
+   int            m_last_filled_count;  // Track filled count to detect new fills
 
    // Trap detection
    CTrapDetector  *m_trap_detector;
@@ -163,8 +164,9 @@ private:
       m_pending_count=0;
       
       // Pre-allocate full array but only fill warm levels
-      if(m_params.grid_dynamic_enabled)
+      if(m_params.lazy_grid_enabled || m_params.grid_dynamic_enabled)
         {
+         // Lazy Grid or Dynamic Grid: Pre-allocate array, fill levels on-demand
          ArrayResize(m_levels,m_max_levels);
          for(int i=0;i<m_max_levels;i++)
            {
@@ -208,10 +210,12 @@ private:
 
       m_executor.SetMagic(m_magic);
 
-      if(m_params.grid_dynamic_enabled)
+      // Check if lazy grid is enabled (v3.3 new system)
+      if(m_params.lazy_grid_enabled)
         {
-         // Dynamic mode: only place seed + warm levels
-         int warm=MathMin(m_params.grid_warm_levels,m_max_levels-1);
+         Print("DEBUG: Lazy Grid ENABLED | initial_warm_levels=", m_params.initial_warm_levels, " | max_levels=", m_max_levels);
+         // Lazy Grid mode: only place seed + initial warm levels (1-2 levels)
+         int warm=MathMin(m_params.initial_warm_levels,m_max_levels-1);
          int warm_cap=warm;
          if(m_params.grid_max_pendings>0)
             warm_cap=MathMin(warm,m_params.grid_max_pendings);
@@ -265,11 +269,70 @@ private:
             m_last_grid_price=anchor;
          
          if(m_log!=NULL)
+            m_log.Event(Tag(),StringFormat("🌱 Lazy grid initialized: seed + %d pending levels (max: %d)",m_pending_count,m_max_levels));
+        }
+      else if(m_params.grid_dynamic_enabled)
+        {
+         // Legacy Dynamic Grid mode (v3.0 compatibility)
+         int warm=MathMin(m_params.grid_warm_levels,m_max_levels-1);
+         int warm_cap=warm;
+         if(m_params.grid_max_pendings>0)
+            warm_cap=MathMin(warm,m_params.grid_max_pendings);
+         m_executor.BypassNext(1+warm_cap);
+
+         double spacing_px=m_spacing.ToPrice(m_initial_spacing_pips);
+         double anchor=SymbolInfoDouble(m_symbol,(m_direction==DIR_BUY)?SYMBOL_ASK:SYMBOL_BID);
+
+         // Place seed
+         double seed_lot=LevelLot(0);
+         ulong market_ticket=m_executor.Market(m_direction,seed_lot,"RGDv2_Seed");
+         if(market_ticket>0)
+           {
+            m_levels[0].price=anchor;
+            m_levels[0].lot=seed_lot;
+            m_levels[0].ticket=market_ticket;
+            m_levels[0].filled=true;
+            m_levels_placed++;
+            m_last_grid_price=anchor;
+            LogDynamic("SEED",0,anchor);
+           }
+
+         // Place warm pending
+         for(int i=1;i<=warm_cap;i++)
+           {
+            double price=anchor;
+            if(m_direction==DIR_BUY)
+               price-=spacing_px*i;
+            else
+               price+=spacing_px*i;
+            double lot=LevelLot(i);
+            ulong pending=(m_direction==DIR_BUY)?m_executor.Limit(DIR_BUY,price,lot,"RGDv2_Grid")
+                                                :m_executor.Limit(DIR_SELL,price,lot,"RGDv2_Grid");
+            if(pending>0)
+              {
+               m_levels[i].price=price;
+               m_levels[i].lot=lot;
+               m_levels[i].ticket=pending;
+               m_levels[i].filled=false;
+               m_levels_placed++;
+               m_pending_count++;
+               m_last_grid_price=price;
+               LogDynamic("SEED",i,price);
+              }
+           }
+
+         if((warm>warm_cap) || (m_params.grid_max_pendings>0 && m_pending_count>=m_params.grid_max_pendings))
+            LogDynamic("LIMIT",m_levels_placed,m_last_grid_price);
+
+         if(m_pending_count==0)
+            m_last_grid_price=anchor;
+
+         if(m_log!=NULL)
             m_log.Event(Tag(),StringFormat("Dynamic grid warm=%d/%d",m_levels_placed,m_max_levels));
         }
       else
         {
-         // Old static mode: place all
+         // Static mode: place all levels at once
          m_executor.BypassNext(ArraySize(m_levels));
          
          double seed_lot=m_levels[0].lot;
@@ -503,6 +566,7 @@ public:
                          m_volume_max(0.0),
                          m_volume_digits(0),
                          m_basket_state(GRID_STATE_ACTIVE),
+                         m_last_filled_count(0),
                          m_trap_detector(NULL),
                          m_trend_filter(NULL),
                          m_quick_exit_mode(false),
@@ -563,6 +627,10 @@ public:
 
    void           RefillBatch()
      {
+      // Skip refill if lazy grid is enabled (uses CheckForNextLevel instead)
+      if(m_params.lazy_grid_enabled)
+         return;
+
       if(!m_params.grid_dynamic_enabled)
          return;
       if(!m_trading_enabled)
@@ -630,6 +698,48 @@ public:
          return;
       m_closed_recently=false;
       RefreshState();
+
+      // Lazy Grid: Track filled levels and trigger expansion ONCE per level
+      if(m_params.lazy_grid_enabled)
+        {
+         // Count how many levels are currently filled
+         int filled_count = 0;
+         for(int i = 0; i < ArraySize(m_levels); i++)
+           {
+            if(m_levels[i].filled && m_levels[i].ticket > 0)
+              {
+               if(PositionSelectByTicket(m_levels[i].ticket))
+                  filled_count++;
+              }
+           }
+
+         // If filled count increased since last check, trigger expansion
+         if(filled_count > m_last_filled_count)
+           {
+            // New level was filled - find which level was just filled
+            // Check levels FORWARD from lastFilledLevel to find the newly filled one
+            for(int i = m_grid_state.lastFilledLevel + 1; i < ArraySize(m_levels); i++)
+              {
+               if(m_levels[i].filled && m_levels[i].ticket > 0)
+                 {
+                  // This level is filled, check if position exists
+                  if(PositionSelectByTicket(m_levels[i].ticket))
+                    {
+                     // Found newly filled level!
+                     OnLevelFilled(i);
+                     break;  // Only process one level per update
+                    }
+                 }
+              }
+
+            m_last_filled_count = filled_count;
+           }
+         else if(filled_count < m_last_filled_count)
+           {
+            // Positions closed, update counter
+            m_last_filled_count = filled_count;
+           }
+        }
 
       // Basket Stop Loss check (spacing-based)
       if(m_params.basket_sl_enabled && CheckBasketSL())
