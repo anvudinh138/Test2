@@ -94,6 +94,47 @@ input double            InpBasketSL_Spacing     = 2.0;         // SL distance in
 input EReseedMode       InpReseedMode           = RESEED_COOLDOWN; // When to reseed after basket SL
 input int               InpReseedCooldownMin    = 30;          // Cooldown minutes before reseed (for COOLDOWN mode)
 
+//+------------------------------------------------------------------+
+//| NEW INPUT PARAMETERS FOR LAZY GRID FILL & TRAP DETECTION         |
+//+------------------------------------------------------------------+
+
+//--- Lazy Grid Fill
+input group             "=== Lazy Grid Fill (v3.3 - Smart Expansion) ==="
+input bool              InpLazyGridEnabled      = true;        // Enable lazy grid fill
+input int               InpInitialWarmLevels    = 1;           // Initial pending levels (1-3)
+input int               InpMaxLevelDistance     = 500;         // Max distance to next level (pips)
+input double            InpMaxDDForExpansion    = -20.0;       // Stop expanding if DD < this (%)
+
+//--- Trap Detection
+input group             "=== Trap Detection (v3.3 - Smart Exit) ==="
+input bool              InpTrapDetectionEnabled = true;        // Enable trap detection
+input double            InpTrapGapThreshold     = 200.0;       // Gap threshold (pips)
+input double            InpTrapDDThreshold      = -20.0;       // DD threshold (%)
+input int               InpTrapConditionsRequired = 3;         // Min conditions to trigger (3/5)
+input int               InpTrapStuckMinutes     = 30;          // Minutes to consider "stuck"
+
+//--- Quick Exit Mode
+input group             "=== Quick Exit Mode (v3.3 - Escape Trap) ==="
+input bool              InpQuickExitEnabled     = true;        // Enable quick exit
+input ENUM_QUICK_EXIT_MODE InpQuickExitMode    = QE_FIXED;    // Exit mode
+input double            InpQuickExitLoss        = -10.0;       // Fixed loss amount ($)
+input double            InpQuickExitPercentage  = 0.30;        // Percentage mode (30% of DD)
+input bool              InpQuickExitCloseFar    = true;        // Close far positions in quick exit
+input bool              InpQuickExitReseed      = true;        // Auto reseed after exit
+input int               InpQuickExitTimeoutMinutes = 60;       // Timeout (minutes)
+
+//--- Gap Management
+input group             "=== Gap Management (v3.3 - Bridge Levels) ==="
+input bool              InpAutoFillBridge       = true;        // Auto fill bridge levels
+input int               InpMaxBridgeLevels      = 5;           // Max bridge levels per gap
+input double            InpMaxPositionDistance  = 300.0;       // Max distance for position (pips)
+input double            InpMaxAcceptableLoss    = -100.0;      // Max loss to abandon trapped ($)
+
+//--- Basket Management
+input group             "=== Basket Management (v3.3 - Risk Control) ==="
+input double            InpBasketSL_USD         = 100.0;       // Basket stop loss ($, 0=disabled)
+input bool              InpAutoReseedAfterSL    = true;        // Auto reseed after SL hit
+
 //--- Globals
 SParams              g_params;
 CLogger             *g_logger        = NULL;
@@ -159,6 +200,42 @@ void BuildParams()
    g_params.basket_sl_spacing     =InpBasketSL_Spacing;
    g_params.reseed_mode           =InpReseedMode;
    g_params.reseed_cooldown_min   =InpReseedCooldownMin;
+
+   //+------------------------------------------------------------------+
+   //| NEW PARAMETERS FOR LAZY GRID FILL & TRAP DETECTION              |
+   //+------------------------------------------------------------------+
+
+   // Lazy grid fill parameters
+   g_params.lazy_grid_enabled     =InpLazyGridEnabled;
+   g_params.initial_warm_levels   =InpInitialWarmLevels;
+   g_params.max_level_distance    =InpMaxLevelDistance;
+   g_params.max_dd_for_expansion  =InpMaxDDForExpansion;
+
+   // Trap detection parameters
+   g_params.trap_detection_enabled =InpTrapDetectionEnabled;
+   g_params.trap_gap_threshold    =InpTrapGapThreshold;
+   g_params.trap_dd_threshold     =InpTrapDDThreshold;
+   g_params.trap_conditions_required=InpTrapConditionsRequired;
+   g_params.trap_stuck_minutes    =InpTrapStuckMinutes;
+
+   // Quick exit mode parameters
+   g_params.quick_exit_enabled    =InpQuickExitEnabled;
+   g_params.quick_exit_mode       =InpQuickExitMode;
+   g_params.quick_exit_loss       =InpQuickExitLoss;
+   g_params.quick_exit_percentage =InpQuickExitPercentage;
+   g_params.quick_exit_close_far  =InpQuickExitCloseFar;
+   g_params.quick_exit_reseed     =InpQuickExitReseed;
+   g_params.quick_exit_timeout_min=InpQuickExitTimeoutMinutes;
+
+   // Gap management parameters
+   g_params.auto_fill_bridge      =InpAutoFillBridge;
+   g_params.max_bridge_levels     =InpMaxBridgeLevels;
+   g_params.max_position_distance =InpMaxPositionDistance;
+   g_params.max_acceptable_loss   =InpMaxAcceptableLoss;
+
+   // Basket management parameters
+   g_params.basket_sl_usd         =InpBasketSL_USD;
+   g_params.auto_reseed_after_sl  =InpAutoReseedAfterSL;
 
    // THEN apply preset overrides (if not CUSTOM)
    // Preset will override only the critical params (spacing, grid, target, cooldown)

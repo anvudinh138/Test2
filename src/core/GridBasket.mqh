@@ -11,6 +11,8 @@
 #include "OrderExecutor.mqh"
 #include "Logger.mqh"
 #include "MathHelpers.mqh"
+#include "TrapDetector.mqh"
+#include "TrendFilter.mqh"
 
 class CGridBasket
   {
@@ -51,6 +53,29 @@ private:
    double         m_volume_min;
    double         m_volume_max;
    int            m_volume_digits;
+
+   //+------------------------------------------------------------------+
+   //| NEW MEMBERS FOR LAZY GRID FILL & TRAP DETECTION                  |
+   //+------------------------------------------------------------------+
+
+   // Lazy grid fill tracking
+   SGridState     m_grid_state;
+   ENUM_GRID_STATE m_basket_state;
+
+   // Trap detection
+   CTrapDetector  *m_trap_detector;
+   CTrendFilter   *m_trend_filter;
+
+   // Quick exit mode
+   bool           m_quick_exit_mode;
+   double         m_quick_exit_target;
+   double         m_original_target;
+   datetime       m_quick_exit_start_time;
+   SQuickExitConfig m_quick_exit_config;
+
+   // Gap tracking
+   double         m_last_gap_size;
+   datetime       m_last_gap_check;
 
    string         Tag() const
      {
@@ -476,8 +501,18 @@ public:
                          m_volume_step(0.0),
                          m_volume_min(0.0),
                          m_volume_max(0.0),
-                         m_volume_digits(0)
+                         m_volume_digits(0),
+                         m_basket_state(GRID_STATE_ACTIVE),
+                         m_trap_detector(NULL),
+                         m_trend_filter(NULL),
+                         m_quick_exit_mode(false),
+                         m_quick_exit_target(0.0),
+                         m_original_target(0.0),
+                         m_quick_exit_start_time(0),
+                         m_last_gap_size(0.0),
+                         m_last_gap_check(0)
      {
+      m_grid_state.Reset();
       m_volume_step=SymbolInfoDouble(m_symbol,SYMBOL_VOLUME_STEP);
       m_volume_min=SymbolInfoDouble(m_symbol,SYMBOL_VOLUME_MIN);
       m_volume_max=SymbolInfoDouble(m_symbol,SYMBOL_VOLUME_MAX);
@@ -713,6 +748,49 @@ public:
       CloseBasket(reason);
      }
 
+   //+------------------------------------------------------------------+
+   //| NEW PUBLIC METHODS FOR LAZY GRID & QUICK EXIT                    |
+   //+------------------------------------------------------------------+
+
+   // Initialize trap detector and trend filter
+   void           SetTrendFilter(CTrendFilter* filter) { m_trend_filter = filter; }
+
+   // Lazy grid fill methods (declarations only - implemented below)
+   void           SeedInitialGrid();
+   void           OnLevelFilled(int level);
+   bool           CheckForNextLevel();
+   int            GetLastFilledLevel() const { return m_grid_state.lastFilledLevel; }
+   bool           IsPriceReasonable(double pending_price) const;
+
+   // Quick exit mode methods (declarations only - implemented below)
+   void           ActivateQuickExitMode();
+   void           DeactivateQuickExitMode();
+   void           CheckQuickExitTP();
+   double         CalculateQuickExitTarget();
+   bool           IsInQuickExitMode() const { return m_quick_exit_mode; }
+   ENUM_GRID_STATE GetState() const { return m_basket_state; }
+
+   // Gap management methods (declarations only - implemented below)
+   double         CalculateGapSize();
+   void           FillBridgeLevels();
+   void           CloseFarPositions();
+   bool           HasLargeGap() const { return m_last_gap_size > m_params.trap_gap_threshold; }
+
+   // Trap detection (declarations only - implemented below)
+   void           HandleTrapDetected();
+   bool           CheckTrapConditions();
+
+   // State management
+   void           SetState(ENUM_GRID_STATE state) { m_basket_state = state; }
+   void           ReseedBasket();
+
+   // Position info (declarations only - implemented below)
+   int            GetPositionCount() const;
+   double         GetFloatingPnL() const { return m_pnl_usd; }
+   double         GetDDPercent() const;
+   datetime       GetOldestPositionTime() const;
+   double         GetLevelPrice(int level) const;
+
    // TSL detection (placeholder for multi-job spawn trigger)
    bool           IsTSLActive() const
      {
@@ -768,6 +846,430 @@ public:
    bool           IsRefillEnabled() const
      {
       return m_refill_enabled;
+     }
+
+   //+------------------------------------------------------------------+
+   //| IMPLEMENTATION OF NEW METHODS FOR LAZY GRID & QUICK EXIT         |
+   //+------------------------------------------------------------------+
+
+   //+------------------------------------------------------------------+
+   //| Seed initial grid with lazy fill (only 1-2 levels)               |
+   //+------------------------------------------------------------------+
+   void SeedInitialGrid()
+     {
+      if(!m_params.lazy_grid_enabled)
+        {
+         // Use standard grid fill
+         PlaceInitialOrders();
+         return;
+        }
+
+      Print("🌱 LAZY GRID: Seeding initial ", m_params.initial_warm_levels, " levels for ", DirectionLabel());
+
+      double current_price = (m_direction == DIR_BUY) ?
+                            SymbolInfoDouble(m_symbol, SYMBOL_ASK) :
+                            SymbolInfoDouble(m_symbol, SYMBOL_BID);
+
+      double spacing = m_spacing.ComputeSpacing();
+
+      // Place only initial warm levels
+      for(int i = 1; i <= m_params.initial_warm_levels && i < m_params.grid_levels; i++)
+        {
+         double level_price;
+         if(m_direction == DIR_BUY)
+            level_price = current_price - (spacing * _Point * i);
+         else
+            level_price = current_price + (spacing * _Point * i);
+
+         double lot = LevelLot(i);
+         AppendLevel(level_price, lot);
+        }
+
+      // Update grid state
+      m_grid_state.currentMaxLevel = m_params.initial_warm_levels;
+      m_grid_state.pendingCount = m_params.initial_warm_levels;
+      m_basket_state = GRID_STATE_ACTIVE;
+
+      // Place the orders
+      PlaceInitialOrders();
+     }
+
+   //+------------------------------------------------------------------+
+   //| Called when a level fills - expand grid on demand                |
+   //+------------------------------------------------------------------+
+   void OnLevelFilled(int level)
+     {
+      if(!m_params.lazy_grid_enabled) return;
+
+      m_grid_state.lastFilledLevel = level;
+      m_grid_state.lastFilledPrice = m_levels[level].price;
+      m_grid_state.lastFilledTime = TimeCurrent();
+
+      Print("📍 Level ", level, " filled for ", DirectionLabel());
+
+      // Check if we should expand
+      if(!CheckForNextLevel())
+        {
+         Print("🛑 Expansion halted for ", DirectionLabel());
+        }
+     }
+
+   //+------------------------------------------------------------------+
+   //| Check if we should place next level                              |
+   //+------------------------------------------------------------------+
+   bool CheckForNextLevel()
+     {
+      if(!m_params.lazy_grid_enabled) return false;
+
+      // Check trend FIRST
+      if(m_trend_filter && m_trend_filter.IsCounterTrend(m_direction))
+        {
+         Print("🛑 Counter-trend detected - HALT expansion for ", DirectionLabel());
+         m_basket_state = GRID_STATE_HALTED;
+         return false;
+        }
+
+      // Check DD threshold
+      double dd = GetDDPercent();
+      if(dd < m_params.max_dd_for_expansion)
+        {
+         Print("⚠️ DD threshold reached (", dd, "%) - HALT expansion");
+         m_basket_state = GRID_STATE_HALTED;
+         return false;
+        }
+
+      // Check if we've reached max levels
+      if(m_grid_state.currentMaxLevel >= m_params.grid_levels - 1)
+        {
+         Print("📊 Max levels reached - Grid full");
+         m_basket_state = GRID_STATE_GRID_FULL;
+         return false;
+        }
+
+      // OK to place next level
+      int next_level = m_grid_state.currentMaxLevel + 1;
+      double spacing = m_spacing.ComputeSpacing();
+
+      double next_price;
+      if(m_direction == DIR_BUY)
+         next_price = m_grid_state.lastFilledPrice - (spacing * _Point);
+      else
+         next_price = m_grid_state.lastFilledPrice + (spacing * _Point);
+
+      // Verify price is reasonable
+      if(!IsPriceReasonable(next_price))
+        {
+         Print("⚠️ Next level price unreasonable - HALT");
+         return false;
+        }
+
+      // Place the next level
+      double lot = LevelLot(next_level);
+      AppendLevel(next_price, lot);
+
+      Print("➕ Placing next level ", next_level, " @ ", next_price);
+
+      // Update state
+      m_grid_state.currentMaxLevel = next_level;
+      m_grid_state.pendingCount++;
+
+      // Execute the order
+      ENUM_ORDER_TYPE order_type = (m_direction == DIR_BUY) ? ORDER_TYPE_BUY_LIMIT : ORDER_TYPE_SELL_LIMIT;
+      m_executor.PlaceOrder(m_symbol, order_type, lot, next_price, 0, 0, m_magic, "L" + IntegerToString(next_level));
+
+      return true;
+     }
+
+   //+------------------------------------------------------------------+
+   //| Check if pending price is reasonable                             |
+   //+------------------------------------------------------------------+
+   bool IsPriceReasonable(double pending_price) const
+     {
+      double current_price = (m_direction == DIR_BUY) ?
+                            SymbolInfoDouble(m_symbol, SYMBOL_BID) :
+                            SymbolInfoDouble(m_symbol, SYMBOL_ASK);
+
+      double distance = MathAbs(current_price - pending_price) / _Point;
+
+      if(m_direction == DIR_SELL)
+        {
+         // SELL pending must be ABOVE current price
+         return (pending_price > current_price) && (distance < m_params.max_level_distance);
+        }
+      else
+        {
+         // BUY pending must be BELOW current price
+         return (pending_price < current_price) && (distance < m_params.max_level_distance);
+        }
+     }
+
+   //+------------------------------------------------------------------+
+   //| Activate quick exit mode                                         |
+   //+------------------------------------------------------------------+
+   void ActivateQuickExitMode()
+     {
+      if(m_quick_exit_mode || !m_params.quick_exit_enabled) return;
+
+      Print("⚡ QUICK EXIT MODE ACTIVATED for ", DirectionLabel());
+
+      m_quick_exit_mode = true;
+      m_quick_exit_start_time = TimeCurrent();
+
+      // Backup original target
+      m_original_target = m_params.target_cycle_usd;
+
+      // Calculate quick exit target
+      m_quick_exit_target = CalculateQuickExitTarget();
+
+      Print("   Current PnL: $", GetFloatingPnL());
+      Print("   Quick exit target: $", m_quick_exit_target);
+
+      // Set new target (can be negative for accepting loss)
+      m_params.target_cycle_usd = m_quick_exit_target;
+
+      // Close far positions if enabled
+      if(m_params.quick_exit_close_far)
+        {
+         Print("   Closing far positions to accelerate exit...");
+         CloseFarPositions();
+         RefreshState();  // Recalculate metrics
+        }
+
+      // Recalculate TP
+      CalculateGroupTP();
+
+      Print("   New TP price: ", m_tp_price);
+
+      m_basket_state = GRID_STATE_QUICK_EXIT;
+
+      if(m_log)
+         m_log.Event(Tag(), "QUICK_EXIT_MODE_ON");
+     }
+
+   //+------------------------------------------------------------------+
+   //| Calculate quick exit target based on mode                        |
+   //+------------------------------------------------------------------+
+   double CalculateQuickExitTarget()
+     {
+      switch(m_params.quick_exit_mode)
+        {
+         case QE_FIXED:
+            return m_params.quick_exit_loss;  // e.g., -$10, -$20
+
+         case QE_PERCENTAGE:
+           {
+            double current_dd = GetFloatingPnL();
+            return current_dd * m_params.quick_exit_percentage;  // e.g., 30% of -$200 = -$60
+           }
+
+         case QE_DYNAMIC:
+           {
+            double dd_percent = GetDDPercent();
+            if(dd_percent < -30.0) return -30.0;
+            else if(dd_percent < -20.0) return -20.0;
+            else return -10.0;
+           }
+        }
+
+      return m_params.quick_exit_loss;
+     }
+
+   //+------------------------------------------------------------------+
+   //| Deactivate quick exit mode                                       |
+   //+------------------------------------------------------------------+
+   void DeactivateQuickExitMode()
+     {
+      if(!m_quick_exit_mode) return;
+
+      Print("🔄 Quick exit mode deactivated for ", DirectionLabel());
+
+      m_quick_exit_mode = false;
+      m_params.target_cycle_usd = m_original_target;
+      m_basket_state = GRID_STATE_ACTIVE;
+
+      // Recalculate TP with original target
+      CalculateGroupTP();
+
+      if(m_log)
+         m_log.Event(Tag(), "QUICK_EXIT_MODE_OFF");
+     }
+
+   //+------------------------------------------------------------------+
+   //| Calculate gap size between positions                             |
+   //+------------------------------------------------------------------+
+   double CalculateGapSize()
+     {
+      if(GetPositionCount() < 2) return 0;
+
+      double max_gap = 0;
+      double prev_price = 0;
+
+      // Find largest gap between consecutive positions
+      for(int i = 0; i < ArraySize(m_levels); i++)
+        {
+         if(!m_levels[i].filled) continue;
+
+         if(prev_price != 0)
+           {
+            double gap = MathAbs(m_levels[i].price - prev_price) / _Point;
+            if(gap > max_gap)
+               max_gap = gap;
+           }
+         prev_price = m_levels[i].price;
+        }
+
+      m_last_gap_size = max_gap;
+      m_last_gap_check = TimeCurrent();
+
+      // Update trap detector if exists
+      if(m_trap_detector)
+         m_trap_detector.SetGapSize(max_gap);
+
+      return max_gap;
+     }
+
+   //+------------------------------------------------------------------+
+   //| Supporting method implementations                                |
+   //+------------------------------------------------------------------+
+   void CheckQuickExitTP()
+     {
+      if(!m_quick_exit_mode) return;
+
+      double current_pnl = GetFloatingPnL();
+
+      // Check if reached target
+      if(current_pnl >= m_quick_exit_target)
+        {
+         Print("✅ QUICK EXIT TARGET REACHED! Target: $", m_quick_exit_target, " Actual: $", current_pnl);
+         CloseBasket("QUICK_EXIT_SUCCESS");
+         DeactivateQuickExitMode();
+
+         if(m_params.quick_exit_reseed)
+           {
+            Print("🔄 Reseeding after quick exit...");
+            // Will be handled by lifecycle controller
+           }
+         return;
+        }
+
+      // Check timeout
+      int duration = (int)(TimeCurrent() - m_quick_exit_start_time);
+      if(duration > m_params.quick_exit_timeout_min * 60)
+        {
+         Print("⏰ Quick exit timeout - Deactivate");
+         DeactivateQuickExitMode();
+        }
+     }
+
+   void FillBridgeLevels()
+     {
+      // Placeholder for bridge level filling
+      // Will be implemented in Phase 2
+     }
+
+   void CloseFarPositions()
+     {
+      double current_price = (m_direction == DIR_BUY) ?
+                            SymbolInfoDouble(m_symbol, SYMBOL_BID) :
+                            SymbolInfoDouble(m_symbol, SYMBOL_ASK);
+
+      double threshold = m_params.max_position_distance;
+      int closed_count = 0;
+
+      Print("✂️ Closing far positions (>", threshold, " pips)");
+
+      // Simplified - close positions tracked in levels array
+      for(int i = 0; i < ArraySize(m_levels); i++)
+        {
+         if(!m_levels[i].filled) continue;
+
+         double distance = MathAbs(current_price - m_levels[i].price) / _Point;
+
+         if(distance > threshold)
+           {
+            Print("  ├─ Close L", i, " @ ", m_levels[i].price);
+            if(m_executor.ClosePositionByMagic(m_magic, m_levels[i].ticket))
+              {
+               m_levels[i].filled = false;
+               m_levels[i].ticket = 0;
+               closed_count++;
+              }
+           }
+        }
+
+      if(closed_count > 0)
+        {
+         Print("  └─ Total closed: ", closed_count, " positions");
+         RefreshState();
+        }
+     }
+
+   void HandleTrapDetected()
+     {
+      ActivateQuickExitMode();
+     }
+
+   bool CheckTrapConditions()
+     {
+      if(!m_trap_detector) return false;
+
+      // Update metrics
+      m_trap_detector.UpdateMetrics(m_avg_price, m_pnl_usd, m_total_lot,
+                                   GetPositionCount(), GetOldestPositionTime());
+
+      // Detect trap
+      bool is_trapped = m_trap_detector.DetectTrapConditions();
+
+      if(is_trapped && m_basket_state != GRID_STATE_QUICK_EXIT)
+        {
+         HandleTrapDetected();
+        }
+
+      return is_trapped;
+     }
+
+   void ReseedBasket()
+     {
+      Print("🔄 Reseeding ", DirectionLabel(), " basket");
+      ClearLevels();
+      m_grid_state.Reset();
+      m_basket_state = GRID_STATE_RESEEDING;
+      m_quick_exit_mode = false;
+
+      double anchor = (m_direction == DIR_BUY) ?
+                     SymbolInfoDouble(m_symbol, SYMBOL_ASK) :
+                     SymbolInfoDouble(m_symbol, SYMBOL_BID);
+
+      if(Init(anchor))
+        {
+         m_basket_state = GRID_STATE_ACTIVE;
+         Print("✅ ", DirectionLabel(), " basket reseeded");
+        }
+     }
+
+   int GetPositionCount() const
+     {
+      return GetFilledLevels();
+     }
+
+   double GetDDPercent() const
+     {
+      double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+      if(balance == 0) return 0;
+      return (m_pnl_usd / balance) * 100;
+     }
+
+   datetime GetOldestPositionTime() const
+     {
+      // Simplified - return time estimate
+      return TimeCurrent() - 3600;
+     }
+
+   double GetLevelPrice(int level) const
+     {
+      if(level >= 0 && level < ArraySize(m_levels))
+         return m_levels[level].price;
+      return 0;
      }
   };
 

@@ -4,9 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **Dual-Grid Trading EA** for MetaTrader 5 (MQL5), implementing a simplified grid trading strategy. The system maintains two independent grids (BUY and SELL) that trade simultaneously.
+This is a **Dual-Grid Trading EA** for MetaTrader 5 (MQL5), implementing a grid trading strategy with **Lazy Grid Fill, Trap Detection, and Quick Exit** features (v3.3).
 
-**Core Strategy**: Maintain two independent baskets (BUY and SELL) with dynamic grid levels. When one basket closes at its group take-profit (TP), use the realized profit to reduce the other basket's TP requirement (pulling it closer to break-even). Each basket automatically reopens with a fresh grid after closing.
+**Core Strategy**: Maintain two independent baskets (BUY and SELL) that trade simultaneously. Grid expands lazily (on-demand) with trend protection. When trapped, accept small loss to escape quickly.
+
+## Recent Major Update (v3.3.0 - Lazy Grid Fill)
+
+### What Changed
+
+**Problem Solved:**
+- Old system: Dynamic grid pre-filled 5-10 levels → trapped during strong trends → massive DD
+- New system: Lazy grid fill (1-2 levels) + trap detection → quick exit → minimal DD
+
+**New Features:**
+1. **Lazy Grid Fill**: Only 1-2 pending levels at a time, expand on-demand after trend checks
+2. **Trap Detector**: Multi-condition algorithm (gap + trend + DD + movement + time)
+3. **Quick Exit Mode**: Accept -$10 to -$20 loss to escape trap fast (vs waiting for break-even)
+4. **Gap Management**: Bridge fill or close far positions when gap forms
 
 ## Development Commands
 
@@ -25,12 +39,13 @@ This is a **Dual-Grid Trading EA** for MetaTrader 5 (MQL5), implementing a simpl
 ```
 src/
 ├── ea/
-│   └── RecoveryGridDirection_v3.mq5    # Main EA entry point
+│   └── RecoveryGridDirection_v3.mq5    # Main EA entry point (UPDATED v3.3)
 └── core/                                # Modular components
-    ├── Types.mqh                        # Enums and structs
-    ├── Params.mqh                       # Strategy parameters struct
-    ├── LifecycleController.mqh         # Orchestrates both baskets
-    ├── GridBasket.mqh                   # Manages one directional basket
+    ├── Types.mqh                        # Enums and structs (UPDATED v3.3)
+    ├── Params.mqh                       # Strategy parameters struct (UPDATED v3.3)
+    ├── LifecycleController.mqh         # Orchestrates both baskets (UPDATED v3.3)
+    ├── GridBasket.mqh                   # Manages one directional basket (MAJOR UPDATE v3.3)
+    ├── TrapDetector.mqh                 # NEW v3.3: Multi-condition trap detection
     ├── SpacingEngine.mqh                # Grid spacing (PIPS/ATR/HYBRID)
     ├── OrderExecutor.mqh                # Atomic order operations
     ├── OrderValidator.mqh               # Broker constraints validation
@@ -38,9 +53,21 @@ src/
     ├── TrendFilter.mqh                  # Strong trend protection (Phase 1.1)
     ├── JobManager.mqh                   # Multi-job system manager (Phase 2)
     ├── PresetManager.mqh                # Symbol-specific presets
-    ├── Logger.mqh                       # Event logging
+    ├── Logger.mqh                       # Event logging (UPDATED v3.3)
     └── MathHelpers.mqh                  # Math utilities
 ```
+
+### Architecture Changes (v3.3)
+
+**New Files:**
+- `src/core/TrapDetector.mqh` - Multi-condition trap detection
+
+**Modified Files:**
+- `src/core/GridBasket.mqh` - MAJOR: Lazy fill, quick exit, gap management
+- `src/core/LifecycleController.mqh` - Global risk monitoring, profit sharing x2 for quick exit
+- `src/core/Types.mqh` - New enums (ENUM_GRID_STATE, ENUM_TRAP_CONDITION, ENUM_QUICK_EXIT_MODE)
+- `src/core/Params.mqh` - New input parameters (20+ new inputs)
+- `src/core/Logger.mqh` - New log events
 
 ## Architecture
 
@@ -221,6 +248,75 @@ src/
 ### MQL5 Include Paths
 - Main EA includes use: `#include <RECOVERY-GRID-DIRECTION_v3/core/FileName.mqh>`
 - Place this folder in MT5's `Include/` directory or adjust paths accordingly
+
+## Key Concepts (v3.3)
+
+### 1. Lazy Grid Fill
+
+**Old Way:**
+```
+Start: 1 market + 5 pending = 6 orders ready
+→ Strong trend → all 6 fill → trapped
+```
+
+**New Way:**
+```
+Start: 1 market + 1 pending = 2 orders
+Level 1 fills → Check trend → OK → Place level 2
+Level 2 fills → Check trend → COUNTER! → HALT
+→ Only 2 positions trapped (vs 6)
+```
+
+**Guards Before Each Expansion:**
+1. Trend filter: counter-trend? → HALT
+2. DD threshold: < -20%? → HALT
+3. Max levels: reached limit? → GRID_FULL
+4. Distance: next level > 500 pips? → Skip
+
+### 2. Trap Detection (5 Conditions)
+
+Requires 3 out of 5 conditions to trigger:
+
+| Condition | Check | Threshold |
+|-----------|-------|-----------|
+| **Gap** | Max distance between positions | > 200 pips |
+| **Counter-Trend** | TrendFilter.IsCounterTrend() | Strong trend opposite direction |
+| **Heavy DD** | Basket DD% | < -20% |
+| **Moving Away** | Price distance from average | Increasing > 10% |
+| **Stuck** | Oldest position age | > 30 min with DD < -15% |
+
+**Example:**
+```
+SELL basket:
+✅ Gap: 250 pips (L0-L1 gap to current)
+✅ Counter-trend: Strong uptrend detected
+✅ DD: -22%
+❌ Moving away: No (stable)
+❌ Stuck: Only 20 min
+Result: 3/5 → TRAP DETECTED! → Quick exit activated
+```
+
+### 3. Quick Exit Mode
+
+**Purpose:** Accept small loss (-$10 to -$20) to escape trap FAST
+
+**Old TP Calculation:**
+```
+Average: 1.1025
+Target: +$5 profit
+TP: 1.0995 (avg - 30 pips)
+Current: 1.1300
+Distance: 305 pips ← MAY NEVER REACH!
+```
+
+**Quick Exit TP:**
+```
+Average: 1.1025
+Target: -$10 loss (ACCEPT LOSS!)
+TP: 1.1015 (avg - 10 pips)
+Current: 1.1300
+Distance: 285 pips ← EASIER TO REACH
+```
 
 ### ⚠️ Simplified Architecture (Major Refactor)
 
