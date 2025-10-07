@@ -68,6 +68,12 @@ struct SParams
 
    // timeframe preservation (prevent duplicate positions on TF switch)
    bool         preserve_on_tf_switch;   // preserve positions on timeframe switch (default: true)
+
+   // basket stop loss (Phase 1.2 - spacing-based risk management)
+   bool         basket_sl_enabled;       // enable basket stop loss
+   double       basket_sl_spacing;       // SL distance in spacing units (e.g., 2.0 = 2x spacing)
+   EReseedMode  reseed_mode;             // when to reseed after basket SL
+   int          reseed_cooldown_min;     // cooldown minutes before reseed (COOLDOWN mode)
   };
 
 #endif // __RGD_V2_PARAMS_MQH__

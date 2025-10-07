@@ -87,6 +87,12 @@ input bool              InpSpawnOnJobDD     = true;  // Spawn new job when job D
 input int               InpSpawnCooldownSec = 30;    // Cooldown between spawns (seconds)
 input int               InpMaxSpawns        = 10;    // Max spawns per session
 
+//--- Basket Stop Loss (Spacing-Based Risk Management)
+input group             "=== Basket Stop Loss (v3.2 - Spacing-Based) ==="
+input bool              InpBasketSL_Enabled     = false;       // Enable basket stop loss
+input double            InpBasketSL_Spacing     = 2.0;         // SL distance in spacing units (e.g., 2.0 = 2x spacing from entry)
+input EReseedMode       InpReseedMode           = RESEED_COOLDOWN; // When to reseed after basket SL
+input int               InpReseedCooldownMin    = 30;          // Cooldown minutes before reseed (for COOLDOWN mode)
 
 //--- Globals
 SParams              g_params;
@@ -147,6 +153,12 @@ void BuildParams()
 
    // Timeframe preservation (bug fix - always enabled)
    g_params.preserve_on_tf_switch=true;
+
+   // Basket stop loss (Phase 1.2 - spacing-based risk management)
+   g_params.basket_sl_enabled     =InpBasketSL_Enabled;
+   g_params.basket_sl_spacing     =InpBasketSL_Spacing;
+   g_params.reseed_mode           =InpReseedMode;
+   g_params.reseed_cooldown_min   =InpReseedCooldownMin;
 
    // THEN apply preset overrides (if not CUSTOM)
    // Preset will override only the critical params (spacing, grid, target, cooldown)

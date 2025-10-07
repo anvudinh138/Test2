@@ -26,7 +26,10 @@ private:
 
    SGridLevel     m_levels[];
    bool           m_active;
+   bool           m_trading_enabled;  // Trend filter control (seed/reseed)
+   bool           m_refill_enabled;   // Refill control (for NO_REFILL mode)
    bool           m_closed_recently;
+   string         m_close_reason;     // Last close reason (for tracking BasketSL)
    int            m_cycles_done;
 
    double         m_total_lot;
@@ -170,8 +173,16 @@ private:
       if(m_executor==NULL)
          return;
 
+      // Check trend filter
+      if(!m_trading_enabled)
+        {
+         if(m_log!=NULL)
+            m_log.Event(Tag(),"Initial seed blocked by trend filter");
+         return;
+        }
+
       m_executor.SetMagic(m_magic);
-      
+
       if(m_params.grid_dynamic_enabled)
         {
          // Dynamic mode: only place seed + warm levels
@@ -363,6 +374,7 @@ private:
         }
       m_active=false;
       m_closed_recently=true;
+      m_close_reason=reason;  // Track close reason
       m_cycles_done++;
       if(m_log!=NULL)
         m_log.Event(Tag(),StringFormat("Basket closed: %s",reason));
@@ -380,6 +392,51 @@ private:
       CalculateGroupTP();
       if(m_log!=NULL && reason!="" && delta>0.0)
          m_log.Event(Tag(),StringFormat("%s %.2f => %.2f",reason,delta,EffectiveTargetUsd()));
+     }
+
+   //+------------------------------------------------------------------+
+   //| Check if basket SL is hit (spacing-based)                        |
+   //+------------------------------------------------------------------+
+   bool           CheckBasketSL()
+     {
+      // Only check if basket has positions
+      if(m_total_lot<=0.0 || m_avg_price<=0.0)
+         return false;
+
+      // Get current spacing in price units
+      double current_spacing_pips=(m_spacing!=NULL)?m_spacing.GetSpacing():m_params.spacing_pips;
+      double point=SymbolInfoDouble(m_symbol,SYMBOL_POINT);
+      double spacing_px=current_spacing_pips*point*10.0;
+
+      // Calculate SL distance in price units
+      double sl_distance_px=spacing_px*m_params.basket_sl_spacing;
+
+      // Get current price
+      double current_price=(m_direction==DIR_BUY)?SymbolInfoDouble(m_symbol,SYMBOL_BID):SymbolInfoDouble(m_symbol,SYMBOL_ASK);
+
+      // Check if price moved against basket by SL distance
+      bool sl_hit=false;
+      if(m_direction==DIR_BUY)
+        {
+         // BUY basket: SL hit if price drops below (avg - SL distance)
+         double sl_price=m_avg_price-sl_distance_px;
+         sl_hit=(current_price<=sl_price);
+        }
+      else
+        {
+         // SELL basket: SL hit if price rises above (avg + SL distance)
+         double sl_price=m_avg_price+sl_distance_px;
+         sl_hit=(current_price>=sl_price);
+        }
+
+      if(sl_hit && m_log!=NULL)
+        {
+         int digits=(int)SymbolInfoInteger(m_symbol,SYMBOL_DIGITS);
+         m_log.Event(Tag(),StringFormat("Basket SL HIT: avg=%."+IntegerToString(digits)+"f cur=%."+IntegerToString(digits)+"f spacing=%.1f pips dist=%.1fx loss=%.2f USD",
+                                        m_avg_price,current_price,current_spacing_pips,m_params.basket_sl_spacing,m_pnl_usd));
+        }
+
+      return sl_hit;
      }
 
 public:
@@ -400,7 +457,10 @@ public:
                          m_log(logger),
                          m_magic(magic),
                          m_active(false),
+                         m_trading_enabled(true),
+                         m_refill_enabled(true),
                          m_closed_recently(false),
+                         m_close_reason(""),
                          m_cycles_done(0),
                          m_total_lot(0.0),
                          m_avg_price(0.0),
@@ -460,6 +520,10 @@ public:
      {
       if(!m_params.grid_dynamic_enabled)
          return;
+      if(!m_trading_enabled)
+         return;  // Trend filter disabled trading (NONE/CLOSE_ALL modes)
+      if(!m_refill_enabled)
+         return;  // NO_REFILL mode: block refill, allow existing positions
       if(m_levels_placed>=m_max_levels)
          return;
       if(m_pending_count>m_params.grid_refill_threshold)
@@ -521,7 +585,14 @@ public:
          return;
       m_closed_recently=false;
       RefreshState();
-      
+
+      // Basket Stop Loss check (spacing-based)
+      if(m_params.basket_sl_enabled && CheckBasketSL())
+        {
+         CloseBasket("BasketSL");
+         return;  // Exit early after SL closure
+        }
+
       // Dynamic grid refill
       if(m_params.grid_dynamic_enabled)
         {
@@ -595,6 +666,7 @@ public:
 
    bool           IsActive() const { return m_active; }
    bool           ClosedRecently() const { return m_closed_recently; }
+   string         GetCloseReason() const { return m_close_reason; }
    double         TakeRealizedProfit()
      {
       double value=m_last_realized;
@@ -635,6 +707,12 @@ public:
 
    double         NormalizeLot(const double volume) const { return NormalizeVolumeValue(volume); }
 
+   // Public wrapper for CloseBasket (for TrendAction)
+   void           ForceClose(const string reason)
+     {
+      CloseBasket(reason);
+     }
+
    // TSL detection (placeholder for multi-job spawn trigger)
    bool           IsTSLActive() const
      {
@@ -670,6 +748,26 @@ public:
    void           SetActive(const bool active)
      {
       m_active=active;
+     }
+
+   void           SetTradingEnabled(const bool enabled)
+     {
+      m_trading_enabled=enabled;
+     }
+
+   bool           IsTradingEnabled() const
+     {
+      return m_trading_enabled;
+     }
+
+   void           SetRefillEnabled(const bool enabled)
+     {
+      m_refill_enabled=enabled;
+     }
+
+   bool           IsRefillEnabled() const
+     {
+      return m_refill_enabled;
      }
   };
 
