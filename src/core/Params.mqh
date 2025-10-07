@@ -69,14 +69,11 @@ struct SParams
    // timeframe preservation (prevent duplicate positions on TF switch)
    bool         preserve_on_tf_switch;   // preserve positions on timeframe switch (default: true)
 
-   // trend filter (Phase 1.1 - prevent counter-trend positions)
-   bool         trend_filter_enabled;    // enable trend filter
-   ETrendAction trend_action;            // action on strong trend (NONE/CLOSE_ALL/NO_REFILL)
-   ENUM_TIMEFRAMES trend_ema_timeframe;  // EMA timeframe (default: H4)
-   int          trend_ema_period;        // EMA period (default: 200)
-   int          trend_adx_period;        // ADX period (default: 14)
-   double       trend_adx_threshold;     // ADX threshold for strong trend (default: 25.0)
-   double       trend_buffer_pips;       // Distance buffer from EMA (default: 200 pips)
+   // basket stop loss (Phase 1.2 - spacing-based risk management)
+   bool         basket_sl_enabled;       // enable basket stop loss
+   double       basket_sl_spacing;       // SL distance in spacing units (e.g., 2.0 = 2x spacing)
+   EReseedMode  reseed_mode;             // when to reseed after basket SL
+   int          reseed_cooldown_min;     // cooldown minutes before reseed (COOLDOWN mode)
   };
 
 #endif // __RGD_V2_PARAMS_MQH__

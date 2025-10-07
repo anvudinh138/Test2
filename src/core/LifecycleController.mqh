@@ -32,6 +32,12 @@ private:
    datetime          m_cooldown_until;        // Cooldown end time
    bool              m_in_cooldown;           // Currently in cooldown
 
+   // Basket SL tracking
+   datetime          m_buy_sl_time;           // Last time BUY basket hit SL
+   datetime          m_sell_sl_time;          // Last time SELL basket hit SL
+   ETrendState       m_buy_sl_trend;          // Trend state when BUY basket hit SL
+   ETrendState       m_sell_sl_trend;         // Trend state when SELL basket hit SL
+
    // P&L tracking (for multi-job system)
    double            m_total_realized_pnl;    // Cumulative realized profit
 
@@ -115,6 +121,87 @@ private:
          return false;
         }
 
+      // Basket SL reseed logic (3 modes)
+      if(m_params.basket_sl_enabled)
+        {
+         datetime sl_time=(dir==DIR_BUY)?m_buy_sl_time:m_sell_sl_time;
+         ETrendState sl_trend=(dir==DIR_BUY)?m_buy_sl_trend:m_sell_sl_trend;
+         datetime now=TimeCurrent();
+
+         switch(m_params.reseed_mode)
+           {
+            case RESEED_IMMEDIATE:
+               // Always reseed immediately - no delay
+               break;
+
+            case RESEED_COOLDOWN:
+               // Wait for cooldown period after basket SL
+               if(sl_time>0)
+                 {
+                  int elapsed_sec=(int)(now-sl_time);
+                  int cooldown_sec=m_params.reseed_cooldown_min*60;
+                  if(elapsed_sec<cooldown_sec)
+                    {
+                     if(m_log!=NULL)
+                       {
+                        static datetime last_cooldown_log=0;
+                        if(now-last_cooldown_log>60)  // Log once per minute
+                          {
+                           int remaining_sec=cooldown_sec-elapsed_sec;
+                           m_log.Event(Tag(),StringFormat("Reseed %s blocked by cooldown (%d sec remaining)",
+                                                         (dir==DIR_BUY)?"BUY":"SELL",remaining_sec));
+                           last_cooldown_log=now;
+                          }
+                       }
+                     return false;
+                    }
+                 }
+               break;
+
+            case RESEED_TREND_REVERSAL:
+               // Only reseed when trend reverses from SL trend
+               if(sl_time>0 && sl_trend!=TREND_NEUTRAL && m_trend_filter!=NULL)
+                 {
+                  ETrendState current_trend=m_trend_filter.GetTrendState();
+
+                  // Check if trend has reversed
+                  bool trend_reversed=false;
+                  if(sl_trend==TREND_UP && current_trend==TREND_DOWN)
+                     trend_reversed=true;
+                  else if(sl_trend==TREND_DOWN && current_trend==TREND_UP)
+                     trend_reversed=true;
+                  else if(sl_trend==TREND_UP && current_trend==TREND_NEUTRAL && m_trend_filter.AllowBuyBasket())
+                     trend_reversed=true;  // Uptrend ended, BUY allowed now
+                  else if(sl_trend==TREND_DOWN && current_trend==TREND_NEUTRAL && m_trend_filter.AllowSellBasket())
+                     trend_reversed=true;  // Downtrend ended, SELL allowed now
+
+                  if(!trend_reversed)
+                    {
+                     if(m_log!=NULL)
+                       {
+                        static datetime last_trend_log=0;
+                        if(now-last_trend_log>300)  // Log once per 5 minutes
+                          {
+                           m_log.Event(Tag(),StringFormat("Reseed %s blocked - waiting for trend reversal (SL trend: %s, Current: %s)",
+                                                         (dir==DIR_BUY)?"BUY":"SELL",
+                                                         EnumToString(sl_trend),EnumToString(current_trend)));
+                           last_trend_log=now;
+                          }
+                       }
+                     return false;
+                    }
+                  else
+                    {
+                     if(m_log!=NULL)
+                        m_log.Event(Tag(),StringFormat("Trend reversal detected - allowing %s reseed (SL trend: %s → Current: %s)",
+                                                       (dir==DIR_BUY)?"BUY":"SELL",
+                                                       EnumToString(sl_trend),EnumToString(current_trend)));
+                    }
+                 }
+               break;
+           }
+        }
+
       double seed_lot=NormalizeVolume(m_params.lot_base);
       if(seed_lot<=0.0)
          return false;
@@ -126,6 +213,19 @@ private:
         {
          if(m_log!=NULL)
            m_log.Event(Tag(),StringFormat("Reseed %s grid", (dir==DIR_BUY)?"BUY":"SELL"));
+
+         // Reset SL timestamp after successful reseed
+         if(dir==DIR_BUY)
+           {
+            m_buy_sl_time=0;
+            m_buy_sl_trend=TREND_NEUTRAL;
+           }
+         else
+           {
+            m_sell_sl_time=0;
+            m_sell_sl_trend=TREND_NEUTRAL;
+           }
+
          return true;
         }
       return false;
@@ -238,6 +338,10 @@ public:
                          m_halted(false),
                          m_cooldown_until(0),
                          m_in_cooldown(false),
+                         m_buy_sl_time(0),
+                         m_sell_sl_time(0),
+                         m_buy_sl_trend(TREND_NEUTRAL),
+                         m_sell_sl_trend(TREND_NEUTRAL),
                          m_total_realized_pnl(0.0)
      {
       // Create trend filter
@@ -423,6 +527,16 @@ public:
 
       if(m_buy!=NULL && m_buy.ClosedRecently())
         {
+         // Check if basket was closed due to SL
+         string close_reason=m_buy.GetCloseReason();
+         if(StringFind(close_reason,"BasketSL")>=0)
+           {
+            m_buy_sl_time=TimeCurrent();
+            m_buy_sl_trend=(m_trend_filter!=NULL)?m_trend_filter.GetTrendState():TREND_NEUTRAL;
+            if(m_log!=NULL)
+               m_log.Event(Tag(),StringFormat("BUY basket SL recorded (trend: %s)",EnumToString(m_buy_sl_trend)));
+           }
+
          double realized=m_buy.TakeRealizedProfit();
          m_total_realized_pnl+=realized;  // Track cumulative realized PnL
          if(realized>0 && m_sell!=NULL)
@@ -431,6 +545,16 @@ public:
         }
       if(m_sell!=NULL && m_sell.ClosedRecently())
         {
+         // Check if basket was closed due to SL
+         string close_reason=m_sell.GetCloseReason();
+         if(StringFind(close_reason,"BasketSL")>=0)
+           {
+            m_sell_sl_time=TimeCurrent();
+            m_sell_sl_trend=(m_trend_filter!=NULL)?m_trend_filter.GetTrendState():TREND_NEUTRAL;
+            if(m_log!=NULL)
+               m_log.Event(Tag(),StringFormat("SELL basket SL recorded (trend: %s)",EnumToString(m_sell_sl_trend)));
+           }
+
          double realized=m_sell.TakeRealizedProfit();
          m_total_realized_pnl+=realized;  // Track cumulative realized PnL
          if(realized>0 && m_buy!=NULL)

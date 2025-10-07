@@ -31,6 +31,13 @@ enum ETrendAction
    TREND_ACTION_NO_REFILL = 2   // Block refills, allow existing positions
   };
 
+enum EReseedMode
+  {
+   RESEED_IMMEDIATE      = 0,  // Reseed immediately after SL hit
+   RESEED_COOLDOWN       = 1,  // Reseed after cooldown period
+   RESEED_TREND_REVERSAL = 2   // Reseed only when trend reverses
+  };
+
 enum EJobStatus
   {
    JOB_ACTIVE    = 0,  // Trading normally
