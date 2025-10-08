@@ -44,6 +44,9 @@ private:
    int            m_levels_placed;
    int            m_pending_count;
    double         m_initial_spacing_pips;
+   
+   // lazy grid state (v3.1 - Phase 3)
+   SGridState     m_grid_state;
 
    double         m_last_realized;
 
@@ -138,7 +141,8 @@ private:
       m_pending_count=0;
       
       // Pre-allocate full array but only fill warm levels
-      if(m_params.grid_dynamic_enabled)
+      // FORCE CHECK: Always use dynamic array structure if ANY modern feature enabled
+      if(m_params.grid_dynamic_enabled || m_params.lazy_grid_enabled || true)  // TEMP: Force for testing
         {
          ArrayResize(m_levels,m_max_levels);
          for(int i=0;i<m_max_levels;i++)
@@ -148,10 +152,12 @@ private:
             m_levels[i].ticket=0;
             m_levels[i].filled=false;
            }
+         if(m_log!=NULL)
+            m_log.Event(Tag(),"[DEBUG BuildGrid] Array pre-allocated - lazy="+(m_params.lazy_grid_enabled?"T":"F"));
         }
       else
         {
-         // Old behavior: build all levels
+         // Old static grid behavior: build all levels upfront
          AppendLevel(anchor_price,LevelLot(0));
          for(int i=1;i<m_params.grid_levels;i++)
            {
@@ -164,6 +170,71 @@ private:
            }
          m_last_grid_price=m_levels[ArraySize(m_levels)-1].price;
         }
+     }
+
+   //+------------------------------------------------------------------+
+   //| Lazy Grid v1: Seed minimal grid (1 market + 1 pending)          |
+   //| Phase 3 - Only called when InpLazyGridEnabled=true              |
+   //+------------------------------------------------------------------+
+   void           SeedInitialGrid()
+     {
+      m_executor.SetMagic(m_magic);
+      m_executor.BypassNext(2);  // Bypass cooldown for 2 orders
+      
+      double spacing_px=m_spacing.ToPrice(m_initial_spacing_pips);
+      double anchor=SymbolInfoDouble(m_symbol,(m_direction==DIR_BUY)?SYMBOL_ASK:SYMBOL_BID);
+      
+      m_levels_placed=0;
+      m_pending_count=0;
+      m_last_grid_price=0.0;
+      m_grid_state.Reset();  // Reset lazy grid state
+      
+      // 1. Place market seed (level 0)
+      double seed_lot=LevelLot(0);
+      if(seed_lot<=0.0)
+         return;
+         
+      ulong market_ticket=m_executor.Market(m_direction,seed_lot,"RGDv2_LazySeed");
+      if(market_ticket>0)
+        {
+         m_levels[0].price=anchor;
+         m_levels[0].lot=seed_lot;
+         m_levels[0].ticket=market_ticket;
+         m_levels[0].filled=true;
+         m_levels_placed++;
+         m_last_grid_price=anchor;
+         LogDynamic("SEED",0,anchor);
+        }
+      
+      // 2. Place ONE pending order (level 1)
+      double price=anchor;
+      if(m_direction==DIR_BUY)
+         price-=spacing_px;
+      else
+         price+=spacing_px;
+         
+      double lot=LevelLot(1);
+      ulong pending=(m_direction==DIR_BUY)?m_executor.Limit(DIR_BUY,price,lot,"RGDv2_LazyGrid")
+                                          :m_executor.Limit(DIR_SELL,price,lot,"RGDv2_LazyGrid");
+      if(pending>0)
+        {
+         m_levels[1].price=price;
+         m_levels[1].lot=lot;
+         m_levels[1].ticket=pending;
+         m_levels[1].filled=false;
+         m_levels_placed++;
+         m_pending_count++;
+         m_last_grid_price=price;
+         LogDynamic("SEED",1,price);
+        }
+      
+      // Update lazy grid state
+      m_grid_state.currentMaxLevel=1;
+      m_grid_state.pendingCount=m_pending_count;
+      
+      if(m_log!=NULL)
+         m_log.Event(Tag(),StringFormat("Initial grid seeded (lazy) levels=%d pending=%d",
+                                        m_levels_placed,m_pending_count));
      }
 
    void           PlaceInitialOrders()
@@ -182,6 +253,15 @@ private:
         }
 
       m_executor.SetMagic(m_magic);
+      
+      // Phase 3: Use lazy grid if enabled (FORCED FOR TESTING)
+      if(true)  // TEMP: Force lazy
+        {
+         if(m_log!=NULL)
+            m_log.Event(Tag(),"[DEBUG PlaceOrders] Lazy path FORCED - lazy_enabled="+(m_params.lazy_grid_enabled?"TRUE":"FALSE"));
+         SeedInitialGrid();
+         return;
+        }
 
       if(m_params.grid_dynamic_enabled)
         {
@@ -518,6 +598,10 @@ public:
 
    void           RefillBatch()
      {
+      // Phase 3 v1: Lazy grid does NOT expand automatically (Phase 4 will add expansion logic)
+      if(m_params.lazy_grid_enabled)
+         return;
+         
       if(!m_params.grid_dynamic_enabled)
          return;
       if(!m_trading_enabled)

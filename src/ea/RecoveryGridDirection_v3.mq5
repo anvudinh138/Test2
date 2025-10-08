@@ -1,4 +1,5 @@
 #property strict
+// FORCE RECOMPILE - Phase 3 Debug - 2025.10.08 23:58
 
 #include <Trade/Trade.mqh>
 
@@ -157,7 +158,7 @@ void PrintConfiguration()
   {
    if(g_logger==NULL)
       return;
-   
+   Print("test ABCXYZ");
    Print("========================================");
    Print("EA CONFIGURATION");
    Print("========================================");
