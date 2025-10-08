@@ -65,7 +65,13 @@ input int               InpNewsBufferMinutes   = 30;     // Buffer before/after 
 
 //--- Trend Filter (Phase 1.1 - Strong Trend Protection)
 input group             "=== Trend Filter (Phase 1.1 - OFF for Phase 0) ==="
+input bool              InpTrendFilterEnabled  = false;              // Enable trend filter
 input ETrendAction      InpTrendAction         = TREND_ACTION_NONE;  // Trend action (NONE/CLOSE_ALL/NO_REFILL)
+input ENUM_TIMEFRAMES   InpTrendEMA_Timeframe  = PERIOD_H4;          // EMA timeframe
+input int               InpTrendEMA_Period     = 200;                // EMA period
+input int               InpTrendADX_Period     = 14;                 // ADX period
+input double            InpTrendADX_Threshold  = 30.0;               // ADX threshold
+input double            InpTrendBufferPips     = 100.0;              // Buffer distance (pips)
 
 //--- Execution
 input int               InpOrderCooldownSec = 5;     // Min seconds between orders (anti-spam)
@@ -144,6 +150,171 @@ CLifecycleController*g_controller    = NULL;
 CJobManager         *g_job_manager   = NULL;
 CNewsFilter         *g_news_filter   = NULL;
 
+//+------------------------------------------------------------------+
+//| Print comprehensive configuration                                |
+//+------------------------------------------------------------------+
+void PrintConfiguration()
+  {
+   if(g_logger==NULL)
+      return;
+   
+   Print("========================================");
+   Print("EA CONFIGURATION");
+   Print("========================================");
+   Print("Version: v3.1.0 Phase 1 (Observability)");
+   Print("Magic: ",InpMagic);
+   Print("Symbol: ",_Symbol);
+   Print("");
+   
+   // Spacing configuration
+   Print("--- Spacing Engine ---");
+   string spacing_mode_str="";
+   switch(InpSpacingMode)
+     {
+      case 0: spacing_mode_str="PIPS (Fixed)"; break;
+      case 1: spacing_mode_str="ATR (Adaptive)"; break;
+      case 2: spacing_mode_str="HYBRID (ATR with floor)"; break;
+     }
+   Print("Mode: ",spacing_mode_str);
+   Print("Base spacing: ",InpSpacingStepPips," pips");
+   if(InpSpacingMode!=0)
+     {
+      Print("ATR multiplier: ",InpSpacingAtrMult);
+      Print("Min spacing: ",InpMinSpacingPips," pips");
+      Print("ATR period: ",InpAtrPeriod," (",EnumToString(InpAtrTimeframe),")");
+     }
+   Print("");
+   
+   // Grid configuration
+   Print("--- Grid Configuration ---");
+   Print("Grid levels: ",InpGridLevels);
+   Print("Base lot: ",InpLotBase);
+   Print("Lot scale: ",InpLotScale,(InpLotScale==1.0?" (Flat)":(InpLotScale==2.0?" (Martingale)":"")));
+   Print("Target per cycle: $",InpTargetCycleUSD);
+   Print("");
+   
+   // Dynamic Grid (legacy)
+   Print("--- Legacy Dynamic Grid ---");
+   Print("Enabled: ",(InpDynamicGrid?"YES":"NO"));
+   if(InpDynamicGrid)
+     {
+      Print("  Warm levels: ",InpWarmLevels);
+      Print("  Refill threshold: ",InpRefillThreshold);
+      Print("  Refill batch: ",InpRefillBatch);
+      Print("  Max pendings: ",InpMaxPendings);
+     }
+   Print("");
+   
+   // Risk management
+   Print("--- Risk Management ---");
+   Print("Session SL: $",InpSessionSL_USD," (monitoring only)");
+   Print("Grid protection: ",(InpGridProtection?"ENABLED":"DISABLED"));
+   if(InpGridProtection)
+      Print("  Cooldown: ",InpCooldownMinutes," minutes");
+   Print("");
+   
+   // Filters
+   Print("--- Filters ---");
+   Print("News filter: ",(InpNewsFilterEnabled?"ENABLED":"DISABLED"));
+   if(InpNewsFilterEnabled)
+     {
+      Print("  Impact: ",InpNewsImpactFilter);
+      Print("  Buffer: ",InpNewsBufferMinutes," minutes");
+     }
+   
+   string trend_action_str="";
+   switch(InpTrendAction)
+     {
+      case TREND_ACTION_NONE: trend_action_str="NONE (Block new only)"; break;
+      case TREND_ACTION_CLOSE_ALL: trend_action_str="CLOSE_ALL (Flatten counter-trend)"; break;
+      case TREND_ACTION_NO_REFILL: trend_action_str="NO_REFILL (Stop adding levels)"; break;
+     }
+   Print("Trend action: ",trend_action_str);
+   Print("");
+   
+   // v3.1.0 Features (Phase 0-4)
+   Print("========================================");
+   Print("v3.1.0 NEW FEATURES STATUS");
+   Print("========================================");
+   
+   // Lazy Grid Fill (Phase 1)
+   Print("1. LAZY GRID FILL: ",(InpLazyGridEnabled?"ENABLED ⚠️":"DISABLED ✓"));
+   if(InpLazyGridEnabled)
+     {
+      Print("   Initial warm levels: ",InpInitialWarmLevels);
+      Print("   Max level distance: ",InpMaxLevelDistance," pips");
+      Print("   Max DD for expansion: ",InpMaxDDForExpansion,"%");
+     }
+   
+   // Trap Detection (Phase 2)
+   Print("2. TRAP DETECTION: ",(InpTrapDetectionEnabled?"ENABLED ⚠️":"DISABLED ✓"));
+   if(InpTrapDetectionEnabled)
+     {
+      Print("   Gap threshold: ",InpTrapGapThreshold," pips");
+      Print("   DD threshold: ",InpTrapDDThreshold,"%");
+      Print("   Conditions required: ",InpTrapConditionsRequired,"/5");
+      Print("   Stuck minutes: ",InpTrapStuckMinutes);
+     }
+   
+   // Quick Exit Mode (Phase 3)
+   Print("3. QUICK EXIT MODE: ",(InpQuickExitEnabled?"ENABLED ⚠️":"DISABLED ✓"));
+   if(InpQuickExitEnabled)
+     {
+      string qe_mode_str="";
+      switch(InpQuickExitMode)
+        {
+         case QE_FIXED: qe_mode_str="FIXED"; break;
+         case QE_PERCENTAGE: qe_mode_str="PERCENTAGE"; break;
+         case QE_DYNAMIC: qe_mode_str="DYNAMIC"; break;
+        }
+      Print("   Mode: ",qe_mode_str);
+      Print("   Target loss: $",InpQuickExitLoss);
+      if(InpQuickExitMode==QE_PERCENTAGE)
+         Print("   Percentage: ",(InpQuickExitPercentage*100),"%");
+      Print("   Close far: ",(InpQuickExitCloseFar?"YES":"NO"));
+      Print("   Auto reseed: ",(InpQuickExitReseed?"YES":"NO"));
+      Print("   Timeout: ",InpQuickExitTimeoutMinutes," minutes");
+     }
+   
+   // Gap Management (Phase 4)
+   Print("4. GAP MANAGEMENT: ",(InpAutoFillBridge?"ENABLED ⚠️":"DISABLED ✓"));
+   if(InpAutoFillBridge)
+     {
+      Print("   Max bridge levels: ",InpMaxBridgeLevels);
+      Print("   Max position distance: ",InpMaxPositionDistance," pips");
+      Print("   Max acceptable loss: $",InpMaxAcceptableLoss);
+     }
+   
+   Print("");
+   
+   // Phase 0 validation
+   if(InpLazyGridEnabled || InpTrapDetectionEnabled || InpQuickExitEnabled || InpAutoFillBridge)
+     {
+      Print("⚠️  WARNING: Phase 0 expects ALL new features OFF!");
+      Print("    Enable only after Phase 1-4 implementation.");
+     }
+   else
+     {
+      Print("✅ Phase 0 OK: All new features disabled as expected.");
+     }
+   
+   // Multi-job system
+   if(InpMultiJobEnabled)
+     {
+      Print("");
+      Print("--- Multi-Job System (EXPERIMENTAL) ---");
+      Print("Max jobs: ",InpMaxJobs);
+      Print("Job SL: $",InpJobSL_USD);
+      Print("Job DD threshold: ",InpJobDDThreshold,"%");
+      Print("Global DD limit: ",InpGlobalDDLimit,"%");
+      Print("Magic offset: ",InpMagicOffset);
+     }
+   
+   Print("========================================");
+   Print("Initialization complete. Waiting for tick...");
+   Print("========================================");
+  }
+
 void BuildParams()
   {
    // Initialize ALL params with manual inputs FIRST (default values)
@@ -195,7 +366,13 @@ void BuildParams()
    g_params.preserve_on_tf_switch=true;
 
    // Trend filter (Phase 1.1 - strong trend protection)
+   g_params.trend_filter_enabled  =InpTrendFilterEnabled;
    g_params.trend_action          =InpTrendAction;
+   g_params.trend_ema_timeframe   =InpTrendEMA_Timeframe;
+   g_params.trend_ema_period      =InpTrendEMA_Period;
+   g_params.trend_adx_period      =InpTrendADX_Period;
+   g_params.trend_adx_threshold   =InpTrendADX_Threshold;
+   g_params.trend_buffer_pips     =InpTrendBufferPips;
 
    // Basket stop loss (Phase 1.2 - spacing-based risk management)
    g_params.basket_sl_enabled     =InpBasketSL_Enabled;
@@ -245,6 +422,12 @@ int OnInit()
    BuildParams();
 
    g_logger   = new CLogger(InpStatusInterval,InpLogEvents);
+   if(g_logger!=NULL)
+     {
+      g_logger.Initialize(g_params.magic);  // Initialize file logging with magic number
+      g_logger.LogEvent(LOG_INIT,StringFormat("EA v3.1.0 Phase 1 - Magic: %d",g_params.magic));
+     }
+   
    g_spacing  = new CSpacingEngine(_Symbol,g_params.spacing_mode,g_params.atr_period,g_params.atr_timeframe,g_params.spacing_atr_mult,g_params.spacing_pips,g_params.min_spacing_pips);
    g_validator= new COrderValidator(_Symbol,g_params.respect_stops_level);
    g_executor = new COrderExecutor(_Symbol,g_validator,g_params.slippage_pips,g_params.order_cooldown_sec);
@@ -285,59 +468,8 @@ int OnInit()
         }
      }
    
-   // Debug info
-   if(g_logger!=NULL)
-     {
-      double ask=SymbolInfoDouble(_Symbol,SYMBOL_ASK);
-      double bid=SymbolInfoDouble(_Symbol,SYMBOL_BID);
-      g_logger.Event("[RGDv2]",StringFormat("Init OK - Ask=%.5f Bid=%.5f LotBase=%.2f GridLevels=%d Dynamic=%s",
-                                            ask,bid,g_params.lot_base,g_params.grid_levels,
-                                            g_params.grid_dynamic_enabled?"ON":"OFF"));
-
-      // Log news filter status
-      if(InpNewsFilterEnabled)
-         g_logger.Event("[RGDv2]",StringFormat("News Filter: ENABLED (Impact=%s, Buffer=%d min)",
-                                               InpNewsImpactFilter,InpNewsBufferMinutes));
-      else
-         g_logger.Event("[RGDv2]","News Filter: DISABLED");
-
-      // Log grid protection status
-      if(InpGridProtection)
-         g_logger.Event("[RGDv2]",StringFormat("Grid Protection: ENABLED (Cooldown=%d min after grid full)",
-                                               InpCooldownMinutes));
-      else
-         g_logger.Event("[RGDv2]","Grid Protection: DISABLED");
-
-      // Log active preset
-      string preset_name = CPresetManager::GetPresetName(InpSymbolPreset);
-      if(InpSymbolPreset == PRESET_CUSTOM)
-         g_logger.Event("[RGDv2]","Preset: CUSTOM (manual inputs)");
-      else
-         g_logger.Event("[RGDv2]",StringFormat("Preset: %s (Spacing=%.1f, ATR=%s, Cooldown=%d min)",
-                                               preset_name,
-                                               g_params.spacing_pips,
-                                               EnumToString(g_params.atr_timeframe),
-                                               g_params.grid_cooldown_minutes));
-      
-      // Log v3.1.0 features status (Phase 0: ALL should be OFF)
-      g_logger.Event("[RGDv2]","========================================");
-      g_logger.Event("[RGDv2]","v3.1.0 FEATURES STATUS (Phase 0):");
-      g_logger.Event("[RGDv2]",StringFormat("  Lazy Grid Fill:   %s", InpLazyGridEnabled ? "ENABLED" : "DISABLED (Phase 0)"));
-      g_logger.Event("[RGDv2]",StringFormat("  Trap Detection:   %s", InpTrapDetectionEnabled ? "ENABLED" : "DISABLED (Phase 0)"));
-      g_logger.Event("[RGDv2]",StringFormat("  Quick Exit Mode:  %s", InpQuickExitEnabled ? "ENABLED" : "DISABLED (Phase 0)"));
-      g_logger.Event("[RGDv2]",StringFormat("  Gap Management:   %s", InpAutoFillBridge ? "ENABLED" : "DISABLED (Phase 0)"));
-      g_logger.Event("[RGDv2]","========================================");
-      
-      if(InpLazyGridEnabled || InpTrapDetectionEnabled || InpQuickExitEnabled || InpAutoFillBridge)
-        {
-         g_logger.Event("[RGDv2]","WARNING: Phase 0 expects ALL new features to be OFF!");
-         g_logger.Event("[RGDv2]","         Enable features ONLY after Phase 1-4 implementation.");
-        }
-      else
-        {
-         g_logger.Event("[RGDv2]","✅ Phase 0 OK: All new features disabled as expected.");
-        }
-     }
+   // Print comprehensive configuration (Phase 1)
+   PrintConfiguration();
 
    return(INIT_SUCCEEDED);
   }

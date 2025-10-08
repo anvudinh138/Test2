@@ -5,11 +5,6 @@ Scope:
 
 Giữ nguyên inputs nhưng đổi default = false cho Lazy/Trap/QE/Gap để không “kỳ vọng hành vi” khi chưa implement. (Trong 14-Phase-1.md đang mặc định = true → gây fail sớm.) 
 
-14-Phase-1
-
- 
-
-14-Phase-1
 
 
 Deliverables: Compile OK, backtest 1–2 ngày không lệnh mới.
@@ -58,12 +53,6 @@ Scope: Chuẩn hóa Logger.mqh event types (TRAP, QE, BRIDGE, FAR_CLOSE, RESEED,
 
 Deliverables: Logger hoạt động; PrintConfiguration() in toàn bộ inputs lúc khởi động (đã có khung trong Phase-5 cũ). 
 
-14-Phase-5
-
- 
-
-14-Phase-5
-
 
 Exit: Thấy log chuyển state, lý do guard/trigger rõ ràng.
 Tests: Mock các state/trigger → log đúng.
@@ -86,8 +75,6 @@ P3 — Lazy Grid v1: Seed tối thiểu
 
 Goal: 1 market + 1 pending sau seed, không nở thêm.
 Scope: SeedInitialGrid() + SGridState (struct đã có trong Types). 
-
-14-Phase-1
 
 
 Deliverables: Log “Initial grid seeded”, đếm pending đúng.
@@ -119,10 +106,6 @@ Scope: Class CTrapDetector với 3 check đầu, counting >= InpTrapConditionsRe
 
 11-AI-PROMPTS-FOR-IMPLEMENTATION
 
- 
-
-14-Phase-2
-
 
 Deliverables: DetectTrapConditions() chạy trong GridBasket.Update(). 
 
@@ -136,13 +119,6 @@ Rollback: InpTrapDetectionEnabled=false hoặc tăng InpTrapConditionsRequired.
 P6 — Trap Detector v2 (Moving-Away + Stuck)
 
 Goal: Giảm false positives bằng 2 điều kiện còn lại (theo code mẫu). 
-
-14-Phase-2
-
- 
-
-14-Phase-2
-
 
 Scope: Track 5 phút & khoảng cách avg tăng >10%; oldest pos > InpTrapStuckMinutes & DD < −15%.
 Deliverables: TrapState điền đủ cờ/metrics.
@@ -223,12 +199,6 @@ P11 — Lifecycle Controller: Profit sharing + Global risk
 Goal: Basket TP → reduce target basket kia (x2 nếu bên kia đang QE); Emergency khi cả hai “trouble”.
 Scope: Update() / HandleBasketClosures() / CheckGlobalRisk() như code checklist pha 4. 
 
-14-Phase-4
-
- 
-
-14-Phase-4
-
  
 
 5-IMPLEMENTATION-PLAN
@@ -270,7 +240,6 @@ P14 — Main EA Integration
 Goal: Nối Lifecycle + Logger + NewsFilter; hourly perf logs + print config.
 Scope: Áp dụng RecoveryGridDirection_v3.mq5 như phase-5 cũ (OnInit/OnTick/OnDeinit + PrintConfiguration() + LogPerformanceMetrics()). 
 
-14-Phase-5
 
 Deliverables: EA chạy được end-to-end với flags.
 Exit: Không crash, metrics in theo giờ.

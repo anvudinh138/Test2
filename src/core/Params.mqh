@@ -71,6 +71,12 @@ struct SParams
 
    // trend filter (Phase 1.1 - strong trend protection)
    ETrendAction trend_action;            // trend action mode (NONE, CLOSE_ALL, NO_REFILL)
+   bool         trend_filter_enabled;    // enable trend filter
+   ENUM_TIMEFRAMES trend_ema_timeframe;  // EMA timeframe
+   int          trend_ema_period;        // EMA period
+   int          trend_adx_period;        // ADX period
+   double       trend_adx_threshold;     // ADX threshold
+   double       trend_buffer_pips;       // buffer distance in pips
 
    // basket stop loss (Phase 1.2 - spacing-based risk management)
    bool         basket_sl_enabled;       // enable basket stop loss
