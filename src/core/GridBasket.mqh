@@ -228,6 +228,7 @@ private:
       // Update lazy grid state
       m_grid_state.currentMaxLevel=1;
       m_grid_state.pendingCount=m_pending_count;
+      m_grid_state.lastFilledLevel=0;  // No fills yet, will expand when level 0 fills
       
       if(m_log!=NULL)
          m_log.Event(Tag(),StringFormat("Initial grid seeded (lazy) levels=%d pending=%d",
@@ -285,6 +286,14 @@ private:
    //--- Check if grid should expand (all guards)
    bool           ShouldExpandGrid()
      {
+      // Guard 0: New level filled? (Phase 4 KEY: Only expand on fill!)
+      int current_filled=GetFilledLevels();
+      if(current_filled<=m_grid_state.lastFilledLevel)
+        {
+         // No new fills since last expansion - silent return
+         return false;
+        }
+      
       // Guard 1: Max levels reached?
       if(m_grid_state.currentMaxLevel>=m_max_levels-1)
         {
@@ -368,12 +377,13 @@ private:
          
          m_grid_state.currentMaxLevel=next_level;
          m_grid_state.pendingCount=m_pending_count;
+         // lastFilledLevel already updated in RefillBatch()
          
          LogDynamic("EXPAND",next_level,price);
          
          if(m_log!=NULL)
-            m_log.Event(Tag(),StringFormat("Lazy grid expanded to level %d, pending=%d/%d",
-                                          next_level,m_pending_count,m_max_levels));
+            m_log.Event(Tag(),StringFormat("Lazy grid expanded to level %d, pending=%d/%d (filled=%d)",
+                                          next_level,m_pending_count,m_max_levels,m_grid_state.lastFilledLevel));
         }
      }
 
@@ -464,6 +474,16 @@ private:
          lot_acc+=vol;
          weighted_price+=vol*price;
          m_pnl_usd+=profit;
+         
+         // Update level filled status (Phase 4: Track fills for lazy grid)
+         for(int j=0;j<ArraySize(m_levels);j++)
+           {
+            if(m_levels[j].ticket==ticket && !m_levels[j].filled)
+              {
+               m_levels[j].filled=true;
+               break;
+              }
+           }
         }
 
       if(lot_acc>0.0)
@@ -682,8 +702,13 @@ public:
          return;
       
       // Check if we should expand by one level
+      int current_filled=GetFilledLevels();
       if(ShouldExpandGrid())
+        {
+         // Update lastFilledLevel BEFORE expansion
+         m_grid_state.lastFilledLevel=current_filled;
          ExpandOneLevel();
+        }
      }
 
    void           Update()
