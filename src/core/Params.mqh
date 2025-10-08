@@ -74,6 +74,38 @@ struct SParams
    double       basket_sl_spacing;       // SL distance in spacing units (e.g., 2.0 = 2x spacing)
    EReseedMode  reseed_mode;             // when to reseed after basket SL
    int          reseed_cooldown_min;     // cooldown minutes before reseed (COOLDOWN mode)
+   
+   //+------------------------------------------------------------------+
+   //| NEW PARAMETERS FOR v3.1.0 (Phase 0: OFF by default)             |
+   //+------------------------------------------------------------------+
+   
+   // lazy grid fill (Phase 1)
+   bool         lazy_grid_enabled;       // enable lazy grid fill
+   int          initial_warm_levels;     // initial pending levels (1-2)
+   int          max_level_distance;      // max distance to next level (pips)
+   double       max_dd_for_expansion;    // stop expanding if DD < this (%)
+   
+   // trap detection (Phase 2)
+   bool         trap_detection_enabled;  // enable trap detection
+   double       trap_gap_threshold;      // gap threshold (pips)
+   double       trap_dd_threshold;       // DD threshold (%)
+   int          trap_conditions_required;// min conditions to trigger (3/5)
+   int          trap_stuck_minutes;      // minutes to consider "stuck"
+   
+   // quick exit mode (Phase 3)
+   bool         quick_exit_enabled;      // enable quick exit
+   ENUM_QUICK_EXIT_MODE quick_exit_mode; // exit mode
+   double       quick_exit_loss;         // fixed loss amount ($)
+   double       quick_exit_percentage;   // percentage mode (30% of DD)
+   bool         quick_exit_close_far;    // close far positions in quick exit
+   bool         quick_exit_reseed;       // auto reseed after exit
+   int          quick_exit_timeout_min;  // timeout (minutes)
+   
+   // gap management (Phase 4)
+   bool         auto_fill_bridge;        // auto fill bridge levels
+   int          max_bridge_levels;       // max bridge levels per gap
+   double       max_position_distance;   // max distance for position (pips)
+   double       max_acceptable_loss;     // max loss to abandon trapped ($)
   };
 
 #endif // __RGD_V2_PARAMS_MQH__

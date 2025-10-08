@@ -42,7 +42,7 @@ input double            InpLotBase          = 0.01;  // Base lot size
 input double            InpLotScale         = 2.0;   // Lot scale multiplier
 
 //--- Dynamic Grid (auto-refill pending levels)
-input bool              InpDynamicGrid      = true;  // Enable dynamic grid
+input bool              InpDynamicGrid      = false;  // Enable dynamic grid
 input int               InpWarmLevels       = 5;     // Initial pending levels
 input int               InpRefillThreshold  = 2;     // Refill when pendings <= this
 input int               InpRefillBatch      = 3;     // Levels per refill
@@ -55,11 +55,11 @@ input double            InpTargetCycleUSD   = 6.0;   // Target profit per cycle 
 input double            InpSessionSL_USD    = 10000; // Session stop loss (USD) - for monitoring only
 
 //--- Grid Protection (Anti Blow-Up)
-input bool              InpGridProtection   = true;  // Enable grid full auto-close
+input bool              InpGridProtection   = false;  // Enable grid full auto-close
 input int               InpCooldownMinutes  = 30;    // Cooldown after grid full (minutes)
 
 //--- News Filter (pause trading during high-impact news)
-input bool              InpNewsFilterEnabled   = true;  // Enable news filter
+input bool              InpNewsFilterEnabled   = false;  // Enable news filter
 input string            InpNewsImpactFilter    = "High"; // Impact filter (High, Medium+, All)
 input int               InpNewsBufferMinutes   = 30;     // Buffer before/after news (minutes)
 
@@ -93,6 +93,42 @@ input bool              InpBasketSL_Enabled     = false;       // Enable basket 
 input double            InpBasketSL_Spacing     = 2.0;         // SL distance in spacing units (e.g., 2.0 = 2x spacing from entry)
 input EReseedMode       InpReseedMode           = RESEED_COOLDOWN; // When to reseed after basket SL
 input int               InpReseedCooldownMin    = 30;          // Cooldown minutes before reseed (for COOLDOWN mode)
+
+//+------------------------------------------------------------------+
+//| NEW PARAMETERS FOR v3.1.0 - Lazy Grid Fill + Trap Detection     |
+//+------------------------------------------------------------------+
+
+//--- Lazy Grid Fill (Phase 1)
+input group             "=== Lazy Grid Fill (v3.1 - Phase 0: OFF) ==="
+input bool              InpLazyGridEnabled      = false;       // Enable lazy grid fill (OFF for Phase 0)
+input int               InpInitialWarmLevels    = 1;           // Initial pending levels (1-2)
+input int               InpMaxLevelDistance     = 500;         // Max distance to next level (pips)
+input double            InpMaxDDForExpansion    = -20.0;       // Stop expanding if DD < this (%)
+
+//--- Trap Detection (Phase 2)
+input group             "=== Trap Detection (v3.1 - Phase 0: OFF) ==="
+input bool              InpTrapDetectionEnabled = false;       // Enable trap detection (OFF for Phase 0)
+input double            InpTrapGapThreshold     = 200.0;       // Gap threshold (pips)
+input double            InpTrapDDThreshold      = -20.0;       // DD threshold (%)
+input int               InpTrapConditionsRequired = 3;         // Min conditions to trigger (3/5)
+input int               InpTrapStuckMinutes     = 30;          // Minutes to consider "stuck"
+
+//--- Quick Exit Mode (Phase 3)
+input group             "=== Quick Exit Mode (v3.1 - Phase 0: OFF) ==="
+input bool              InpQuickExitEnabled     = false;       // Enable quick exit (OFF for Phase 0)
+input ENUM_QUICK_EXIT_MODE InpQuickExitMode    = QE_FIXED;    // Exit mode
+input double            InpQuickExitLoss        = -10.0;       // Fixed loss amount ($)
+input double            InpQuickExitPercentage  = 0.30;        // Percentage mode (30% of DD)
+input bool              InpQuickExitCloseFar    = true;        // Close far positions in quick exit
+input bool              InpQuickExitReseed      = true;        // Auto reseed after exit
+input int               InpQuickExitTimeoutMinutes = 60;       // Timeout (minutes)
+
+//--- Gap Management (Phase 4)
+input group             "=== Gap Management (v3.1 - Phase 0: OFF) ==="
+input bool              InpAutoFillBridge       = false;       // Auto fill bridge levels (OFF for Phase 0)
+input int               InpMaxBridgeLevels      = 5;           // Max bridge levels per gap
+input double            InpMaxPositionDistance  = 300.0;       // Max distance for position (pips)
+input double            InpMaxAcceptableLoss    = -100.0;      // Max loss to abandon trapped ($)
 
 //--- Globals
 SParams              g_params;
@@ -159,6 +195,35 @@ void BuildParams()
    g_params.basket_sl_spacing     =InpBasketSL_Spacing;
    g_params.reseed_mode           =InpReseedMode;
    g_params.reseed_cooldown_min   =InpReseedCooldownMin;
+
+   // NEW v3.1.0 parameters (Phase 0: OFF by default)
+   // Lazy grid fill
+   g_params.lazy_grid_enabled     =InpLazyGridEnabled;
+   g_params.initial_warm_levels   =InpInitialWarmLevels;
+   g_params.max_level_distance    =InpMaxLevelDistance;
+   g_params.max_dd_for_expansion  =InpMaxDDForExpansion;
+   
+   // Trap detection
+   g_params.trap_detection_enabled=InpTrapDetectionEnabled;
+   g_params.trap_gap_threshold    =InpTrapGapThreshold;
+   g_params.trap_dd_threshold     =InpTrapDDThreshold;
+   g_params.trap_conditions_required=InpTrapConditionsRequired;
+   g_params.trap_stuck_minutes    =InpTrapStuckMinutes;
+   
+   // Quick exit mode
+   g_params.quick_exit_enabled    =InpQuickExitEnabled;
+   g_params.quick_exit_mode       =InpQuickExitMode;
+   g_params.quick_exit_loss       =InpQuickExitLoss;
+   g_params.quick_exit_percentage =InpQuickExitPercentage;
+   g_params.quick_exit_close_far  =InpQuickExitCloseFar;
+   g_params.quick_exit_reseed     =InpQuickExitReseed;
+   g_params.quick_exit_timeout_min=InpQuickExitTimeoutMinutes;
+   
+   // Gap management
+   g_params.auto_fill_bridge      =InpAutoFillBridge;
+   g_params.max_bridge_levels     =InpMaxBridgeLevels;
+   g_params.max_position_distance =InpMaxPositionDistance;
+   g_params.max_acceptable_loss   =InpMaxAcceptableLoss;
 
    // THEN apply preset overrides (if not CUSTOM)
    // Preset will override only the critical params (spacing, grid, target, cooldown)
@@ -246,6 +311,25 @@ int OnInit()
                                                g_params.spacing_pips,
                                                EnumToString(g_params.atr_timeframe),
                                                g_params.grid_cooldown_minutes));
+      
+      // Log v3.1.0 features status (Phase 0: ALL should be OFF)
+      g_logger.Event("[RGDv2]","========================================");
+      g_logger.Event("[RGDv2]","v3.1.0 FEATURES STATUS (Phase 0):");
+      g_logger.Event("[RGDv2]",StringFormat("  Lazy Grid Fill:   %s", InpLazyGridEnabled ? "ENABLED" : "DISABLED (Phase 0)"));
+      g_logger.Event("[RGDv2]",StringFormat("  Trap Detection:   %s", InpTrapDetectionEnabled ? "ENABLED" : "DISABLED (Phase 0)"));
+      g_logger.Event("[RGDv2]",StringFormat("  Quick Exit Mode:  %s", InpQuickExitEnabled ? "ENABLED" : "DISABLED (Phase 0)"));
+      g_logger.Event("[RGDv2]",StringFormat("  Gap Management:   %s", InpAutoFillBridge ? "ENABLED" : "DISABLED (Phase 0)"));
+      g_logger.Event("[RGDv2]","========================================");
+      
+      if(InpLazyGridEnabled || InpTrapDetectionEnabled || InpQuickExitEnabled || InpAutoFillBridge)
+        {
+         g_logger.Event("[RGDv2]","WARNING: Phase 0 expects ALL new features to be OFF!");
+         g_logger.Event("[RGDv2]","         Enable features ONLY after Phase 1-4 implementation.");
+        }
+      else
+        {
+         g_logger.Event("[RGDv2]","✅ Phase 0 OK: All new features disabled as expected.");
+        }
      }
 
    return(INIT_SUCCEEDED);
