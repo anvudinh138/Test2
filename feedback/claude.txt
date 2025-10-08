@@ -1,0 +1,87 @@
+Tôi sẽ phân tích log và hình ảnh của bạn để xác định vấn đề:
+Vấn đề phát hiện
+Mặc dù InpLazyGridEnabled=true, nhưng EA vẫn seed theo kiểu stable (seed đầy đủ 4 levels ngay từ đầu) thay vì lazy (chỉ seed 1 level).
+Từ log:
+InpLazyGridEnabled=true
+InpInitialWarmLevels=1
+Nhưng khi khởi tạo:
+[RGDv2][XAUUSD][BUY][PRI] Dynamic grid warm=4/5
+[RGDv2][XAUUSD][SELL][PRI] Dynamic grid warm=4/5
+→ EA đã seed 4 levels thay vì 1 level như setting!
+Nguyên nhân có thểSearched project for “LazyGrid InitialWarmLevels ReseedDynamicGrid seed levels initialization”5 resultssrc/core/GridBasket.mqh2 relevant sectionstextidea/Dynamic_Grid.md2 relevant sectionstextplan/14-Phase-5.mdtextidea/IMPLEMENTED_Dynamic_Grid.md2 relevant sectionstextplan/9-TESTING-STRATEGY.mdtextDựa trên log và code review, tôi tìm thấy vấn đề:
+🔍 Vấn đề chính
+Trong GridBasket.mqh, hàm PlaceInitialOrders() có logic sau:
+cppint warm=MathMin(m_params.grid_warm_levels,m_max_levels-1);
+Nhưng biến m_params.grid_warm_levels được map từ input InpWarmLevels, trong khi KHÔNG CÓ biến InpWarmLevels nào trong log!
+Từ log của bạn:
+InpLazyGridEnabled=true
+InpInitialWarmLevels=1  ← Đây là biến sai!
+🐛 Bug phát hiệnSearched project for “InpWarmLevels InpInitialWarmLevels parameter mapping EA inputs”5 resultssrc/ea/RecoveryGridDirection_v3.mq54 relevant sectionstextdoc/TROUBLESHOOTING.mdtextCLAUDE.mdtextplan/11-AI-PROMPTS-FOR-IMPLEMENTATION.mdtextplan/12-UPDATED-CLAUDE.mdtextSearched project for “InpLazyGridEnabled InpInitialWarmLevels grid_warm_levels lazy grid parameters”7 resultssrc/ea/RecoveryGridDirection_v3.mq52 relevant sectionstextplan/12-UPDATED-CLAUDE.mdtextplan/7-PSEUDOCODE.mdtextplan/4-TECHNICAL-SPECIFICATIONS.mdtextIMPLEMENTATION_SUMMARY_v3.3.mdtextidea/Dynamic_Grid.mdtextplan/14-Phase-1.mdtext✅ Tìm thấy bug!
+Vấn đề nằm ở conflict giữa 2 hệ thống grid:
+1. Dynamic Grid (Cũ - v3.0)
+cpp// Trong EA
+input bool InpDynamicGrid = true;
+input int  InpWarmLevels = 5;     // ← CÁI NÀY
+
+// Mapping trong BuildParams()
+g_params.grid_dynamic_enabled = InpDynamicGrid;
+g_params.grid_warm_levels = InpWarmLevels;  // ← BỊ SỬ DỤNG
+2. Lazy Grid (Mới - v3.3)
+cpp// Trong EA
+input bool InpLazyGridEnabled = true;
+input int  InpInitialWarmLevels = 1;  // ← CÁI NÀY
+
+// Mapping trong BuildParams()
+g_params.lazy_grid_enabled = InpLazyGridEnabled;
+g_params.initial_warm_levels = InpInitialWarmLevels;  // ← BỊ BỎ QUA!
+🔥 Nguyên nhân
+Trong GridBasket.mqh:
+cppvoid PlaceInitialOrders()
+{
+    if(m_params.grid_dynamic_enabled)  // ← Check DynamicGrid CŨ
+    {
+        int warm = MathMin(m_params.grid_warm_levels, ...);  
+        // ← Dùng grid_warm_levels (5) thay vì initial_warm_levels (1)!
+    }
+}
+EA đang dùng grid_dynamic_enabled + grid_warm_levels (hệ thống cũ) thay vì lazy_grid_enabled + initial_warm_levels (hệ thống mới)!
+🛠️ Giải pháp
+Có 2 cách fix:
+Option 1: Thêm input thiếu (Quick fix)
+Thêm vào EA inputs:
+cpp//--- Dynamic Grid (v3.0 - Legacy system, kept for compatibility)
+input group "=== Dynamic Grid (v3.0 - Legacy) ==="
+input bool  InpDynamicGrid = true;   
+input int   InpWarmLevels = 1;       // ← THAY 5 THÀNH 1!
+Cách này sẽ work ngay vì code GridBasket đang check grid_dynamic_enabled.
+
+Option 2: Refactor code (Proper fix)
+Sửa GridBasket.mqh để dùng lazy_grid_enabled thay vì grid_dynamic_enabled:
+cppvoid PlaceInitialOrders()
+{
+    // OLD CODE (wrong):
+    // if(m_params.grid_dynamic_enabled)
+    
+    // NEW CODE (correct):
+    if(m_params.lazy_grid_enabled)  // ← Dùng lazy grid flag
+    {
+        int warm = MathMin(m_params.initial_warm_levels, ...);  
+        // ← Dùng initial_warm_levels thay vì grid_warm_levels
+    }
+}
+
+💡 Khuyến nghị
+Dùng Option 1 trước để test nhanh:
+
+Mở EA inputs, tìm InpWarmLevels
+Đổi từ 5 → 1
+Chạy lại test
+
+Sau đó refactor theo Option 2 để code clean hơn.
+
+📝 Root cause summary
+
+Bạn đã implement Lazy Grid v3.3 với inputs mới (InpLazyGridEnabled, InpInitialWarmLevels)
+Nhưng code trong GridBasket.mqh vẫn đang check Dynamic Grid v3.0 (grid_dynamic_enabled, grid_warm_levels)
+Log của bạn shows: InpInitialWarmLevels=1 nhưng code ignore nó và dùng default grid_warm_levels=5
+Kết quả: Seed 4 levels thay vì 1 level như setting!
