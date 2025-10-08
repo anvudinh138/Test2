@@ -1,79 +1,62 @@
-; Preset: Strong Uptrend 300+ pips - SELL Trap Test
-; Symbol: EURUSD
-; Scenario: Strong rally, minimal pullback, SELL basket gets trapped
-; Expected: SELL trap → Quick Exit (when implemented)
-; Test Period: 2024-03-10 to 2024-03-17 (NFP week)
+;+------------------------------------------------------------------+
+;| Scenario 2: Strong Uptrend 300+ pips - SELL Trap Test            |
+;| Symbol: EURUSD                                                     |
+;| Period: 2024-01-10 to 2024-03-17 (extended range for data)       |
+;| Expected: SELL basket trapped, BUY basket profits                 |
+;| Purpose: Demonstrate counter-trend trap (key test for Phase 3+)   |
+;+------------------------------------------------------------------+
 
+;=== CHANGED FROM DEFAULTS ===
+
+;--- Identity
 InpMagic=990046
-InpSymbolPreset=5
-InpUseTestedPresets=false
-InpStatusInterval=60
-InpLogEvents=true
-InpAtrTimeframe=4
-InpAtrPeriod=14
-InpSpacingMode=2
-InpSpacingStepPips=25.0
-InpSpacingAtrMult=0.6
-InpMinSpacingPips=12.0
-InpGridLevels=5
-InpLotBase=0.01
-InpLotScale=2.0
-InpDynamicGrid=false
-InpWarmLevels=3
-InpRefillThreshold=1
-InpRefillBatch=2
-InpMaxPendings=10
-InpTargetCycleUSD=5.0
-InpSessionSL_USD=10000.0
-InpGridProtection=false
-InpCooldownMinutes=30
-InpNewsFilterEnabled=false
-InpNewsImpactFilter=High
-InpNewsBufferMinutes=30
-InpTrendFilterEnabled=false
-InpTrendAction=0
-InpTrendEMA_Timeframe=16
-InpTrendEMA_Period=200
-InpTrendADX_Period=14
-InpTrendADX_Threshold=30.0
-InpTrendBufferPips=100.0
-InpOrderCooldownSec=5
-InpSlippagePips=0
-InpRespectStops=false
-InpCommissionPerLot=0.0
-InpMultiJobEnabled=false
-InpMaxJobs=5
-InpJobSL_USD=50.0
-InpJobDDThreshold=30.0
-InpGlobalDDLimit=50.0
-InpMagicOffset=421
-InpSpawnOnGridFull=false
-InpSpawnOnTSL=false
-InpSpawnOnJobDD=false
-InpSpawnCooldownSec=30
-InpMaxSpawns=10
-InpBasketSL_Enabled=false
-InpBasketSL_Spacing=2.0
-InpReseedMode=1
-InpReseedCooldownMin=30
-InpLazyGridEnabled=false
-InpInitialWarmLevels=1
-InpMaxLevelDistance=500
-InpMaxDDForExpansion=-20.0
-InpTrapDetectionEnabled=false
-InpTrapGapThreshold=200.0
-InpTrapDDThreshold=-20.0
-InpTrapConditionsRequired=3
-InpTrapStuckMinutes=30
-InpQuickExitEnabled=false
-InpQuickExitMode=0
-InpQuickExitLoss=-10.0
-InpQuickExitPercentage=0.30
-InpQuickExitCloseFar=true
-InpQuickExitReseed=true
-InpQuickExitTimeoutMinutes=60
-InpAutoFillBridge=false
-InpMaxBridgeLevels=5
-InpMaxPositionDistance=300.0
-InpMaxAcceptableLoss=-100.0
+; Default: 990045
+; Changed to: 990046 (unique for this scenario)
 
+;--- Spacing Engine
+InpAtrTimeframe=4
+; Default: PERIOD_M15 (16)
+; Changed to: PERIOD_M5 (4) for faster response
+
+;--- Grid Configuration
+; InpGridLevels=5 (using default - fewer levels for trending market)
+
+; InpLotScale=2.0 (using default - standard martingale)
+
+;--- Dynamic Grid (REDUCED for trending market)
+InpWarmLevels=3
+; Default: 5
+; Changed to: 3 (fewer initial pendings in trend)
+
+InpRefillThreshold=1
+; Default: 2
+; Changed to: 1 (refill more conservatively)
+
+InpRefillBatch=2
+; Default: 3
+; Changed to: 2 (add fewer levels at a time)
+
+InpMaxPendings=10
+; Default: 15
+; Changed to: 10 (limit exposure in trend)
+
+;--- Profit Target
+InpTargetCycleUSD=5.0
+; Default: 6.0
+; Changed to: 5.0 (take profit faster in trend)
+
+;--- Spawn Triggers (DISABLED for controlled test)
+InpSpawnOnGridFull=false
+; Default: true
+; Changed to: false (no spawn - focus on single basket trap)
+
+InpSpawnOnTSL=false
+; Default: true
+; Changed to: false
+
+InpSpawnOnJobDD=false
+; Default: true
+; Changed to: false
+
+;=== ALL OTHER PARAMETERS USE DEFAULTS ===
+;--- Phase 0-2 features OFF: InpLazyGridEnabled=false, InpTrapDetectionEnabled=false, etc.

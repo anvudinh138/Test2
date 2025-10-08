@@ -48,7 +48,7 @@ P1 — Observability: Logger + State & Metrics
 Goal: Nhìn log là biết đang ở state nào và tại sao.
 Scope: Chuẩn hóa Logger.mqh event types (TRAP, QE, BRIDGE, FAR_CLOSE, RESEED, EMERGENCY) + file log theo magic, như checklist bạn đã có. 
 
-5-IMPLEMENTATION-PLAN
+
 
 
 Deliverables: Logger hoạt động; PrintConfiguration() in toàn bộ inputs lúc khởi động (đã có khung trong Phase-5 cũ). 
@@ -63,7 +63,7 @@ P2 — Test Harness & Presets
 Goal: Có preset Range / Uptrend 300+ / Whipsaw / Gap-sideways để tái hiện bug lặp lại.
 Scope: Script chạy backtest batch, xuất CSV KPI (MaxDD, traps, QE success). (Kịch bản test đã mô tả trong prompts của bạn.) 
 
-11-AI-PROMPTS-FOR-IMPLEMENTATION
+
 
 
 Deliverables: Folder /presets/ + hướng dẫn.
@@ -87,7 +87,6 @@ P4 — Lazy Grid v2: Chỉ nở khi fill + Guards
 Goal: Nở level sau fill và qua guards: counter-trend, DD, max-levels, distance.
 Scope: OnLevelFilled()->ShouldExpandGrid(), dùng IsPriceReasonable() để chặn pending sai phía/xa quá; function này bạn đã phác trong plan. 
 
-5-IMPLEMENTATION-PLAN
 
 
 Deliverables: State ACTIVE/HALTED/GRID_FULL đổi đúng, log lý do.
@@ -100,16 +99,14 @@ P5 — Trap Detector v1 (3 điều kiện core)
 Goal: Kích hoạt TRAP khi đạt ngưỡng (Gap + Counter-trend + Heavy DD).
 Scope: Class CTrapDetector với 3 check đầu, counting >= InpTrapConditionsRequired (mặc định 3/5), log “TRAP DETECTED … Conditions x/5”. Bạn đã có khung code & prompts. 
 
-5-IMPLEMENTATION-PLAN
 
  
 
-11-AI-PROMPTS-FOR-IMPLEMENTATION
+
 
 
 Deliverables: DetectTrapConditions() chạy trong GridBasket.Update(). 
 
-5-IMPLEMENTATION-PLAN
 
 
 Exit: Preset Uptrend 300p: trap SELL được phát hiện.
@@ -131,7 +128,7 @@ P7 — Quick Exit v1: QE_FIXED + TP âm
 Goal: Khi trap, kích hoạt QE_FIXED (nhận lỗ nhỏ: −$10) và hỗ trợ TP âm.
 Scope: ActivateQuickExitMode() → backup target, set target âm, recalc TP; integrate từ prompt của bạn. 
 
-11-AI-PROMPTS-FOR-IMPLEMENTATION
+
 
  
 
@@ -148,7 +145,7 @@ P8 — Quick Exit v2: Percentage/Dynamic + Timeout + CloseFar
 Goal: Hoàn thiện QE: 3 mode (Fixed/Percentage/Dynamic), timeout, đóng vị thế xa khi QE.
 Scope: Thêm InpQuickExitTimeoutMinutes, InpQuickExitCloseFar; sau close-far recalculate basket metrics như hướng dẫn. 
 
-11-AI-PROMPTS-FOR-IMPLEMENTATION
+
 
 
 Deliverables: QE log đầy đủ: target, TP, distance, timeout/deactivate.
@@ -161,18 +158,18 @@ P9 — Gap Management v1: CalculateGapSize + Bridge (200–400)
 Goal: Đo gap chuẩn (max khoảng cách liên tiếp) & điền cầu khi 200–400 pips.
 Scope: Tích hợp block “Check gap and manage” ở GridBasket.Update() (đoạn bạn đã có). 
 
-5-IMPLEMENTATION-PLAN
+
 
  
 
-5-IMPLEMENTATION-PLAN
+
 
 
 Deliverables: Log gap size + từng bridge level được đặt.
 Exit: Preset Gap-sideways: bridge hợp lý, không đặt giá vô lý.
 Tests: Validate BUY dưới/SELL trên current (IsPriceReasonable). 
 
-5-IMPLEMENTATION-PLAN
+
 
 
 Rollback: InpAutoFillBridge=false.
@@ -182,11 +179,11 @@ P10 — Gap Management v2: CloseFar (>400) + Reseed điều kiện
 Goal: Gap lớn → đóng vị thế xa (nếu loss chấp nhận), reseed khi còn <2.
 Scope: Theo checklist “Close far positions / Reseed / Price validation” trong prompts & plan. 
 
-11-AI-PROMPTS-FOR-IMPLEMENTATION
+
 
  
 
-5-IMPLEMENTATION-PLAN
+
 
 
 Deliverables: Log tổng loss khi đóng xa + metrics sau recalc.
@@ -201,7 +198,7 @@ Scope: Update() / HandleBasketClosures() / CheckGlobalRisk() như code checklist
 
  
 
-5-IMPLEMENTATION-PLAN
+
 
 
 Deliverables: Log x2 help khi basket kia đang QE; emergency protocol rõ ràng.
@@ -227,7 +224,7 @@ P13 — Backtest Burn-in + Guardrails
 Goal: 3 tháng dữ liệu: đo MaxDD, TrapEscapeRate, AvgLossPerTrap, AvgTimeToQE.
 Scope: Kịch bản test & regression như prompts (5 test chính + regression). 
 
-11-AI-PROMPTS-FOR-IMPLEMENTATION
+
 
 
 Deliverables: CSV/Markdown + biểu đồ so sánh trước/sau.
@@ -251,7 +248,7 @@ P15 — Hardening, Docs & Release
 Goal: Làm sạch module (tách helpers QE/Gap), viết docs & changelog.
 Scope: Dựa prompts: User Guide / Technical docs / Testing report / Deployment checklist / Changelog 3.1.0. 
 
-11-AI-PROMPTS-FOR-IMPLEMENTATION
+
 
 
 Deliverables: Tag v3.1.0 + CHANGELOG.
