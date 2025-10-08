@@ -140,8 +140,8 @@ private:
       m_levels_placed=0;
       m_pending_count=0;
       
-      // Pre-allocate full array but only fill warm levels
-      if(m_params.grid_dynamic_enabled || m_params.lazy_grid_enabled)
+      // Pre-allocate array for lazy grid (filled dynamically)
+      if(m_params.lazy_grid_enabled)
         {
          ArrayResize(m_levels,m_max_levels);
          for(int i=0;i<m_max_levels;i++)
@@ -234,6 +234,149 @@ private:
                                         m_levels_placed,m_pending_count));
      }
 
+   //+------------------------------------------------------------------+
+   //| Phase 4: Smart Expansion Helpers                                 |
+   //+------------------------------------------------------------------+
+   
+   //--- Calculate next level price
+   double         CalculateNextLevelPrice()
+     {
+      int next_level=m_grid_state.currentMaxLevel+1;
+      double spacing_px=m_spacing.ToPrice(m_initial_spacing_pips);
+      double anchor=m_levels[0].price;
+      
+      if(m_direction==DIR_BUY)
+         return anchor-(spacing_px*next_level);
+      else
+         return anchor+(spacing_px*next_level);
+     }
+   
+   //--- Convert price difference to pips
+   double         PriceToDistance(const double price1,const double price2)
+     {
+      double diff=MathAbs(price1-price2);
+      double point=SymbolInfoDouble(m_symbol,SYMBOL_POINT);
+      int digits=(int)SymbolInfoInteger(m_symbol,SYMBOL_DIGITS);
+      
+      // For 3/5 digit brokers, divide by 10
+      if(digits==3 || digits==5)
+         return diff/point/10.0;
+      else
+         return diff/point;
+     }
+   
+   //--- Validate price is on correct side of market
+   bool           IsPriceReasonable(const double price)
+     {
+      double current=SymbolInfoDouble(m_symbol,
+                     (m_direction==DIR_BUY)?SYMBOL_ASK:SYMBOL_BID);
+      
+      // BUY: pending must be BELOW current
+      if(m_direction==DIR_BUY && price>=current)
+         return false;
+      
+      // SELL: pending must be ABOVE current
+      if(m_direction==DIR_SELL && price<=current)
+         return false;
+      
+      return true;
+     }
+   
+   //--- Check if grid should expand (all guards)
+   bool           ShouldExpandGrid()
+     {
+      // Guard 1: Max levels reached?
+      if(m_grid_state.currentMaxLevel>=m_max_levels-1)
+        {
+         if(m_log!=NULL)
+            m_log.Event(Tag(),"Expansion blocked: GRID_FULL");
+         return false;
+        }
+      
+      // Guard 2: DD too deep?
+      if(m_total_lot>0.0)
+        {
+         double account_balance=AccountInfoDouble(ACCOUNT_BALANCE);
+         if(account_balance>0.0)
+           {
+            double dd_pct=(m_pnl_usd/account_balance)*100.0;
+            if(dd_pct<m_params.max_dd_for_expansion)
+              {
+               if(m_log!=NULL)
+                  m_log.Event(Tag(),StringFormat("Expansion blocked: DD too deep %.2f%% < %.2f%%",
+                                                 dd_pct,m_params.max_dd_for_expansion));
+               return false;
+              }
+           }
+        }
+      
+      // Guard 3: Distance too far?
+      double next_price=CalculateNextLevelPrice();
+      double distance_pips=PriceToDistance(next_price,m_levels[0].price);
+      if(distance_pips>m_params.max_level_distance)
+        {
+         if(m_log!=NULL)
+            m_log.Event(Tag(),StringFormat("Expansion blocked: Distance %.1f pips > %.1f max",
+                                          distance_pips,m_params.max_level_distance));
+         return false;
+        }
+      
+      // Guard 4: Price reasonable?
+      if(!IsPriceReasonable(next_price))
+        {
+         if(m_log!=NULL)
+            m_log.Event(Tag(),"Expansion blocked: Price on wrong side of market");
+         return false;
+        }
+      
+      return true;
+     }
+   
+   //--- Expand grid by one level
+   void           ExpandOneLevel()
+     {
+      int next_level=m_grid_state.currentMaxLevel+1;
+      
+      double spacing_px=m_spacing.ToPrice(m_initial_spacing_pips);
+      double anchor=m_levels[0].price;
+      
+      double price=anchor;
+      if(m_direction==DIR_BUY)
+         price-=(spacing_px*next_level);
+      else
+         price+=(spacing_px*next_level);
+      
+      double lot=LevelLot(next_level);
+      if(lot<=0.0)
+         return;
+      
+      m_executor.SetMagic(m_magic);
+      ulong ticket=(m_direction==DIR_BUY)
+                  ?m_executor.Limit(DIR_BUY,price,lot,"RGDv2_LazyExpand")
+                  :m_executor.Limit(DIR_SELL,price,lot,"RGDv2_LazyExpand");
+      
+      if(ticket>0)
+        {
+         m_levels[next_level].price=price;
+         m_levels[next_level].lot=lot;
+         m_levels[next_level].ticket=ticket;
+         m_levels[next_level].filled=false;
+         
+         m_levels_placed++;
+         m_pending_count++;
+         m_last_grid_price=price;
+         
+         m_grid_state.currentMaxLevel=next_level;
+         m_grid_state.pendingCount=m_pending_count;
+         
+         LogDynamic("EXPAND",next_level,price);
+         
+         if(m_log!=NULL)
+            m_log.Event(Tag(),StringFormat("Lazy grid expanded to level %d, pending=%d/%d",
+                                          next_level,m_pending_count,m_max_levels));
+        }
+     }
+
    void           PlaceInitialOrders()
      {
       if(ArraySize(m_levels)==0)
@@ -251,105 +394,43 @@ private:
 
       m_executor.SetMagic(m_magic);
       
-      // Phase 3: Use lazy grid if enabled
+      // Phase 4: Use lazy grid if enabled
       if(m_params.lazy_grid_enabled)
         {
          SeedInitialGrid();
          return;
         }
-
-      if(m_params.grid_dynamic_enabled)
+      
+      // Fallback: Static grid (place all levels at once)
+      m_executor.BypassNext(ArraySize(m_levels));
+      
+      double seed_lot=m_levels[0].lot;
+      if(seed_lot<=0.0)
+         return;
+      ulong market_ticket=m_executor.Market(m_direction,seed_lot,"RGDv2_Seed");
+      if(market_ticket>0)
         {
-         // Dynamic mode: only place seed + warm levels
-         int warm=MathMin(m_params.grid_warm_levels,m_max_levels-1);
-         int warm_cap=warm;
-         if(m_params.grid_max_pendings>0)
-            warm_cap=MathMin(warm,m_params.grid_max_pendings);
-         m_executor.BypassNext(1+warm_cap);
-         
-         double spacing_px=m_spacing.ToPrice(m_initial_spacing_pips);
-         double anchor=SymbolInfoDouble(m_symbol,(m_direction==DIR_BUY)?SYMBOL_ASK:SYMBOL_BID);
-         
-         // Place seed
-         double seed_lot=LevelLot(0);
-         ulong market_ticket=m_executor.Market(m_direction,seed_lot,"RGDv2_Seed");
-         if(market_ticket>0)
-           {
-            m_levels[0].price=anchor;
-            m_levels[0].lot=seed_lot;
-            m_levels[0].ticket=market_ticket;
-            m_levels[0].filled=true;
-            m_levels_placed++;
-            m_last_grid_price=anchor;
-            LogDynamic("SEED",0,anchor);
-           }
-         
-         // Place warm pending
-         for(int i=1;i<=warm_cap;i++)
-           {
-            double price=anchor;
-            if(m_direction==DIR_BUY)
-               price-=spacing_px*i;
-            else
-               price+=spacing_px*i;
-            double lot=LevelLot(i);
-            ulong pending=(m_direction==DIR_BUY)?m_executor.Limit(DIR_BUY,price,lot,"RGDv2_Grid")
-                                                :m_executor.Limit(DIR_SELL,price,lot,"RGDv2_Grid");
-            if(pending>0)
-              {
-               m_levels[i].price=price;
-               m_levels[i].lot=lot;
-               m_levels[i].ticket=pending;
-               m_levels[i].filled=false;
-               m_levels_placed++;
-               m_pending_count++;
-               m_last_grid_price=price;
-               LogDynamic("SEED",i,price);
-              }
-           }
-
-         if((warm>warm_cap) || (m_params.grid_max_pendings>0 && m_pending_count>=m_params.grid_max_pendings))
-            LogDynamic("LIMIT",m_levels_placed,m_last_grid_price);
-
-         if(m_pending_count==0)
-            m_last_grid_price=anchor;
-         
-         if(m_log!=NULL)
-            m_log.Event(Tag(),StringFormat("Dynamic grid warm=%d/%d",m_levels_placed,m_max_levels));
+         m_levels[0].ticket=market_ticket;
+         m_levels[0].filled=true;
         }
-      else
+      
+      for(int i=1;i<ArraySize(m_levels);i++)
         {
-         // Old static mode: place all
-         m_executor.BypassNext(ArraySize(m_levels));
-         
-         double seed_lot=m_levels[0].lot;
-         if(seed_lot<=0.0)
-            return;
-         ulong market_ticket=m_executor.Market(m_direction,seed_lot,"RGDv2_Seed");
-         if(market_ticket>0)
-           {
-            m_levels[0].ticket=market_ticket;
-            m_levels[0].filled=true;
-           }
-         
-         for(int i=1;i<ArraySize(m_levels);i++)
-           {
-            double price=m_levels[i].price;
-            double lot=m_levels[i].lot;
-            if(lot<=0.0)
-               continue;
-            ulong pending=0;
-            if(m_direction==DIR_BUY)
-               pending=m_executor.Limit(DIR_BUY,price,lot,"RGDv2_Grid");
-            else
-               pending=m_executor.Limit(DIR_SELL,price,lot,"RGDv2_Grid");
-            if(pending>0)
-               m_levels[i].ticket=pending;
-           }
-         
-         if(m_log!=NULL)
-            m_log.Event(Tag(),StringFormat("Grid seeded levels=%d",ArraySize(m_levels)));
+         double price=m_levels[i].price;
+         double lot=m_levels[i].lot;
+         if(lot<=0.0)
+            continue;
+         ulong pending=0;
+         if(m_direction==DIR_BUY)
+            pending=m_executor.Limit(DIR_BUY,price,lot,"RGDv2_Grid");
+         else
+            pending=m_executor.Limit(DIR_SELL,price,lot,"RGDv2_Grid");
+         if(pending>0)
+            m_levels[i].ticket=pending;
         }
+      
+      if(m_log!=NULL)
+         m_log.Event(Tag(),StringFormat("Static grid seeded levels=%d",ArraySize(m_levels)));
      }
 
    void           RefreshState()
@@ -591,71 +672,18 @@ public:
       return true;
      }
 
+   //+------------------------------------------------------------------+
+   //| Refill/Expand Grid (Lazy Grid Only)                              |
+   //+------------------------------------------------------------------+
    void           RefillBatch()
      {
-      // Phase 3 v1: Lazy grid does NOT expand automatically (Phase 4 will add expansion logic)
-      if(m_params.lazy_grid_enabled)
-         return;
-         
-      if(!m_params.grid_dynamic_enabled)
-         return;
-      if(!m_trading_enabled)
-         return;  // Trend filter disabled trading (NONE/CLOSE_ALL modes)
-      if(!m_refill_enabled)
-         return;  // NO_REFILL mode: block refill, allow existing positions
-      if(m_levels_placed>=m_max_levels)
-         return;
-      if(m_pending_count>m_params.grid_refill_threshold)
-         return;
-      if(m_params.grid_max_pendings>0 && m_pending_count>=m_params.grid_max_pendings)
+      // Only handle lazy grid expansion
+      if(!m_params.lazy_grid_enabled)
          return;
       
-      double spacing_px=m_spacing.ToPrice(m_initial_spacing_pips);
-      double anchor_price=SymbolInfoDouble(m_symbol,(m_direction==DIR_BUY)?SYMBOL_BID:SYMBOL_ASK);
-      int to_add=MathMin(m_params.grid_refill_batch,m_max_levels-m_levels_placed);
-      int added=0;
-      
-      for(int i=0;i<to_add;i++)
-        {
-         int idx=m_levels_placed;
-         if(idx>=m_max_levels)
-            break;
-         
-         double base_price=(m_levels_placed==0)?anchor_price:m_last_grid_price;
-         double price=base_price;
-         if(m_direction==DIR_BUY)
-            price-=spacing_px;
-         else
-            price+=spacing_px;
-         
-         double lot=LevelLot(idx);
-         if(lot<=0.0)
-            continue;
-         
-         ulong pending=(m_direction==DIR_BUY)?m_executor.Limit(DIR_BUY,price,lot,"RGDv2_GridRefill")
-                                             :m_executor.Limit(DIR_SELL,price,lot,"RGDv2_GridRefill");
-         if(pending>0)
-           {
-            m_levels[idx].price=price;
-            m_levels[idx].lot=lot;
-            m_levels[idx].ticket=pending;
-            m_levels[idx].filled=false;
-            m_levels_placed++;
-            m_pending_count++;
-            m_last_grid_price=price;
-            LogDynamic("REFILL",idx,price);
-            added++;
-
-            if(m_params.grid_max_pendings>0 && m_pending_count>=m_params.grid_max_pendings)
-              {
-               LogDynamic("LIMIT",idx,price);
-               break;
-              }
-           }
-        }
-      
-      if(added>0 && m_log!=NULL)
-         m_log.Event(Tag(),StringFormat("Refill +%d placed=%d/%d pending=%d",added,m_levels_placed,m_max_levels,m_pending_count));
+      // Check if we should expand by one level
+      if(ShouldExpandGrid())
+         ExpandOneLevel();
      }
 
    void           Update()
@@ -672,8 +700,8 @@ public:
          return;  // Exit early after SL closure
         }
 
-      // Dynamic grid refill
-      if(m_params.grid_dynamic_enabled)
+      // Lazy grid expansion
+      if(m_params.lazy_grid_enabled)
         {
          // Update pending count by direction
          m_pending_count=0;
@@ -694,7 +722,7 @@ public:
                continue;
             m_pending_count++;
            }
-         RefillBatch();
+         RefillBatch();  // Calls ExpandOneLevel() if guards pass
         }
 
       if((m_pnl_usd>=EffectiveTargetUsd()) || PriceReachedTP())

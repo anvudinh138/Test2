@@ -22,22 +22,11 @@ struct SParams
    double       lot_base;
    double       lot_scale;
 
-   // dynamic grid
-   bool         grid_dynamic_enabled;
-   int          grid_warm_levels;      // initial pending count
-   int          grid_refill_threshold; // refill when pending <= this
-   int          grid_refill_batch;     // add this many per refill
-   int          grid_max_pendings;     // hard limit for safety
-
    // profit target
    double       target_cycle_usd;
 
    // session risk limit (keep for safety)
    double       session_sl_usd;
-
-   // grid protection (anti blow-up)
-   bool         grid_protection_enabled;  // enable grid full auto-close
-   int          grid_cooldown_minutes;    // cooldown after grid full (minutes)
 
    // execution
    int          slippage_pips;
@@ -68,15 +57,6 @@ struct SParams
 
    // timeframe preservation (prevent duplicate positions on TF switch)
    bool         preserve_on_tf_switch;   // preserve positions on timeframe switch (default: true)
-
-   // trend filter (Phase 1.1 - strong trend protection)
-   ETrendAction trend_action;            // trend action mode (NONE, CLOSE_ALL, NO_REFILL)
-   bool         trend_filter_enabled;    // enable trend filter
-   ENUM_TIMEFRAMES trend_ema_timeframe;  // EMA timeframe
-   int          trend_ema_period;        // EMA period
-   int          trend_adx_period;        // ADX period
-   double       trend_adx_threshold;     // ADX threshold
-   double       trend_buffer_pips;       // buffer distance in pips
 
    // basket stop loss (Phase 1.2 - spacing-based risk management)
    bool         basket_sl_enabled;       // enable basket stop loss

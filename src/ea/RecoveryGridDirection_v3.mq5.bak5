@@ -314,6 +314,13 @@ void BuildParams()
    g_params.preserve_on_tf_switch=true;
 
    // Trend filter (Phase 1.1 - strong trend protection)
+   g_params.trend_filter_enabled  =InpTrendFilterEnabled;
+   g_params.trend_action          =InpTrendAction;
+   g_params.trend_ema_timeframe   =InpTrendEMA_Timeframe;
+   g_params.trend_ema_period      =InpTrendEMA_Period;
+   g_params.trend_adx_period      =InpTrendADX_Period;
+   g_params.trend_adx_threshold   =InpTrendADX_Threshold;
+   g_params.trend_buffer_pips     =InpTrendBufferPips;
 
    // Basket stop loss (Phase 1.2 - spacing-based risk management)
    g_params.basket_sl_enabled     =InpBasketSL_Enabled;

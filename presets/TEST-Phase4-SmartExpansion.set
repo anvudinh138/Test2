@@ -1,0 +1,82 @@
+;+------------------------------------------------------------------+
+;| Scenario: Lazy Grid Smart Expansion Test (Phase 4)               |
+;| Purpose: Verify lazy grid expands 1 level at a time with guards  |
+;+------------------------------------------------------------------+
+
+;=== CHANGED FROM DEFAULTS ===
+
+;--- Identity
+InpMagic=990044
+; Default: 990045
+; Changed to: 990044 (unique for Phase 4 test)
+
+;--- Symbol Preset (IMPORTANT!)
+InpSymbolPreset=99
+; Default: PRESET_AUTO (0)
+; Changed to: 99 (PRESET_CUSTOM - bypasses preset manager)
+
+InpUseTestedPresets=false
+; Default: true
+; Changed to: false (MUST be false - prevents preset override!)
+
+;--- Spacing Engine
+InpAtrTimeframe=4
+; Default: PERIOD_M15 (16)
+; Changed to: PERIOD_M5 (4)
+
+InpSpacingStepPips=25.0
+; Default: 25.0
+; Kept: 25 pips spacing for XAUUSD
+
+;--- Grid Configuration
+InpGridLevels=5
+; Default: 5
+; Kept: 5 levels to test max level guard
+
+InpLotBase=0.01
+InpLotScale=2.0
+; Standard martingale settings
+
+;--- Target
+InpTargetCycleUSD=5.0
+; Default: 6.0
+; Changed to: 5.0 (standard for XAUUSD)
+
+;--- Lazy Grid Fill (Phase 4)
+InpLazyGridEnabled=true
+; Default: false
+; Changed to: true (enable lazy grid for this test)
+
+InpInitialWarmLevels=1
+; Default: 1
+; Kept: Start with 1 pending (level 1)
+
+InpMaxLevelDistance=500
+; Default: 500
+; Kept: 500 pips max distance (should not trigger for normal tests)
+
+InpMaxDDForExpansion=-20.0
+; Default: -20.0
+; Kept: Stop expansion if DD < -20%
+
+;=== TEST SCENARIOS ===
+
+; Test 1: Basic Expansion
+; - Price moves slowly against position
+; - Expected: Grid expands 1 level at a time (1→2→3→4)
+; - Should see: "Lazy grid expanded to level X"
+
+; Test 2: Max Level Guard
+; - Let grid expand to level 4 (max for 5 levels)
+; - Expected: Stops at level 4, logs "Expansion blocked: GRID_FULL"
+
+; Test 3: DD Guard (Manual Test)
+; - Modify InpMaxDDForExpansion=-5.0
+; - Let DD grow to -5%
+; - Expected: Stops expansion, logs "Expansion blocked: DD too deep"
+
+; Test 4: Distance Guard (Manual Test)
+; - Modify InpMaxLevelDistance=50
+; - Expected: Stops after 2-3 levels, logs "Expansion blocked: Distance X pips > 50 max"
+
+;=== ALL OTHER PARAMETERS USE DEFAULTS ===
