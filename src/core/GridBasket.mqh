@@ -141,8 +141,7 @@ private:
       m_pending_count=0;
       
       // Pre-allocate full array but only fill warm levels
-      // FORCE CHECK: Always use dynamic array structure if ANY modern feature enabled
-      if(m_params.grid_dynamic_enabled || m_params.lazy_grid_enabled || true)  // TEMP: Force for testing
+      if(m_params.grid_dynamic_enabled || m_params.lazy_grid_enabled)
         {
          ArrayResize(m_levels,m_max_levels);
          for(int i=0;i<m_max_levels;i++)
@@ -152,8 +151,6 @@ private:
             m_levels[i].ticket=0;
             m_levels[i].filled=false;
            }
-         if(m_log!=NULL)
-            m_log.Event(Tag(),"[DEBUG BuildGrid] Array pre-allocated - lazy="+(m_params.lazy_grid_enabled?"T":"F"));
         }
       else
         {
@@ -254,11 +251,9 @@ private:
 
       m_executor.SetMagic(m_magic);
       
-      // Phase 3: Use lazy grid if enabled (FORCED FOR TESTING)
-      if(true)  // TEMP: Force lazy
+      // Phase 3: Use lazy grid if enabled
+      if(m_params.lazy_grid_enabled)
         {
-         if(m_log!=NULL)
-            m_log.Event(Tag(),"[DEBUG PlaceOrders] Lazy path FORCED - lazy_enabled="+(m_params.lazy_grid_enabled?"TRUE":"FALSE"));
          SeedInitialGrid();
          return;
         }
