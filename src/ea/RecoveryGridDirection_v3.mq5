@@ -63,6 +63,10 @@ input bool              InpNewsFilterEnabled   = false;  // Enable news filter
 input string            InpNewsImpactFilter    = "High"; // Impact filter (High, Medium+, All)
 input int               InpNewsBufferMinutes   = 30;     // Buffer before/after news (minutes)
 
+//--- Trend Filter (Phase 1.1 - Strong Trend Protection)
+input group             "=== Trend Filter (Phase 1.1 - OFF for Phase 0) ==="
+input ETrendAction      InpTrendAction         = TREND_ACTION_NONE;  // Trend action (NONE/CLOSE_ALL/NO_REFILL)
+
 //--- Execution
 input int               InpOrderCooldownSec = 5;     // Min seconds between orders (anti-spam)
 input int               InpSlippagePips     = 0;     // Max slippage (pips)
@@ -189,6 +193,9 @@ void BuildParams()
 
    // Timeframe preservation (bug fix - always enabled)
    g_params.preserve_on_tf_switch=true;
+
+   // Trend filter (Phase 1.1 - strong trend protection)
+   g_params.trend_action          =InpTrendAction;
 
    // Basket stop loss (Phase 1.2 - spacing-based risk management)
    g_params.basket_sl_enabled     =InpBasketSL_Enabled;

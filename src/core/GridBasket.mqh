@@ -404,7 +404,7 @@ private:
          return false;
 
       // Get current spacing in price units
-      double current_spacing_pips=(m_spacing!=NULL)?m_spacing.GetSpacing():m_params.spacing_pips;
+      double current_spacing_pips=(m_spacing!=NULL)?m_spacing.SpacingPips():m_params.spacing_pips;
       double point=SymbolInfoDouble(m_symbol,SYMBOL_POINT);
       double spacing_px=current_spacing_pips*point*10.0;
 

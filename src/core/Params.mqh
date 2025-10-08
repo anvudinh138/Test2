@@ -69,6 +69,9 @@ struct SParams
    // timeframe preservation (prevent duplicate positions on TF switch)
    bool         preserve_on_tf_switch;   // preserve positions on timeframe switch (default: true)
 
+   // trend filter (Phase 1.1 - strong trend protection)
+   ETrendAction trend_action;            // trend action mode (NONE, CLOSE_ALL, NO_REFILL)
+
    // basket stop loss (Phase 1.2 - spacing-based risk management)
    bool         basket_sl_enabled;       // enable basket stop loss
    double       basket_sl_spacing;       // SL distance in spacing units (e.g., 2.0 = 2x spacing)
