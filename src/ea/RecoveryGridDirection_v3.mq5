@@ -99,8 +99,8 @@ input group             "=== Trap Detection (v3.1 - Phase 5) ==="
 input bool              InpTrapDetectionEnabled = true;       // Enable trap detection
 input bool              InpTrapAutoThreshold    = true;        // Auto-calculate gap threshold
 input double            InpTrapGapThreshold     = 50.0;        // Manual gap threshold (pips) - used if auto=false
-input double            InpTrapATRMultiplier    = 2.0;         // ATR multiplier for auto mode (2.0 = 2x ATR)
-input double            InpTrapSpacingMultiplier = 1.5;        // Spacing multiplier for auto mode (1.5 = 1.5x spacing)
+input double            InpTrapATRMultiplier    = 1.0;         // ATR multiplier for auto mode (2.0 = 2x ATR)
+input double            InpTrapSpacingMultiplier = 1.0;        // Spacing multiplier for auto mode (1.5 = 1.5x spacing)
 input double            InpTrapDDThreshold      = -15.0;       // DD threshold (%)
 input int               InpTrapConditionsRequired = 1;         // Min conditions to trigger (1-5)
 input int               InpTrapStuckMinutes     = 0;          // Minutes to consider "stuck"
@@ -109,7 +109,7 @@ input int               InpTrapStuckMinutes     = 0;          // Minutes to cons
 input group             "=== Quick Exit Mode (v3.1 - Phase 0: OFF) ==="
 input bool              InpQuickExitEnabled     = true;       // Enable quick exit (OFF for Phase 0)
 input ENUM_QUICK_EXIT_MODE InpQuickExitMode    = QE_FIXED;    // Exit mode
-input double            InpQuickExitLoss        = -10.0;       // Fixed loss amount ($)
+input double            InpQuickExitLoss        = 0.0;       // Fixed loss amount ($)
 input double            InpQuickExitPercentage  = 0.30;        // Percentage mode (30% of DD)
 input bool              InpQuickExitCloseFar    = true;        // Close far positions in quick exit
 input bool              InpQuickExitReseed      = true;        // Auto reseed after exit

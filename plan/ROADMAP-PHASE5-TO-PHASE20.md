@@ -16,10 +16,10 @@
 ✅ Phase 3: Lazy Grid v1 (Seed minimal) ............................ DONE
 ✅ Phase 4: Lazy Grid v2 (Smart expansion + guards) ................ DONE
 ✅ Phase 5: Trap Detection v1 (3 core conditions) .................. DONE
-✅ Phase 5.5: Auto Trap Threshold (Hybrid ATR + Spacing) ........... DONE ← YOU ARE HERE
+✅ Phase 5.5: Auto Trap Threshold (Hybrid ATR + Spacing) ........... DONE
 ⏳ Phase 6: Trap Detection v2 (Moving-away + Stuck) ................ FUTURE
 ✅ Phase 7: Quick Exit v1 (QE_FIXED + Close with loss) ............. DONE
-⏳ Phase 8: Quick Exit v2 (Percentage/Dynamic + Timeout + CloseFar). PARTIAL (Timeout DONE)
+✅ Phase 8: Quick Exit v2 (3 Modes + Timeout + Reseed) ............. DONE ← YOU ARE HERE
 ⏳ Phase 9: Gap Management v1 (CalculateGap + Bridge 200-400) ...... FUTURE
 ⏳ Phase 10: Gap Management v2 (CloseFar >400 + Reseed) ............ FUTURE
 ⏳ Phase 11: Lifecycle Controller (Profit sharing + Global risk) ... PARTIAL (Profit sharing DONE)
