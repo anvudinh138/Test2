@@ -243,24 +243,21 @@ bool CTrapDetector::CheckCondition_HeavyDD()
 //+------------------------------------------------------------------+
 void CTrapDetector::LogTrapDetection(bool cond1, bool cond2, bool cond3, bool cond4, bool cond5)
   {
+   if(m_log == NULL) return;
+   
    string dir_str = (GetBasketDirection() == DIR_BUY) ? "BUY" : "SELL";
    
-   Print("🚨 TRAP DETECTED for ", dir_str, " basket");
-   Print("   Conditions met: ", m_trap_state.conditionsMet, "/5");
-   Print("   ├─ Gap (", DoubleToString(m_trap_state.gapSize, 1), " pips): ", cond1 ? "✅" : "❌");
-   Print("   ├─ Counter-trend: ", cond2 ? "✅" : "❌");
-   Print("   ├─ Heavy DD (", DoubleToString(m_trap_state.ddAtDetection, 2), "%): ", cond3 ? "✅" : "❌");
-   Print("   ├─ Moving away: ", cond4 ? "✅" : "❌", " (Phase 6)");
-   Print("   └─ Stuck: ", cond5 ? "✅" : "❌", " (Phase 6)");
-   
-   if(m_log != NULL)
-     {
-      string details = StringFormat("Conditions: %d/5 | Gap: %.1f | DD: %.2f%%",
-                                   m_trap_state.conditionsMet,
-                                   m_trap_state.gapSize,
-                                   m_trap_state.ddAtDetection);
-      m_log.Event(Tag(), "TRAP_DETECTED: " + details);
-     }
+   m_log.Event(Tag(),StringFormat("🚨 TRAP DETECTED for %s basket", dir_str));
+   m_log.Event(Tag(),StringFormat("   Conditions met: %d/5", m_trap_state.conditionsMet));
+   m_log.Event(Tag(),StringFormat("   ├─ Gap (%.1f pips): %s", 
+                                    m_trap_state.gapSize, 
+                                    cond1 ? "✅" : "❌"));
+   m_log.Event(Tag(),StringFormat("   ├─ Counter-trend: %s", cond2 ? "✅" : "❌"));
+   m_log.Event(Tag(),StringFormat("   ├─ Heavy DD (%.2f%%): %s", 
+                                    m_trap_state.ddAtDetection, 
+                                    cond3 ? "✅" : "❌"));
+   m_log.Event(Tag(),StringFormat("   ├─ Moving away: %s (Phase 6)", cond4 ? "✅" : "❌"));
+   m_log.Event(Tag(),StringFormat("   └─ Stuck: %s (Phase 6)", cond5 ? "✅" : "❌"));
   }
 
 //+------------------------------------------------------------------+

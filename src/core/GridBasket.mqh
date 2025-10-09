@@ -54,6 +54,12 @@ private:
    
    // trap detector (v3.1 - Phase 5)
    CTrapDetector *m_trap_detector;
+   
+   // quick exit mode (v3.1 - Phase 7)
+   bool           m_quick_exit_active;
+   double         m_quick_exit_target;
+   double         m_original_target;
+   datetime       m_quick_exit_start_time;
 
    double         m_last_realized;
 
@@ -681,6 +687,12 @@ public:
       
       // Initialize trap detector pointer to NULL
       m_trap_detector=NULL;
+      
+      // Initialize quick exit state
+      m_quick_exit_active=false;
+      m_quick_exit_target=0.0;
+      m_original_target=0.0;
+      m_quick_exit_start_time=0;
      }
    
    //+------------------------------------------------------------------+
@@ -712,7 +724,7 @@ public:
       m_active=true;
       m_closed_recently=false;
       RefreshState();
-      
+
       // Initialize trap detector (Phase 5)
       // Note: TrendFilter will be passed from LifecycleController (for now NULL)
       m_trap_detector=new CTrapDetector(GetPointer(this),
@@ -723,8 +735,40 @@ public:
                                          m_params.trap_dd_threshold,
                                          m_params.trap_conditions_required,
                                          m_params.trap_stuck_minutes);
-      
+
       return true;
+     }
+
+   //+------------------------------------------------------------------+
+   //| Reseed basket with fresh grid (for Quick Exit auto-reseed)      |
+   //+------------------------------------------------------------------+
+   void           Reseed()
+     {
+      if(m_spacing==NULL)
+         return;
+
+      // Get current price for anchor
+      double anchor_price=SymbolInfoDouble(m_symbol,(m_direction==DIR_BUY)?SYMBOL_ASK:SYMBOL_BID);
+
+      // Clear old state
+      ClearLevels();
+      m_target_reduction=0.0;
+      m_last_realized=0.0;
+
+      // Rebuild grid and place orders
+      double spacing_pips=m_spacing.SpacingPips();
+      double spacing_px=m_spacing.ToPrice(spacing_pips);
+      if(spacing_px>0.0)
+        {
+         m_initial_spacing_pips=spacing_pips;
+         BuildGrid(anchor_price,spacing_px);
+         PlaceInitialOrders();
+         m_active=true;
+         RefreshState();
+
+         if(m_log!=NULL)
+            m_log.Event(Tag(),StringFormat("[%s] Basket reseeded at %.5f",DirectionLabel(),anchor_price));
+        }
      }
 
    //+------------------------------------------------------------------+
@@ -752,6 +796,15 @@ public:
          return;
       m_closed_recently=false;
       RefreshState();
+      
+      // Phase 7: Check Quick Exit TP (highest priority - escape trap ASAP)
+      if(CheckQuickExitTP())
+        {
+         return;  // Quick exit closed basket, skip other checks
+        }
+      
+      // Phase 5: Check for new trap conditions (detect traps before they worsen)
+      CheckTrapConditions();
 
       // Basket Stop Loss check (spacing-based)
       if(m_params.basket_sl_enabled && CheckBasketSL())
@@ -1007,25 +1060,30 @@ public:
      }
    
    //+------------------------------------------------------------------+
-   //| Handle trap detected (Phase 5: log only, no action yet)          |
+   //| Handle trap detected (Phase 7: activate Quick Exit once only)    |
    //+------------------------------------------------------------------+
    void           HandleTrapDetected()
      {
       if(m_trap_detector==NULL)
          return;
       
+      // Only activate Quick Exit if not already active (prevent spam)
+      if(m_quick_exit_active)
+         return;
+      
       STrapState trap_state=m_trap_detector.GetTrapState();
       
+      // Log trap detection ONCE
       if(m_log!=NULL)
         {
-         m_log.Event(Tag(),"🚨 TRAP HANDLER triggered");
+         m_log.Event(Tag(),"🚨 TRAP DETECTED!");
          m_log.Event(Tag(),StringFormat("   Gap: %.1f pips",trap_state.gapSize));
          m_log.Event(Tag(),StringFormat("   DD: %.2f%%",trap_state.ddAtDetection));
          m_log.Event(Tag(),StringFormat("   Conditions: %d/5",trap_state.conditionsMet));
         }
       
-      // Phase 5: LOG ONLY - no action taken yet
-      // Phase 7: Will activate quick exit mode here
+      // Phase 7: Activate Quick Exit Mode to escape trap (once only)
+      ActivateQuickExitMode();
      }
    
    //+------------------------------------------------------------------+
@@ -1052,6 +1110,135 @@ public:
      {
       // Will be implemented when needed
       // For now, trap detector works without trend filter
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Phase 7: Activate Quick Exit Mode                                |
+   //+------------------------------------------------------------------+
+   void           ActivateQuickExitMode()
+     {
+      if(!m_params.quick_exit_enabled)
+         return;
+      
+      if(m_quick_exit_active)
+        {
+         // Already active - silently ignore to prevent log spam
+         return;
+        }
+      
+      m_original_target = m_params.target_cycle_usd;
+      m_quick_exit_target = CalculateQuickExitTarget();
+      m_quick_exit_active = true;
+      m_quick_exit_start_time = TimeCurrent();
+      
+      if(m_log!=NULL)
+         m_log.Event(Tag(),StringFormat("[%s] Quick Exit ACTIVATED | Original Target: $%.2f → New Target: $%.2f (Accept loss: $%.2f)",
+                                        DirectionLabel(),m_original_target,m_quick_exit_target,m_quick_exit_target));
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Phase 7: Calculate Quick Exit Target (negative target = accept loss)|
+   //+------------------------------------------------------------------+
+   double         CalculateQuickExitTarget()
+     {
+      double current_pnl = m_pnl_usd;
+      double target = 0.0;
+      
+      switch(m_params.quick_exit_mode)
+        {
+         case QE_FIXED:
+            // Accept a fixed loss amount
+            target = -m_params.quick_exit_loss;
+            break;
+         
+         case QE_PERCENTAGE:
+            // Accept X% of current DD
+            // Example: DD = -$100, percentage = 30% → target = -$30 (accept $30 loss to escape)
+            if(current_pnl < 0)
+               target = current_pnl * (m_params.quick_exit_percentage / 100.0);
+            else
+               target = -m_params.quick_exit_loss; // fallback to fixed
+            break;
+         
+         case QE_DYNAMIC:
+           {
+            // Dynamic: choose smaller loss between fixed and percentage
+            double percentage_loss = (current_pnl < 0) ? (current_pnl * m_params.quick_exit_percentage / 100.0) : 0.0;
+            target = MathMax(-m_params.quick_exit_loss, percentage_loss); // choose less negative (smaller loss)
+            break;
+           }
+        }
+      
+      // Debug log removed - too verbose
+      return target;
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Phase 7: Check if Quick Exit TP reached                          |
+   //+------------------------------------------------------------------+
+   bool           CheckQuickExitTP()
+     {
+      if(!m_quick_exit_active)
+         return false;
+      
+      // Timeout check
+      if(m_params.quick_exit_timeout_min > 0)
+        {
+         int elapsed_minutes = (int)((TimeCurrent() - m_quick_exit_start_time) / 60);
+         if(elapsed_minutes >= m_params.quick_exit_timeout_min)
+           {
+            if(m_log!=NULL)
+               m_log.Warn(Tag(),StringFormat("[%s] Quick Exit TIMEOUT (%d minutes) - deactivating", 
+                                             DirectionLabel(),elapsed_minutes));
+            DeactivateQuickExitMode();
+            return false;
+           }
+        }
+      
+      double current_pnl = m_pnl_usd;
+      
+      // Check if we've reached the quick exit target (negative target = accept small loss)
+      // Example: target = -$20, current = -$18 → CLOSE! (loss reduced enough)
+      if(current_pnl >= m_quick_exit_target)
+        {
+         if(m_log!=NULL)
+            m_log.Event(Tag(),StringFormat("[%s] 🎯 Quick Exit TARGET REACHED! PnL: $%.2f >= Target: $%.2f → CLOSING ALL",
+                                           DirectionLabel(),current_pnl,m_quick_exit_target));
+         
+         // Close all positions in this basket
+         CloseBasket("QuickExit");
+         
+         // Auto reseed if enabled
+         if(m_params.quick_exit_reseed)
+           {
+            if(m_log!=NULL)
+               m_log.Event(Tag(),StringFormat("[%s] Quick Exit: Auto-reseeding basket after escape",DirectionLabel()));
+            Reseed();
+           }
+         
+         DeactivateQuickExitMode();
+         return true;
+        }
+      
+      return false;
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Phase 7: Deactivate Quick Exit Mode                              |
+   //+------------------------------------------------------------------+
+   void           DeactivateQuickExitMode()
+     {
+      if(!m_quick_exit_active)
+         return;
+      
+      m_quick_exit_active = false;
+      m_quick_exit_target = 0.0;
+      m_quick_exit_start_time = 0;
+      
+      // Restore original target
+      m_params.target_cycle_usd = m_original_target;
+      
+      // Debug log removed - deactivation happens silently after timeout or close
      }
   };
 

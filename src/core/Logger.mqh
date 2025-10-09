@@ -146,6 +146,26 @@ public:
      }
 
    //+------------------------------------------------------------------+
+   //| Warning method                                                    |
+   //+------------------------------------------------------------------+
+   void Warn(const string tag,const string message) const
+     {
+      if(!m_emit_events)
+         return;
+      PrintFormat("%s [WARN] %s",tag,message);
+     }
+
+   //+------------------------------------------------------------------+
+   //| Debug method                                                      |
+   //+------------------------------------------------------------------+
+   void Debug(const string tag,const string message) const
+     {
+      if(!m_emit_events)
+         return;
+      PrintFormat("%s [DEBUG] %s",tag,message);
+     }
+
+   //+------------------------------------------------------------------+
    //| NEW: Structured event logging with types                         |
    //+------------------------------------------------------------------+
    void LogEvent(ENUM_LOG_EVENT event,EDirection direction,const string details="")

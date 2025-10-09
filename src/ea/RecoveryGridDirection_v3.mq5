@@ -99,7 +99,7 @@ input group             "=== Trap Detection (v3.1 - Phase 0: OFF) ==="
 input bool              InpTrapDetectionEnabled = false;       // Enable trap detection (OFF for Phase 0)
 input double            InpTrapGapThreshold     = 200.0;       // Gap threshold (pips)
 input double            InpTrapDDThreshold      = -20.0;       // DD threshold (%)
-input int               InpTrapConditionsRequired = 3;         // Min conditions to trigger (3/5)
+input int               InpTrapConditionsRequired = 2;         // Min conditions to trigger (3/5)
 input int               InpTrapStuckMinutes     = 30;          // Minutes to consider "stuck"
 
 //--- Quick Exit Mode (Phase 3)
