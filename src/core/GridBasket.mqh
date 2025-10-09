@@ -12,6 +12,10 @@
 #include "Logger.mqh"
 #include "MathHelpers.mqh"
 
+// Forward declarations
+class CTrapDetector;
+class CTrendFilter;
+
 class CGridBasket
   {
 private:
@@ -47,6 +51,9 @@ private:
    
    // lazy grid state (v3.1 - Phase 3)
    SGridState     m_grid_state;
+   
+   // trap detector (v3.1 - Phase 5)
+   CTrapDetector *m_trap_detector;
 
    double         m_last_realized;
 
@@ -671,6 +678,22 @@ public:
            }
         }
       ArrayResize(m_levels,0);
+      
+      // Initialize trap detector pointer to NULL
+      m_trap_detector=NULL;
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Destructor                                                        |
+   //+------------------------------------------------------------------+
+                    ~CGridBasket()
+     {
+      // Cleanup trap detector
+      if(m_trap_detector!=NULL)
+        {
+         delete m_trap_detector;
+         m_trap_detector=NULL;
+        }
      }
 
    bool           Init(const double anchor_price)
@@ -689,6 +712,18 @@ public:
       m_active=true;
       m_closed_recently=false;
       RefreshState();
+      
+      // Initialize trap detector (Phase 5)
+      // Note: TrendFilter will be passed from LifecycleController (for now NULL)
+      m_trap_detector=new CTrapDetector(GetPointer(this),
+                                         NULL,  // TrendFilter reference (will be set later)
+                                         m_log,
+                                         m_params.trap_detection_enabled,
+                                         m_params.trap_gap_threshold,
+                                         m_params.trap_dd_threshold,
+                                         m_params.trap_conditions_required,
+                                         m_params.trap_stuck_minutes);
+      
       return true;
      }
 
@@ -901,6 +936,126 @@ public:
      {
       return m_refill_enabled;
      }
+   
+   //+------------------------------------------------------------------+
+   //| Phase 5: Trap Detection Helper Methods                           |
+   //+------------------------------------------------------------------+
+   
+   //+------------------------------------------------------------------+
+   //| Calculate gap size between filled positions                      |
+   //+------------------------------------------------------------------+
+   double         CalculateGapSize() const
+     {
+      // Find all filled positions
+      double prices[];
+      int count=0;
+      
+      for(int i=0;i<ArraySize(m_levels);i++)
+        {
+         if(m_levels[i].filled && m_levels[i].ticket>0)
+           {
+            ArrayResize(prices,count+1);
+            prices[count]=m_levels[i].price;
+            count++;
+           }
+        }
+      
+      if(count<2)
+         return 0.0;  // Need at least 2 positions
+      
+      // Sort prices
+      ArraySort(prices);
+      
+      // Find largest gap between consecutive positions
+      double max_gap=0.0;
+      double point=SymbolInfoDouble(m_symbol,SYMBOL_POINT);
+      int digits=(int)SymbolInfoInteger(m_symbol,SYMBOL_DIGITS);
+      
+      for(int i=0;i<count-1;i++)
+        {
+         double gap=MathAbs(prices[i+1]-prices[i])/point;
+         
+         // Convert to pips (handle 3/5 digit brokers)
+         if(digits==3 || digits==5)
+            gap/=10.0;
+         
+         if(gap>max_gap)
+            max_gap=gap;
+        }
+      
+      return max_gap;
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Get DD percent (for trap detection)                              |
+   //+------------------------------------------------------------------+
+   double         GetDDPercent() const
+     {
+      double balance=AccountInfoDouble(ACCOUNT_BALANCE);
+      if(balance<=0.0)
+         return 0.0;
+      
+      return (m_pnl_usd/balance)*100.0;
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Get basket direction (for trap detection)                        |
+   //+------------------------------------------------------------------+
+   EDirection     GetDirection() const
+     {
+      return m_direction;
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Handle trap detected (Phase 5: log only, no action yet)          |
+   //+------------------------------------------------------------------+
+   void           HandleTrapDetected()
+     {
+      if(m_trap_detector==NULL)
+         return;
+      
+      STrapState trap_state=m_trap_detector.GetTrapState();
+      
+      if(m_log!=NULL)
+        {
+         m_log.Event(Tag(),"🚨 TRAP HANDLER triggered");
+         m_log.Event(Tag(),StringFormat("   Gap: %.1f pips",trap_state.gapSize));
+         m_log.Event(Tag(),StringFormat("   DD: %.2f%%",trap_state.ddAtDetection));
+         m_log.Event(Tag(),StringFormat("   Conditions: %d/5",trap_state.conditionsMet));
+        }
+      
+      // Phase 5: LOG ONLY - no action taken yet
+      // Phase 7: Will activate quick exit mode here
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Check for trap conditions (call from LifecycleController)        |
+   //+------------------------------------------------------------------+
+   void           CheckTrapConditions()
+     {
+      if(m_trap_detector==NULL || !m_trap_detector.IsEnabled())
+         return;
+      
+      if(!m_active)
+         return;
+      
+      if(m_trap_detector.DetectTrapConditions())
+        {
+         HandleTrapDetected();
+        }
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Set trend filter reference (called from LifecycleController)     |
+   //+------------------------------------------------------------------+
+   void           SetTrendFilter(CTrendFilter *trend_filter)
+     {
+      // Will be implemented when needed
+      // For now, trap detector works without trend filter
+     }
   };
+
+// Include TrapDetector after GridBasket definition (to resolve circular dependency)
+#include "TrapDetector.mqh"
 
 #endif // __RGD_V2_GRID_BASKET_MQH__

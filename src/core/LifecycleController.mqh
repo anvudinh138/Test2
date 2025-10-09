@@ -359,6 +359,12 @@ public:
          m_buy.Update();
       if(m_sell!=NULL)
          m_sell.Update();
+      
+      // Phase 5: Check trap conditions for both baskets
+      if(m_buy!=NULL)
+         m_buy.CheckTrapConditions();
+      if(m_sell!=NULL)
+         m_sell.CheckTrapConditions();
 
       if(m_buy!=NULL && m_buy.ClosedRecently())
         {
