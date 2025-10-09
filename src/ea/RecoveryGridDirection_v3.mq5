@@ -94,13 +94,16 @@ input int               InpInitialWarmLevels    = 1;           // Initial pendin
 input int               InpMaxLevelDistance     = 500;         // Max distance to next level (pips)
 input double            InpMaxDDForExpansion    = -20.0;       // Stop expanding if DD < this (%)
 
-//--- Trap Detection (Phase 2)
-input group             "=== Trap Detection (v3.1 - Phase 0: OFF) ==="
-input bool              InpTrapDetectionEnabled = true;       // Enable trap detection (OFF for Phase 0)
-input double            InpTrapGapThreshold     = 200.0;       // Gap threshold (pips)
-input double            InpTrapDDThreshold      = -20.0;       // DD threshold (%)
-input int               InpTrapConditionsRequired = 2;         // Min conditions to trigger (3/5)
-input int               InpTrapStuckMinutes     = 30;          // Minutes to consider "stuck"
+//--- Trap Detection (Phase 5)
+input group             "=== Trap Detection (v3.1 - Phase 5) ==="
+input bool              InpTrapDetectionEnabled = true;       // Enable trap detection
+input bool              InpTrapAutoThreshold    = true;        // Auto-calculate gap threshold
+input double            InpTrapGapThreshold     = 50.0;        // Manual gap threshold (pips) - used if auto=false
+input double            InpTrapATRMultiplier    = 2.0;         // ATR multiplier for auto mode (2.0 = 2x ATR)
+input double            InpTrapSpacingMultiplier = 1.5;        // Spacing multiplier for auto mode (1.5 = 1.5x spacing)
+input double            InpTrapDDThreshold      = -15.0;       // DD threshold (%)
+input int               InpTrapConditionsRequired = 1;         // Min conditions to trigger (1-5)
+input int               InpTrapStuckMinutes     = 0;          // Minutes to consider "stuck"
 
 //--- Quick Exit Mode (Phase 3)
 input group             "=== Quick Exit Mode (v3.1 - Phase 0: OFF) ==="
@@ -203,11 +206,18 @@ void PrintConfiguration()
       Print("   Max DD for expansion: ",InpMaxDDForExpansion,"%");
      }
    
-   // Trap Detection (Phase 2)
+   // Trap Detection (Phase 5)
    Print("2. TRAP DETECTION: ",(InpTrapDetectionEnabled?"ENABLED ⚠️":"DISABLED ✓"));
    if(InpTrapDetectionEnabled)
      {
-      Print("   Gap threshold: ",InpTrapGapThreshold," pips");
+      if(InpTrapAutoThreshold)
+        {
+         Print("   Gap threshold: AUTO (ATR × ",InpTrapATRMultiplier," | Spacing × ",InpTrapSpacingMultiplier,")");
+        }
+      else
+        {
+         Print("   Gap threshold: ",InpTrapGapThreshold," pips (manual)");
+        }
       Print("   DD threshold: ",InpTrapDDThreshold,"%");
       Print("   Conditions required: ",InpTrapConditionsRequired,"/5");
       Print("   Stuck minutes: ",InpTrapStuckMinutes);
@@ -330,7 +340,10 @@ void BuildParams()
    
    // Trap detection
    g_params.trap_detection_enabled=InpTrapDetectionEnabled;
+   g_params.trap_auto_threshold   =InpTrapAutoThreshold;
    g_params.trap_gap_threshold    =InpTrapGapThreshold;
+   g_params.trap_atr_multiplier   =InpTrapATRMultiplier;
+   g_params.trap_spacing_multiplier=InpTrapSpacingMultiplier;
    g_params.trap_dd_threshold     =InpTrapDDThreshold;
    g_params.trap_conditions_required=InpTrapConditionsRequired;
    g_params.trap_stuck_minutes    =InpTrapStuckMinutes;

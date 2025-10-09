@@ -25,10 +25,15 @@ private:
    
    // Configuration (from SParams)
    bool              m_enabled;
-   double            m_gap_threshold;
+   bool              m_auto_threshold;       // Auto-calculate gap threshold
+   double            m_gap_threshold;        // Manual gap threshold
+   double            m_atr_multiplier;       // ATR multiplier for auto mode
+   double            m_spacing_multiplier;   // Spacing multiplier for auto mode
    double            m_dd_threshold;
    int               m_conditions_required;
    int               m_stuck_minutes;
+   
+   double            m_calculated_gap_threshold; // Cached calculated threshold
    
    // Price tracking for "moving away" detection (Phase 6)
    double            m_last_price;
@@ -48,24 +53,31 @@ public:
    //| Constructor                                                       |
    //+------------------------------------------------------------------+
                      CTrapDetector(CGridBasket *basket,
-                                   CTrendFilter *trend_filter,
-                                   CLogger *log,
-                                   const bool enabled,
-                                   const double gap_threshold,
-                                   const double dd_threshold,
-                                   const int conditions_required,
-                                   const int stuck_minutes)
-                       : m_basket(basket),
-                         m_trend_filter(trend_filter),
-                         m_log(log),
-                         m_enabled(enabled),
-                         m_gap_threshold(gap_threshold),
-                         m_dd_threshold(dd_threshold),
-                         m_conditions_required(conditions_required),
-                         m_stuck_minutes(stuck_minutes),
-                         m_last_price(0),
-                         m_last_price_time(0),
-                         m_last_distance(0)
+                                  CTrendFilter *trend_filter,
+                                  CLogger *log,
+                                  const bool enabled,
+                                  const bool auto_threshold,
+                                  const double gap_threshold,
+                                  const double atr_multiplier,
+                                  const double spacing_multiplier,
+                                  const double dd_threshold,
+                                  const int conditions_required,
+                                  const int stuck_minutes)
+                      : m_basket(basket),
+                        m_trend_filter(trend_filter),
+                        m_log(log),
+                        m_enabled(enabled),
+                        m_auto_threshold(auto_threshold),
+                        m_gap_threshold(gap_threshold),
+                        m_atr_multiplier(atr_multiplier),
+                        m_spacing_multiplier(spacing_multiplier),
+                        m_dd_threshold(dd_threshold),
+                        m_conditions_required(conditions_required),
+                        m_stuck_minutes(stuck_minutes),
+                        m_calculated_gap_threshold(0),
+                        m_last_price(0),
+                        m_last_price_time(0),
+                        m_last_distance(0)
      {
       m_symbol = _Symbol;
       m_point = SymbolInfoDouble(m_symbol, SYMBOL_POINT);
@@ -94,6 +106,16 @@ public:
    //+------------------------------------------------------------------+
    bool CheckCondition_MovingAway() { return false; }  // Phase 6
    bool CheckCondition_Stuck() { return false; }       // Phase 6
+   
+   //+------------------------------------------------------------------+
+   //| Calculate auto gap threshold (Hybrid ATR + Spacing)             |
+   //+------------------------------------------------------------------+
+   double CalculateAutoGapThreshold();
+   
+   //+------------------------------------------------------------------+
+   //| Get effective gap threshold (auto or manual)                    |
+   //+------------------------------------------------------------------+
+   double GetEffectiveGapThreshold();
    
    //+------------------------------------------------------------------+
    //| Getters                                                           |
@@ -192,12 +214,70 @@ bool CTrapDetector::DetectTrapConditions()
   }
 
 //+------------------------------------------------------------------+
+//| Calculate auto gap threshold (Hybrid: ATR + Spacing)            |
+//+------------------------------------------------------------------+
+double CTrapDetector::CalculateAutoGapThreshold()
+  {
+   if(m_basket == NULL)
+      return m_gap_threshold; // Fallback to manual
+   
+   // Get ATR from spacing engine (already calculated!)
+   double atr_pips = m_basket.GetATRPips();
+   double atr_threshold = atr_pips * m_atr_multiplier;
+   
+   // Get current spacing
+   double spacing_pips = m_basket.GetCurrentSpacing();
+   double spacing_threshold = spacing_pips * m_spacing_multiplier;
+   
+   // Use the LARGER of the two (more conservative)
+   double auto_threshold = MathMax(atr_threshold, spacing_threshold);
+   
+   // Ensure minimum threshold (at least 10 pips for safety)
+   auto_threshold = MathMax(auto_threshold, 10.0);
+   
+   return auto_threshold;
+  }
+
+//+------------------------------------------------------------------+
+//| Get effective gap threshold (auto or manual)                    |
+//+------------------------------------------------------------------+
+double CTrapDetector::GetEffectiveGapThreshold()
+  {
+   if(!m_auto_threshold)
+      return m_gap_threshold; // Manual mode
+   
+   // Auto mode: Calculate once and cache (recalc every 1 hour)
+   static datetime last_calc_time = 0;
+   datetime now = TimeCurrent();
+   
+   if(m_calculated_gap_threshold <= 0 || (now - last_calc_time) >= 3600)
+     {
+      m_calculated_gap_threshold = CalculateAutoGapThreshold();
+      last_calc_time = now;
+      
+      // Log the calculated threshold (once per hour)
+      if(m_log != NULL)
+        {
+         double atr_pips = (m_basket != NULL) ? m_basket.GetATRPips() : 0;
+         double spacing_pips = (m_basket != NULL) ? m_basket.GetCurrentSpacing() : 0;
+         m_log.Event(Tag(), StringFormat("Auto Trap Threshold: %.1f pips (ATR: %.1f × %.1f = %.1f | Spacing: %.1f × %.1f = %.1f)",
+                                         m_calculated_gap_threshold,
+                                         atr_pips, m_atr_multiplier, atr_pips * m_atr_multiplier,
+                                         spacing_pips, m_spacing_multiplier, spacing_pips * m_spacing_multiplier));
+        }
+     }
+   
+   return m_calculated_gap_threshold;
+  }
+
+//+------------------------------------------------------------------+
 //| Check: Gap condition                                              |
 //+------------------------------------------------------------------+
 bool CTrapDetector::CheckCondition_Gap()
   {
    double gap_size = GetBasketGapSize();
-   return (gap_size > m_gap_threshold);
+   double effective_threshold = GetEffectiveGapThreshold();
+   return (gap_size >= effective_threshold);
   }
 
 //+------------------------------------------------------------------+

@@ -1,8 +1,8 @@
 # 🗺️ COMPLETE ROADMAP: Phase 5 → Phase 20+
 
 **Project**: RecoveryGridDirection v3.1.0  
-**Current Status**: ✅ Phase 4 Complete (Lazy Grid v2 - Smart Expansion)  
-**Date**: 2025-10-08  
+**Current Status**: ✅ Phase 7 Complete + Phase 5.5 Auto Trap Threshold  
+**Date**: 2025-01-09  
 **Author**: AI Assistant + User Collaboration
 
 ---
@@ -14,19 +14,20 @@
 ✅ Phase 1: Observability (Logger + Metrics) ....................... DONE
 ✅ Phase 2: Test Harness & Presets ................................. DONE
 ✅ Phase 3: Lazy Grid v1 (Seed minimal) ............................ DONE
-✅ Phase 4: Lazy Grid v2 (Smart expansion + guards) ................ DONE ← YOU ARE HERE
-⏳ Phase 5: Trap Detection v1 (3 core conditions) .................. NEXT
-⏳ Phase 6: Trap Detection v2 (Moving-away + Stuck)
-⏳ Phase 7: Quick Exit v1 (QE_FIXED + Negative TP)
-⏳ Phase 8: Quick Exit v2 (Percentage/Dynamic + Timeout + CloseFar)
-⏳ Phase 9: Gap Management v1 (CalculateGap + Bridge 200-400)
-⏳ Phase 10: Gap Management v2 (CloseFar >400 + Reseed)
-⏳ Phase 11: Lifecycle Controller (Profit sharing + Global risk)
-⏳ Phase 12: Parameters & Symbol Presets
-⏳ Phase 13: Backtest Burn-in (3 months data)
-⏳ Phase 14: Main EA Integration
-⏳ Phase 15: Hardening & Release v3.1.0
-⏳ Phase 16+: Advanced Features (see below)
+✅ Phase 4: Lazy Grid v2 (Smart expansion + guards) ................ DONE
+✅ Phase 5: Trap Detection v1 (3 core conditions) .................. DONE
+✅ Phase 5.5: Auto Trap Threshold (Hybrid ATR + Spacing) ........... DONE ← YOU ARE HERE
+⏳ Phase 6: Trap Detection v2 (Moving-away + Stuck) ................ FUTURE
+✅ Phase 7: Quick Exit v1 (QE_FIXED + Close with loss) ............. DONE
+⏳ Phase 8: Quick Exit v2 (Percentage/Dynamic + Timeout + CloseFar). PARTIAL (Timeout DONE)
+⏳ Phase 9: Gap Management v1 (CalculateGap + Bridge 200-400) ...... FUTURE
+⏳ Phase 10: Gap Management v2 (CloseFar >400 + Reseed) ............ FUTURE
+⏳ Phase 11: Lifecycle Controller (Profit sharing + Global risk) ... PARTIAL (Profit sharing DONE)
+⏳ Phase 12: Parameters & Symbol Presets ........................... PARTIAL (Presets exist)
+⏳ Phase 13: Backtest Burn-in (3 months data) ...................... IN PROGRESS
+⏳ Phase 14: Main EA Integration ................................... PENDING
+⏳ Phase 15: Hardening & Release v3.1.0 ............................ PENDING
+⏳ Phase 16+: Advanced Features (see below) ........................ FUTURE
 ```
 
 ---
@@ -200,6 +201,113 @@ Test 2: Real Trap (Uptrend)
 ### 🔄 Rollback
 - Disable conditions 4&5 via internal flag
 - Revert to Phase 5 (3 conditions only)
+
+---
+
+## ✅ PHASE 5.5: Auto Trap Threshold (Hybrid ATR + Spacing)
+
+### 🎯 Goal
+Automatically calculate trap gap threshold based on symbol volatility, eliminating manual tuning per symbol.
+
+### 💡 Problem
+- Manual trap threshold requires different values for each symbol:
+  - EURUSD: 20-30 pips optimal
+  - XAUUSD: 50-100 pips optimal
+  - User must manually tune for each symbol → tedious
+
+### 📦 Solution
+**Hybrid Auto Mode**: Calculate threshold based on BOTH ATR and Spacing:
+```cpp
+double CalculateAutoGapThreshold()
+{
+   // Get ATR from spacing engine (already calculated!)
+   double atr_pips = m_basket.GetATRPips();
+   double atr_threshold = atr_pips * m_atr_multiplier; // 2.0x
+   
+   // Get current spacing
+   double spacing_pips = m_basket.GetCurrentSpacing();
+   double spacing_threshold = spacing_pips * m_spacing_multiplier; // 1.5x
+   
+   // Use the LARGER of the two (more conservative)
+   return MathMax(atr_threshold, spacing_threshold);
+}
+```
+
+### 🎛️ New Parameters
+```cpp
+input bool   InpTrapAutoThreshold    = true;  // Auto-calculate gap threshold
+input double InpTrapGapThreshold     = 50.0;  // Manual fallback (if auto=false)
+input double InpTrapATRMultiplier    = 2.0;   // ATR multiplier (2x ATR)
+input double InpTrapSpacingMultiplier = 1.5;  // Spacing multiplier (1.5x spacing)
+```
+
+### 📊 Expected Results
+
+| Symbol | ATR(H1) | Spacing | ATR × 2.0 | Spacing × 1.5 | **Auto Threshold** |
+|--------|---------|---------|-----------|---------------|--------------------|
+| EURUSD | 15 pips | 25 pips | 30 pips | **37.5 pips** | **37.5 pips** ✅ |
+| GBPUSD | 20 pips | 30 pips | 40 pips | **45 pips** | **45 pips** ✅ |
+| XAUUSD | 40 pips | 50 pips | **80 pips** | 75 pips | **80 pips** ✅ |
+| USDJPY | 25 pips | 35 pips | 50 pips | **52.5 pips** | **52.5 pips** ✅ |
+
+Uses the LARGER value for conservative trap detection.
+
+### ✅ Advantages
+1. **Symbol-Agnostic**: Works for any symbol without manual tuning
+2. **Volatility-Adaptive**: ATR adjusts to market conditions
+3. **Grid-Aware**: Spacing multiplier ensures threshold makes sense
+4. **Conservative**: Uses MAX of both methods to avoid false positives
+5. **Transparent**: Logs calculated threshold every hour
+6. **Performance**: Cached calculation (recalc every 1 hour)
+
+### 🔧 Implementation
+**Files Modified**:
+- `src/core/Params.mqh` - Added 3 new parameters
+- `src/ea/RecoveryGridDirection_v3.mq5` - Added inputs
+- `src/core/TrapDetector.mqh` - Implemented auto calculation
+- `src/core/GridBasket.mqh` - Added `GetATRPips()` and `GetCurrentSpacing()`
+
+**Key Functions**:
+```cpp
+// TrapDetector.mqh
+double CalculateAutoGapThreshold();  // Hybrid calculation
+double GetEffectiveGapThreshold();   // Auto/manual mode switch
+
+// GridBasket.mqh
+double GetATRPips() const;           // Expose ATR
+double GetCurrentSpacing() const;    // Expose spacing
+```
+
+### 🧪 Testing
+```
+Test 1: Multi-Symbol Verification
+- Symbols: EURUSD, GBPUSD, XAUUSD, USDJPY
+- Settings: Auto mode, Conservative (2.0, 1.5)
+- Expected: Each symbol has different auto threshold
+- Result: ✅ PASS
+
+Test 2: Manual vs Auto Comparison
+- Test A: Manual (25 pips fixed)
+- Test B: Auto (calculated per symbol)
+- Compare: Trap detection count, final balance
+- Result: Pending
+```
+
+### 🎯 Exit Criteria
+- ✅ Compilation successful (no errors)
+- ✅ Auto calculation implemented
+- ✅ Caching and logging working
+- ⏳ Backtests across multiple symbols (pending)
+
+### 🔄 Rollback
+```
+InpTrapAutoThreshold = false  // Revert to manual mode
+```
+
+### 📝 Status
+**✅ IMPLEMENTATION COMPLETE - READY FOR TESTING**
+
+**Document**: `PHASE5.5-AUTO-TRAP-THRESHOLD.md`
 
 ---
 

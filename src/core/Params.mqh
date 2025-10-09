@@ -76,7 +76,10 @@ struct SParams
    
    // trap detection (Phase 2)
    bool         trap_detection_enabled;  // enable trap detection
-   double       trap_gap_threshold;      // gap threshold (pips)
+   bool         trap_auto_threshold;     // auto-calculate gap threshold
+   double       trap_gap_threshold;      // gap threshold (pips) - manual mode
+   double       trap_atr_multiplier;     // ATR multiplier for auto mode
+   double       trap_spacing_multiplier; // spacing multiplier for auto mode
    double       trap_dd_threshold;       // DD threshold (%)
    int          trap_conditions_required;// min conditions to trigger (3/5)
    int          trap_stuck_minutes;      // minutes to consider "stuck"

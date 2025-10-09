@@ -311,7 +311,7 @@ private:
       if(m_grid_state.currentMaxLevel>=m_max_levels-1)
         {
          if(m_log!=NULL)
-            m_log.Event(Tag(),"Expansion blocked: GRID_FULL");
+           // m_log.Event(Tag(),"Expansion blocked: GRID_FULL");
          return false;
         }
       
@@ -325,8 +325,8 @@ private:
             if(dd_pct<m_params.max_dd_for_expansion)
               {
                if(m_log!=NULL)
-                  m_log.Event(Tag(),StringFormat("Expansion blocked: DD too deep %.2f%% < %.2f%%",
-                                                 dd_pct,m_params.max_dd_for_expansion));
+                 // m_log.Event(Tag(),StringFormat("Expansion blocked: DD too deep %.2f%% < %.2f%%",
+                  //                               dd_pct,m_params.max_dd_for_expansion));
                return false;
               }
            }
@@ -338,8 +338,8 @@ private:
       if(distance_pips>m_params.max_level_distance)
         {
          if(m_log!=NULL)
-            m_log.Event(Tag(),StringFormat("Expansion blocked: Distance %.1f pips > %.1f max",
-                                          distance_pips,m_params.max_level_distance));
+           // m_log.Event(Tag(),StringFormat("Expansion blocked: Distance %.1f pips > %.1f max",
+           //                               distance_pips,m_params.max_level_distance));
          return false;
         }
       
@@ -347,7 +347,7 @@ private:
       if(!IsPriceReasonable(next_price))
         {
          if(m_log!=NULL)
-            m_log.Event(Tag(),"Expansion blocked: Price on wrong side of market");
+           // m_log.Event(Tag(),"Expansion blocked: Price on wrong side of market");
          return false;
         }
       
@@ -728,13 +728,16 @@ public:
       // Initialize trap detector (Phase 5)
       // Note: TrendFilter will be passed from LifecycleController (for now NULL)
       m_trap_detector=new CTrapDetector(GetPointer(this),
-                                         NULL,  // TrendFilter reference (will be set later)
-                                         m_log,
-                                         m_params.trap_detection_enabled,
-                                         m_params.trap_gap_threshold,
-                                         m_params.trap_dd_threshold,
-                                         m_params.trap_conditions_required,
-                                         m_params.trap_stuck_minutes);
+                                        NULL,  // TrendFilter reference (will be set later)
+                                        m_log,
+                                        m_params.trap_detection_enabled,
+                                        m_params.trap_auto_threshold,
+                                        m_params.trap_gap_threshold,
+                                        m_params.trap_atr_multiplier,
+                                        m_params.trap_spacing_multiplier,
+                                        m_params.trap_dd_threshold,
+                                        m_params.trap_conditions_required,
+                                        m_params.trap_stuck_minutes);
 
       return true;
      }
@@ -1060,6 +1063,26 @@ public:
      }
    
    //+------------------------------------------------------------------+
+   //| Get ATR pips (for auto trap threshold calculation)              |
+   //+------------------------------------------------------------------+
+   double         GetATRPips() const
+     {
+      if(m_spacing == NULL)
+         return 0.0;
+      return m_spacing.AtrPips();
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Get current spacing (for auto trap threshold calculation)       |
+   //+------------------------------------------------------------------+
+   double         GetCurrentSpacing() const
+     {
+      if(m_spacing == NULL)
+         return 0.0;
+      return m_spacing.SpacingPips();
+     }
+   
+   //+------------------------------------------------------------------+
    //| Handle trap detected (Phase 7: activate Quick Exit once only)    |
    //+------------------------------------------------------------------+
    void           HandleTrapDetected()
@@ -1067,22 +1090,8 @@ public:
       if(m_trap_detector==NULL)
          return;
       
-      // Only activate Quick Exit if not already active (prevent spam)
-      if(m_quick_exit_active)
-         return;
-      
-      STrapState trap_state=m_trap_detector.GetTrapState();
-      
-      // Log trap detection ONCE
-      if(m_log!=NULL)
-        {
-         m_log.Event(Tag(),"🚨 TRAP DETECTED!");
-         m_log.Event(Tag(),StringFormat("   Gap: %.1f pips",trap_state.gapSize));
-         m_log.Event(Tag(),StringFormat("   DD: %.2f%%",trap_state.ddAtDetection));
-         m_log.Event(Tag(),StringFormat("   Conditions: %d/5",trap_state.conditionsMet));
-        }
-      
-      // Phase 7: Activate Quick Exit Mode to escape trap (once only)
+      // Phase 7: Try to activate Quick Exit Mode
+      // (ActivateQuickExitMode will check if already active and skip if so)
       ActivateQuickExitMode();
      }
    
@@ -1126,14 +1135,24 @@ public:
          return;
         }
       
+      // Log trap details BEFORE activation (from trap detector)
+      if(m_trap_detector!=NULL && m_log!=NULL)
+        {
+         STrapState trap_state=m_trap_detector.GetTrapState();
+         m_log.Event(Tag(),"🚨 TRAP DETECTED!");
+         m_log.Event(Tag(),StringFormat("   Gap: %.1f pips",trap_state.gapSize));
+         m_log.Event(Tag(),StringFormat("   DD: %.2f%%",trap_state.ddAtDetection));
+         m_log.Event(Tag(),StringFormat("   Conditions: %d/5",trap_state.conditionsMet));
+        }
+      
       m_original_target = m_params.target_cycle_usd;
       m_quick_exit_target = CalculateQuickExitTarget();
       m_quick_exit_active = true;
       m_quick_exit_start_time = TimeCurrent();
       
       if(m_log!=NULL)
-         m_log.Event(Tag(),StringFormat("[%s] Quick Exit ACTIVATED | Original Target: $%.2f → New Target: $%.2f (Accept loss: $%.2f)",
-                                        DirectionLabel(),m_original_target,m_quick_exit_target,m_quick_exit_target));
+         m_log.Event(Tag(),StringFormat("Quick Exit ACTIVATED | Original Target: $%.2f → New Target: $%.2f",
+                                        m_original_target,m_quick_exit_target));
      }
    
    //+------------------------------------------------------------------+
