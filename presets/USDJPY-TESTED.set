@@ -1,0 +1,13 @@
+; USDJPY Preset - Medium Volatility (Tested)
+; Only showing parameters that differ from default settings
+; Note: InpUseTestedPresets=true will auto-apply USDJPY settings from PresetManager
+
+InpSymbolPreset=0
+InpUseTestedPresets=true
+InpAtrTimeframe=16388
+InpSpacingStepPips=40.0
+InpSpacingAtrMult=0.7
+InpMinSpacingPips=20.0
+InpGridLevels=8
+InpTargetCycleUSD=7.0
+

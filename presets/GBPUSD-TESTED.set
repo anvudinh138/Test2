@@ -1,0 +1,13 @@
+; GBPUSD Preset - Medium Volatility (Tested)
+; Only showing parameters that differ from default settings
+; Note: InpUseTestedPresets=true will auto-apply GBPUSD settings from PresetManager
+
+InpSymbolPreset=0
+InpUseTestedPresets=true
+InpAtrTimeframe=16388
+InpSpacingStepPips=50.0
+InpSpacingAtrMult=0.8
+InpMinSpacingPips=25.0
+InpGridLevels=7
+InpTargetCycleUSD=8.0
+

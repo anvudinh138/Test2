@@ -89,9 +89,11 @@ input int               InpReseedCooldownMin    = 30;          // Cooldown minut
 
 //--- Lazy Grid Fill (Phase 1)
 input group             "=== Lazy Grid Fill (v3.1 - Phase 0: OFF) ==="
-input bool              InpLazyGridEnabled      = true;       // Enable lazy grid fill (OFF for Phase 0)
+input bool              InpLazyGridEnabled      = true;        // Enable lazy grid fill (OFF for Phase 0)
 input int               InpInitialWarmLevels    = 1;           // Initial pending levels (1-2)
-input int               InpMaxLevelDistance     = 500;         // Max distance to next level (pips)
+input bool              InpAutoMaxLevelDistance = true;        // Auto-calculate max level distance
+input int               InpMaxLevelDistance     = 500;         // Manual max distance (pips) - used if auto=false
+input double            InpLazyDistanceMultiplier = 20.0;      // Spacing multiplier for auto mode (20x spacing)
 input double            InpMaxDDForExpansion    = -20.0;       // Stop expanding if DD < this (%)
 
 //--- Trap Detection (Phase 5)
@@ -202,7 +204,14 @@ void PrintConfiguration()
    if(InpLazyGridEnabled)
      {
       Print("   Initial warm levels: ",InpInitialWarmLevels);
-      Print("   Max level distance: ",InpMaxLevelDistance," pips");
+      if(InpAutoMaxLevelDistance)
+        {
+         Print("   Max level distance: AUTO (Spacing × ",InpLazyDistanceMultiplier,")");
+        }
+      else
+        {
+         Print("   Max level distance: ",InpMaxLevelDistance," pips (manual)");
+        }
       Print("   Max DD for expansion: ",InpMaxDDForExpansion,"%");
      }
    
@@ -335,7 +344,9 @@ void BuildParams()
    // Lazy grid fill
    g_params.lazy_grid_enabled     =InpLazyGridEnabled;
    g_params.initial_warm_levels   =InpInitialWarmLevels;
+   g_params.auto_max_level_distance=InpAutoMaxLevelDistance;
    g_params.max_level_distance    =InpMaxLevelDistance;
+   g_params.lazy_distance_multiplier=InpLazyDistanceMultiplier;
    g_params.max_dd_for_expansion  =InpMaxDDForExpansion;
    
    // Trap detection

@@ -335,11 +335,12 @@ private:
       // Guard 3: Distance too far?
       double next_price=CalculateNextLevelPrice();
       double distance_pips=PriceToDistance(next_price,m_levels[0].price);
-      if(distance_pips>m_params.max_level_distance)
+      double max_distance=GetEffectiveMaxLevelDistance();
+      if(distance_pips>max_distance)
         {
          if(m_log!=NULL)
            // m_log.Event(Tag(),StringFormat("Expansion blocked: Distance %.1f pips > %.1f max",
-           //                               distance_pips,m_params.max_level_distance));
+           //                               distance_pips,max_distance));
          return false;
         }
       
@@ -1080,6 +1081,22 @@ public:
       if(m_spacing == NULL)
          return 0.0;
       return m_spacing.SpacingPips();
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Get effective max level distance (auto or manual)               |
+   //+------------------------------------------------------------------+
+   double         GetEffectiveMaxLevelDistance()
+     {
+      if(!m_params.auto_max_level_distance)
+         return m_params.max_level_distance; // Manual mode
+      
+      // Auto mode: spacing × multiplier
+      double spacing_pips = GetCurrentSpacing();
+      if(spacing_pips <= 0)
+         return m_params.max_level_distance; // Fallback to manual
+      
+      return spacing_pips * m_params.lazy_distance_multiplier;
      }
    
    //+------------------------------------------------------------------+

@@ -1,0 +1,13 @@
+; EURUSD Preset - Low Volatility (Tested)
+; Only showing parameters that differ from default settings
+; Note: InpUseTestedPresets=true will auto-apply EURUSD settings from PresetManager
+
+InpSymbolPreset=0
+InpUseTestedPresets=true
+InpAtrTimeframe=3
+InpSpacingStepPips=25.0
+InpSpacingAtrMult=0.6
+InpMinSpacingPips=12.0
+InpGridLevels=10
+InpTargetCycleUSD=6.0
+

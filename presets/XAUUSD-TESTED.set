@@ -1,0 +1,13 @@
+; XAUUSD Preset - High Volatility (Tested +472%)
+; Only showing parameters that differ from default settings
+; Note: InpUseTestedPresets=true will auto-apply XAUUSD settings from PresetManager
+
+InpSymbolPreset=0
+InpUseTestedPresets=true
+InpAtrTimeframe=16385
+InpSpacingStepPips=150.0
+InpSpacingAtrMult=1.0
+InpMinSpacingPips=80.0
+InpGridLevels=5
+InpTargetCycleUSD=10.0
+

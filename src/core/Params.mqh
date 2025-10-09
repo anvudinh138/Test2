@@ -71,7 +71,9 @@ struct SParams
    // lazy grid fill (Phase 1)
    bool         lazy_grid_enabled;       // enable lazy grid fill
    int          initial_warm_levels;     // initial pending levels (1-2)
-   int          max_level_distance;      // max distance to next level (pips)
+   bool         auto_max_level_distance; // auto-calculate max level distance
+   int          max_level_distance;      // max distance to next level (pips) - manual
+   double       lazy_distance_multiplier;// spacing multiplier for auto mode (default 20x)
    double       max_dd_for_expansion;    // stop expanding if DD < this (%)
    
    // trap detection (Phase 2)
