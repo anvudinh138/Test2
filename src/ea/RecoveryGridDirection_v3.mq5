@@ -42,7 +42,7 @@ input double            InpLotBase          = 0.01;  // Base lot size
 input double            InpLotScale         = 2.0;   // Lot scale multiplier
 
 //--- Profit Target
-input double            InpTargetCycleUSD   = 6.0;   // Target profit per cycle (USD)
+input double            InpTargetCycleUSD   = 5.0;   // Target profit per cycle (USD)
 
 //--- Risk Management (Session Stop Loss)
 input double            InpSessionSL_USD    = 10000; // Session stop loss (USD) - for monitoring only
@@ -70,7 +70,7 @@ input group             "=== Magic Number (Job Isolation) ==="
 input long              InpMagicOffset      = 421;   // Magic offset between jobs (e.g., 421)
 
 input group             "=== Spawn Triggers ==="
-input bool              InpSpawnOnGridFull  = true;  // Spawn new job when grid full
+input bool              InpSpawnOnGridFull  = false;  // Spawn new job when grid full
 input bool              InpSpawnOnTSL       = true;  // Spawn new job when TSL active
 input bool              InpSpawnOnJobDD     = true;  // Spawn new job when job DD >= threshold
 input int               InpSpawnCooldownSec = 30;    // Cooldown between spawns (seconds)
@@ -89,14 +89,14 @@ input int               InpReseedCooldownMin    = 30;          // Cooldown minut
 
 //--- Lazy Grid Fill (Phase 1)
 input group             "=== Lazy Grid Fill (v3.1 - Phase 0: OFF) ==="
-input bool              InpLazyGridEnabled      = false;       // Enable lazy grid fill (OFF for Phase 0)
+input bool              InpLazyGridEnabled      = true;       // Enable lazy grid fill (OFF for Phase 0)
 input int               InpInitialWarmLevels    = 1;           // Initial pending levels (1-2)
 input int               InpMaxLevelDistance     = 500;         // Max distance to next level (pips)
 input double            InpMaxDDForExpansion    = -20.0;       // Stop expanding if DD < this (%)
 
 //--- Trap Detection (Phase 2)
 input group             "=== Trap Detection (v3.1 - Phase 0: OFF) ==="
-input bool              InpTrapDetectionEnabled = false;       // Enable trap detection (OFF for Phase 0)
+input bool              InpTrapDetectionEnabled = true;       // Enable trap detection (OFF for Phase 0)
 input double            InpTrapGapThreshold     = 200.0;       // Gap threshold (pips)
 input double            InpTrapDDThreshold      = -20.0;       // DD threshold (%)
 input int               InpTrapConditionsRequired = 2;         // Min conditions to trigger (3/5)
@@ -104,13 +104,13 @@ input int               InpTrapStuckMinutes     = 30;          // Minutes to con
 
 //--- Quick Exit Mode (Phase 3)
 input group             "=== Quick Exit Mode (v3.1 - Phase 0: OFF) ==="
-input bool              InpQuickExitEnabled     = false;       // Enable quick exit (OFF for Phase 0)
+input bool              InpQuickExitEnabled     = true;       // Enable quick exit (OFF for Phase 0)
 input ENUM_QUICK_EXIT_MODE InpQuickExitMode    = QE_FIXED;    // Exit mode
 input double            InpQuickExitLoss        = -10.0;       // Fixed loss amount ($)
 input double            InpQuickExitPercentage  = 0.30;        // Percentage mode (30% of DD)
 input bool              InpQuickExitCloseFar    = true;        // Close far positions in quick exit
 input bool              InpQuickExitReseed      = true;        // Auto reseed after exit
-input int               InpQuickExitTimeoutMinutes = 60;       // Timeout (minutes)
+input int               InpQuickExitTimeoutMinutes = 0;       // Timeout (minutes)
 
 //--- Gap Management (Phase 4)
 input group             "=== Gap Management (v3.1 - Phase 0: OFF) ==="
