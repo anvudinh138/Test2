@@ -80,8 +80,12 @@ input int               InpMaxSpawns        = 10;    // Max spawns per session
 input group             "=== Basket Stop Loss (v3.2 - Spacing-Based) ==="
 input bool              InpBasketSL_Enabled     = false;       // Enable basket stop loss
 input double            InpBasketSL_Spacing     = 2.0;         // SL distance in spacing units (e.g., 2.0 = 2x spacing from entry)
-input EReseedMode       InpReseedMode           = RESEED_COOLDOWN; // When to reseed after basket SL
+
+//--- Phase 12: Trend-Aware Reseed
+input group             "=== Phase 12: Trend-Aware Reseed ==="
+input EReseedMode       InpReseedMode           = RESEED_TREND_REVERSAL; // When to reseed after basket SL
 input int               InpReseedCooldownMin    = 30;          // Cooldown minutes before reseed (for COOLDOWN mode)
+input bool              InpReseedWithTrendOnly  = true;        // Enable trend filter for reseed
 
 //+------------------------------------------------------------------+
 //| NEW PARAMETERS FOR v3.1.0 - Lazy Grid Fill + Trap Detection     |
@@ -352,8 +356,11 @@ void BuildParams()
    // Basket stop loss (Phase 1.2 - spacing-based risk management)
    g_params.basket_sl_enabled     =InpBasketSL_Enabled;
    g_params.basket_sl_spacing     =InpBasketSL_Spacing;
+
+   // Phase 12: Trend-Aware Reseed
    g_params.reseed_mode           =InpReseedMode;
    g_params.reseed_cooldown_min   =InpReseedCooldownMin;
+   g_params.reseed_with_trend_only=InpReseedWithTrendOnly;
 
    // NEW v3.1.0 parameters (Phase 0: OFF by default)
    // Lazy grid fill

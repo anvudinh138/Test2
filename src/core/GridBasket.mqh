@@ -56,6 +56,9 @@ private:
    // trap detector (v3.1 - Phase 5)
    CTrapDetector *m_trap_detector;
 
+   // trend filter (Phase 12 - for conditional Basket SL)
+   CTrendFilter  *m_trend_filter;
+
    // gap manager (v3.1 - Phase 9)
    CGapManager   *m_gap_manager;
 
@@ -589,13 +592,56 @@ private:
      }
 
    //+------------------------------------------------------------------+
-   //| Check if basket SL is hit (spacing-based)                        |
+   //| Check if basket SL is hit (CONDITIONAL - only in strong trend)  |
    //+------------------------------------------------------------------+
    bool           CheckBasketSL()
      {
       // Only check if basket has positions
       if(m_total_lot<=0.0 || m_avg_price<=0.0)
          return false;
+
+      // Phase 12: Only check Basket SL if counter-trend detected
+      // This prevents SL loop in range markets
+      if(m_params.reseed_with_trend_only && m_trend_filter!=NULL)
+        {
+         ETrendState current_trend=m_trend_filter.GetTrendState();
+         bool is_counter_trend=false;
+
+         // BUY basket counter-trend = DOWNTREND
+         if(m_direction==DIR_BUY && current_trend==TREND_DOWN)
+            is_counter_trend=true;
+
+         // SELL basket counter-trend = UPTREND
+         if(m_direction==DIR_SELL && current_trend==TREND_UP)
+            is_counter_trend=true;
+
+         // Skip SL check if NOT counter-trend (allow grid to work in range/with-trend)
+         if(!is_counter_trend)
+           {
+            static datetime last_skip_log=0;
+            datetime now=TimeCurrent();
+            if(m_log!=NULL && now-last_skip_log>300)  // Log every 5 min
+              {
+               m_log.Event(Tag(),StringFormat("Basket SL skipped: No counter-trend (trend: %s)",
+                                             EnumToString(current_trend)));
+               last_skip_log=now;
+              }
+            return false;  // No SL check - let grid work normally
+           }
+
+         // Counter-trend detected - proceed with SL check
+         if(m_log!=NULL)
+           {
+            static datetime last_check_log=0;
+            datetime now=TimeCurrent();
+            if(now-last_check_log>60)  // Log every 1 min
+              {
+               m_log.Event(Tag(),StringFormat("⚠️  Counter-trend detected (%s) - Basket SL ACTIVE",
+                                             EnumToString(current_trend)));
+               last_check_log=now;
+              }
+           }
+        }
 
       // Get current spacing in price units
       double current_spacing_pips=(m_spacing!=NULL)?m_spacing.SpacingPips():m_params.spacing_pips;
@@ -626,7 +672,7 @@ private:
       if(sl_hit && m_log!=NULL)
         {
          int digits=(int)SymbolInfoInteger(m_symbol,SYMBOL_DIGITS);
-         m_log.Event(Tag(),StringFormat("Basket SL HIT: avg=%."+IntegerToString(digits)+"f cur=%."+IntegerToString(digits)+"f spacing=%.1f pips dist=%.1fx loss=%.2f USD",
+         m_log.Event(Tag(),StringFormat("🚨 Basket SL HIT (counter-trend): avg=%."+IntegerToString(digits)+"f cur=%."+IntegerToString(digits)+"f spacing=%.1f pips dist=%.1fx loss=%.2f USD",
                                         m_avg_price,current_price,current_spacing_pips,m_params.basket_sl_spacing,m_pnl_usd));
         }
 
@@ -692,6 +738,9 @@ public:
 
       // Initialize trap detector pointer to NULL
       m_trap_detector=NULL;
+
+      // Initialize trend filter pointer to NULL (Phase 12)
+      m_trend_filter=NULL;
 
       // Initialize gap manager pointer to NULL
       m_gap_manager=NULL;
@@ -1017,6 +1066,11 @@ public:
       m_refill_enabled=enabled;
      }
 
+   void           SetTrendFilter(CTrendFilter *filter)
+     {
+      m_trend_filter=filter;
+     }
+
    bool           IsRefillEnabled() const
      {
       return m_refill_enabled;
@@ -1155,15 +1209,6 @@ public:
         {
          HandleTrapDetected();
         }
-     }
-   
-   //+------------------------------------------------------------------+
-   //| Set trend filter reference (called from LifecycleController)     |
-   //+------------------------------------------------------------------+
-   void           SetTrendFilter(CTrendFilter *trend_filter)
-     {
-      // Will be implemented when needed
-      // For now, trap detector works without trend filter
      }
    
    //+------------------------------------------------------------------+

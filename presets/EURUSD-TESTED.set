@@ -182,8 +182,8 @@ InpMinPositionsBeforeReseed=2
 ; Reseed if < 2 positions remain after CloseFar
 
 ;--- PHASE 11: BASKET STOP LOSS (Hard Safety Net)
-InpBasketSL_Enabled=false
-; ⚠️ DISABLED by default - TEST FIRST before enabling!
+InpBasketSL_Enabled=true
+; ✅ ENABLED - Works with Phase 12 Trend-Aware Reseed
 ; Hard stop loss per basket (independent from Quick Exit)
 
 InpBasketSL_Spacing=3.0
@@ -191,6 +191,18 @@ InpBasketSL_Spacing=3.0
 ; Example: 25 pips × 3.0 = 75 pips from average price
 ; → BUY basket closes if price drops 75 pips below average
 ; → SELL basket closes if price rises 75 pips above average
+; → Phase 12 blocks counter-trend reseed after SL
+
+;--- PHASE 12: TREND-AWARE RESEED (Smart Reseed Direction Filter)
+InpReseedMode=2
+; 0=RESEED_IMMEDIATE (risky), 1=RESEED_COOLDOWN, 2=RESEED_TREND_REVERSAL (recommended)
+
+InpReseedCooldownMin=30
+; Cooldown minutes before reseed (for COOLDOWN mode)
+
+InpReseedWithTrendOnly=true
+; ✅ ENABLED - Block counter-trend reseed after Basket SL
+; Example: If SELL basket hits SL during uptrend, block SELL reseed until range
 
 ;=== EXPECTED BEHAVIOR (EURUSD) ===
 ;

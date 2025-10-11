@@ -159,8 +159,51 @@ private:
                break;
 
             case RESEED_TREND_REVERSAL:
-               // Trend filter disabled - always reseed immediately after SL
-               // (No cooldown, no trend check)
+               // Phase 12: Trend-aware reseed - check if counter-trend
+               if(m_params.reseed_with_trend_only && m_trend_filter!=NULL && sl_time>0)
+                 {
+                  ETrendState current_trend=m_trend_filter.GetTrendState();
+
+                  // Block counter-trend reseed after SL
+                  bool block_reseed=false;
+                  string block_reason="";
+
+                  // SELL basket: Block reseed if uptrend (counter-trend)
+                  if(dir==DIR_SELL && (current_trend==TREND_UP || sl_trend==TREND_UP))
+                    {
+                     block_reseed=true;
+                     block_reason="Uptrend detected - counter-trend SELL would lose";
+                    }
+
+                  // BUY basket: Block reseed if downtrend (counter-trend)
+                  if(dir==DIR_BUY && (current_trend==TREND_DOWN || sl_trend==TREND_DOWN))
+                    {
+                     block_reseed=true;
+                     block_reason="Downtrend detected - counter-trend BUY would lose";
+                    }
+
+                  if(block_reseed)
+                    {
+                     if(m_log!=NULL)
+                       {
+                        static datetime last_block_log=0;
+                        if(now-last_block_log>60)  // Log once per minute
+                          {
+                           m_log.Warn(Tag(),StringFormat("⚠️  %s reseed BLOCKED: %s",
+                                                        (dir==DIR_BUY)?"BUY":"SELL",
+                                                        block_reason));
+                           last_block_log=now;
+                          }
+                       }
+                     return false;
+                    }
+
+                  // No strong counter-trend → Allow reseed
+                  if(m_log!=NULL)
+                     m_log.Event(Tag(),StringFormat("✅ %s reseed ALLOWED: No strong counter-trend (trend: %s)",
+                                                   (dir==DIR_BUY)?"BUY":"SELL",
+                                                   EnumToString(current_trend)));
+                 }
                break;
            }
         }
@@ -282,6 +325,10 @@ public:
          m_buy=new CGridBasket(m_symbol,DIR_BUY,BASKET_PRIMARY,m_params,m_spacing,m_executor,m_log,m_magic);
          m_sell=new CGridBasket(m_symbol,DIR_SELL,BASKET_PRIMARY,m_params,m_spacing,m_executor,m_log,m_magic);
 
+         // Phase 12: Set trend filter for conditional Basket SL
+         m_buy.SetTrendFilter(m_trend_filter);
+         m_sell.SetTrendFilter(m_trend_filter);
+
          // Mark baskets active without seeding
          m_buy.SetActive(true);
          m_sell.SetActive(true);
@@ -308,6 +355,7 @@ public:
       // Seed BUY basket
       m_buy=new CGridBasket(m_symbol,DIR_BUY,BASKET_PRIMARY,m_params,m_spacing,m_executor,m_log,m_magic);
       m_buy.SetTradingEnabled(true);
+      m_buy.SetTrendFilter(m_trend_filter);  // Phase 12: For conditional Basket SL
       if(!m_buy.Init(ask))
         {
          if(m_log!=NULL)
@@ -319,6 +367,7 @@ public:
 
       m_sell=new CGridBasket(m_symbol,DIR_SELL,BASKET_PRIMARY,m_params,m_spacing,m_executor,m_log,m_magic);
       m_sell.SetTradingEnabled(true);
+      m_sell.SetTrendFilter(m_trend_filter);  // Phase 12: For conditional Basket SL
       if(!m_sell.Init(bid))
         {
          if(m_log!=NULL)
@@ -373,9 +422,14 @@ public:
          if(StringFind(close_reason,"BasketSL")>=0)
            {
             m_buy_sl_time=TimeCurrent();
-            m_buy_sl_trend=TREND_NEUTRAL;  // Trend filter disabled
+            // Phase 12: Record trend state when BUY basket hit SL
+            if(m_trend_filter!=NULL)
+               m_buy_sl_trend=m_trend_filter.GetTrendState();
+            else
+               m_buy_sl_trend=TREND_NEUTRAL;
             if(m_log!=NULL)
-               m_log.Event(Tag(),"BUY basket SL recorded");
+               m_log.Event(Tag(),StringFormat("BUY basket SL recorded (trend: %s)",
+                                             EnumToString(m_buy_sl_trend)));
            }
 
          double realized=m_buy.TakeRealizedProfit();
@@ -391,9 +445,14 @@ public:
          if(StringFind(close_reason,"BasketSL")>=0)
            {
             m_sell_sl_time=TimeCurrent();
-            m_sell_sl_trend=TREND_NEUTRAL;  // Trend filter disabled
+            // Phase 12: Record trend state when SELL basket hit SL
+            if(m_trend_filter!=NULL)
+               m_sell_sl_trend=m_trend_filter.GetTrendState();
+            else
+               m_sell_sl_trend=TREND_NEUTRAL;
             if(m_log!=NULL)
-               m_log.Event(Tag(),"SELL basket SL recorded");
+               m_log.Event(Tag(),StringFormat("SELL basket SL recorded (trend: %s)",
+                                             EnumToString(m_sell_sl_trend)));
            }
 
          double realized=m_sell.TakeRealizedProfit();
