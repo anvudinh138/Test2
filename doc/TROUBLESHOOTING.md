@@ -1,265 +1,222 @@
-# Troubleshooting Guide
+# Troubleshooting Guide - Recovery Grid Direction v3.1.0
 
-## ❌ Problem: "Market closed" - No trades in backtest
+## Common Issues & Solutions
 
-### Symptoms
+### 🔴 EA Not Trading
+
+**Symptoms**: No positions opened, no activity in logs
+
+**Solutions**:
+1. Check if market is open (not weekend/holiday)
+2. Verify AutoTrading is enabled in MT5
+3. Check if News Filter is blocking trades
+4. Ensure sufficient margin available
+5. Verify symbol trading is allowed by broker
+6. Check EA initialization logs for errors
+
+### 🔴 "Market Closed" Errors
+
+**Symptoms**:
 ```
 failed sell limit 500 EURUSD at 4.85857 [Market closed]
-CTrade::OrderSend: sell limit 500.00 EURUSD at 4.85857 [market closed]
 ```
 
-### Root Causes
+**Solutions**:
+1. For backtesting: Don't start on weekends
+2. Check symbol trading sessions
+3. Verify historical data is available
+4. Set `InpRespectStops = false` for backtesting
 
-1. **Weekend/Holiday data**
-   - Backtest started on Saturday/Sunday
-   - No trading session active
+### 🔴 High Drawdown
 
-2. **Symbol not available**
-   - Symbol has no historical data
-   - Wrong symbol name
+**Symptoms**: Account DD exceeds 30-40%
 
-3. **Broker stops level conflict**
-   - `InpRespectStops=true` blocks orders too close to price
-   - Some brokers have large stops level
-
-4. **Wrong price feed**
-   - Price data corrupted
-   - Symbol digits mismatch
-
-### Solutions
-
-#### ✅ Fix 1: Check Backtest Settings
-
-In **Strategy Tester**:
-
-1. **Date Range**: Start on Monday, avoid holidays
+**Solutions**:
+1. **Enable Time-Based Exit** (critical!)
    ```
-   From: 2024.01.02 (Tuesday)
-   To:   2024.03.31
+   InpTimeExitEnabled = true
+   InpTimeExitHours = 24
+   InpTimeExitMaxLoss = -100.0
    ```
+2. Reduce lot size (`InpLotBase = 0.01`)
+3. Use flat scaling (`InpLotScale = 1.0`)
+4. Increase grid spacing for volatile symbols
+5. Reduce grid levels (`InpGridLevels = 5`)
 
-2. **Mode**: Use `Every tick` or `1 minute OHLC`
+### 🔴 Grid Not Expanding
 
-3. **Model**: `Real ticks` for accuracy
+**Symptoms**: Only 1-2 levels placed, no expansion
 
-4. **Symbol**: Ensure data exists
-   - Right click symbol → Chart
-   - Check if price history loads
+**Causes & Solutions**:
+1. **DD threshold reached** - Check `InpMaxDDForExpansion` setting
+2. **Max distance exceeded** - Adjust `InpLazyDistanceMultiplier`
+3. **Max levels reached** - Check `InpGridLevels` setting
+4. **Insufficient margin** - Reduce lot sizes
 
-#### ✅ Fix 2: EA Settings
+### 🔴 Compilation Errors
 
-```properties
-# Required settings
-InpRespectStops = false       # Set false for backtest
-InpGridLevels = 200           # Your test value
-InpLotBase = 0.01             # NOT 500!
-InpLotScale = 2               # Martingale multiplier
-
-# Dynamic Grid (to reduce lag)
-InpDynamicGrid = true
-InpWarmLevels = 5
-InpRefillThreshold = 2
-InpRefillBatch = 3
-InpMaxPendings = 15
-
-# Risk (for stress test)
-InpDDOpenUSD = 100
-InpSessionSL_USD = 1000
-InpExposureCapLots = 20.0     # High for 200 levels
+**Common errors**:
+```
+'InpLazyGridEnabled' - undeclared identifier
+'m_gap_manager' - undeclared identifier
 ```
 
-#### ✅ Fix 3: Check Symbol Info
+**Solution**: You're using the old version. The v3.1.0 refactor:
+- Removed multi-job system
+- Removed basket SL
+- Removed gap management
+- Lazy grid is always enabled (not configurable)
+- Dynamic spacing is always enabled
 
-Run this script to verify:
+### 🔴 News Filter Not Working
 
-```mql5
-void OnStart()
-{
-   string symbol = "EURUSD";
-   
-   Print("=== Symbol Info ===");
-   Print("Ask: ", SymbolInfoDouble(symbol, SYMBOL_ASK));
-   Print("Bid: ", SymbolInfoDouble(symbol, SYMBOL_BID));
-   Print("Digits: ", SymbolInfoInteger(symbol, SYMBOL_DIGITS));
-   Print("Trade Mode: ", SymbolInfoInteger(symbol, SYMBOL_TRADE_MODE));
-   Print("Stops Level: ", SymbolInfoInteger(symbol, SYMBOL_TRADE_STOPS_LEVEL));
-   Print("Volume Min: ", SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN));
-   Print("Volume Step: ", SymbolInfoDouble(symbol, SYMBOL_VOLUME_STEP));
-   
-   MqlDateTime dt;
-   TimeToStruct(TimeCurrent(), dt);
-   Print("Day of Week: ", dt.day_of_week, " (0=Sun, 6=Sat)");
-}
+**Symptoms**: Trading during news events
+
+**Solutions**:
+1. Enable WebRequest in MT5:
+   - Tools → Options → Expert Advisors
+   - Check "Allow WebRequest for listed URL"
+   - Add: `https://nfs.faireconomy.media`
+2. Check internet connection
+3. Verify `InpNewsFilterEnabled = true`
+4. Check news filter logs for errors
+
+### 🔴 Orders Rejected by Broker
+
+**Error messages**:
+```
+Invalid stops
+Invalid volume
+Trade is disabled
 ```
 
-#### ✅ Fix 4: Debug Log Check
+**Solutions**:
+1. Check broker's minimum/maximum lot sizes
+2. Verify stops level requirements
+3. Ensure symbol is tradeable
+4. Check account type allows EAs
+5. Verify sufficient margin
 
-After init, you should see:
+### 🔴 Time Exit Not Triggering
+
+**Symptoms**: Positions stay open > 24 hours
+
+**Solutions**:
+1. Verify `InpTimeExitEnabled = true`
+2. Check loss is within acceptable range (`InpTimeExitMaxLoss`)
+3. If `InpTimeExitTrendOnly = true`, verify position is counter-trend
+4. Check logs for time exit evaluation
+
+## Performance Issues
+
+### Slow Backtesting
+
+**Solutions**:
+1. Use "Open prices only" mode for initial tests
+2. Reduce date range
+3. Disable visual mode
+4. Close other applications
+5. Reduce logging verbosity
+
+### Memory Usage High
+
+**Solutions**:
+1. Reduce `InpGridLevels`
+2. Clear old log files
+3. Restart MT5 periodically
+4. Use 64-bit MT5 version
+
+## Configuration Problems
+
+### Wrong Symbol Settings
+
+**Problem**: EA uses wrong spacing/levels for symbol
+
+**Solution**: Use symbol presets:
 ```
-[RGDv2] Init OK - Ask=1.08450 Bid=1.08440 LotBase=0.01 GridLevels=200 Dynamic=ON
-[RGDv2][EURUSD][BUY][PRI] Dynamic grid warm=6/200
-[RGDv2][EURUSD][SELL][PRI] Dynamic grid warm=6/200
-```
-
-If you see:
-```
-[RGDv2] Controller init failed
-```
-
-Check:
-- Balance > 0
-- Symbol exists
-- Lot size valid
-
----
-
-## ❌ Problem: Abnormal prices (e.g., 4.85857 for EURUSD)
-
-### Cause
-- Wrong symbol selected
-- Data corruption
-
-### Solution
-1. Delete history and re-download:
-   - Tools → History Center
-   - Select symbol → Delete
-   - Download again
-
-2. Use different broker's data
-
-3. Check symbol specifications match
-
----
-
-## ❌ Problem: Lot size 500 (too large)
-
-### Cause
-- Wrong input parameter
-- LotScale too aggressive
-
-### Solution
-```properties
-InpLotBase = 0.01        # Start small!
-InpLotScale = 1.0        # No martingale
-# OR
-InpLotScale = 2.0        # Moderate martingale
+InpSymbolPreset = PRESET_AUTO
+InpUseTestedPresets = true
 ```
 
-**For 200 levels with LotScale=2**:
-- Level 0: 0.01
-- Level 10: 10.24
-- Level 20: 10,485.76 ⚠️ TOO BIG!
+### Duplicate Magic Numbers
 
-**Safe approach**:
-```properties
-InpGridLevels = 200
+**Problem**: Multiple EAs interfering
+
+**Solution**: Use unique magic for each instance:
+- Instance 1: `InpMagic = 990045`
+- Instance 2: `InpMagic = 990046`
+- Instance 3: `InpMagic = 990047`
+
+## Critical Settings Checklist
+
+✅ **For ALL Production Use**:
+```
+InpTimeExitEnabled = true
+InpTimeExitHours = 24
+InpTimeExitMaxLoss = -100.0
+```
+
+✅ **For Volatile Symbols (XAUUSD)**:
+```
+InpSpacingStepPips = 150
+InpGridLevels = 5
 InpLotBase = 0.01
-InpLotScale = 1.0        # Flat lot
-InpExposureCapLots = 5.0 # Total limit
 ```
+
+✅ **For Backtesting**:
+```
+InpRespectStops = false
+InpCommissionPerLot = 7.0
+```
+
+## Debug Information
+
+### Check EA Status
+1. Open Experts tab for logs
+2. Look for initialization messages
+3. Check for error messages (red text)
+4. Verify basket status updates
+
+### Log Locations
+- Terminal logs: `View → Experts`
+- File logs: `MQL5/Logs/` folder
+- Custom logs: Check EA initialization message
+
+### Key Log Messages
+```
+"EA v3.1.0 Phase 1 - Magic: 990045"  # Successful init
+"Lazy Grid Fill: ALWAYS ENABLED"     # Feature status
+"Dynamic Spacing: ALWAYS ENABLED"    # Feature status
+"News filter ACTIVE"                 # News blocking
+"Time exit triggered"                # Time-based close
+"Basket SL skipped"                  # Old feature (removed)
+```
+
+## Getting Help
+
+1. **Check Documentation**:
+   - README.md - Overview
+   - STRATEGY_SPEC.md - Technical details
+   - ARCHITECTURE.md - Module structure
+
+2. **Review Configuration**:
+   - CONFIG_EXAMPLE.yaml - Example settings
+   - Symbol presets in PresetManager.mqh
+
+3. **Test Systematically**:
+   - Start with default settings
+   - Change one parameter at a time
+   - Use Strategy Tester first
+   - Test on demo before live
+
+## Known Limitations
+
+1. **No automated stop loss** - Manual monitoring required
+2. **Accepts losses** - By design during strong trends
+3. **High margin usage** - Both grids active simultaneously
+4. **Broker limits** - Some brokers limit pending orders
+5. **News dependency** - Requires internet connection
 
 ---
 
-## ❌ Problem: Init lag (5-10 seconds)
-
-### Solution
-✅ Use Dynamic Grid (already implemented):
-
-```properties
-InpDynamicGrid = true
-InpWarmLevels = 5        # Only 5 pending at start
-InpGridLevels = 200      # Total capacity
-```
-
-Now init takes **<1 second**!
-
----
-
-## 🔍 Common Backtest Issues
-
-### 1. "Not enough money"
-```
-InpLotBase too large for balance
-```
-**Fix**: Reduce lot or increase initial deposit
-
-### 2. "Invalid stops"
-```
-Pending order too close to price
-```
-**Fix**: 
-- Set `InpRespectStops = false`
-- Increase `InpMinSpacingPips`
-
-### 3. "Too many orders"
-```
-Max orders per symbol exceeded
-```
-**Fix**:
-- Reduce `InpGridLevels`
-- Or increase `InpWarmLevels` slower
-- Check broker limit (usually 200-500)
-
-### 4. Zero trades but no errors
-**Checklist**:
-- [ ] Date range includes weekdays
-- [ ] Symbol has data
-- [ ] InpLotBase > Symbol minimum
-- [ ] InpExposureCapLots > InpLotBase
-- [ ] InpSessionSL_USD not too tight
-
----
-
-## 📊 Expected Behavior
-
-### Successful init:
-```
-[RGDv2] Init OK - Ask=1.08450 Bid=1.08440 LotBase=0.01 GridLevels=200 Dynamic=ON
-[RGDv2][EURUSD][BUY][PRI] Dynamic grid warm=6/200
-[RGDv2][EURUSD][SELL][PRI] Dynamic grid warm=6/200
-[RGDv2][EURUSD][LC] Lifecycle bootstrapped
-```
-
-### During trading:
-```
-[RGDv2][EURUSD][BUY][PRI] Refill +3 placed=9/200 pending=5
-[RGDv2][EURUSD][SELL][PRI] Refill +3 placed=9/200 pending=4
-[RGDv2][EURUSD][LC] Rescue deployed
-[RGDv2][EURUSD][BUY][HEDGE] TSL activated
-[RGDv2][EURUSD][BUY][HEDGE] Basket closed: GroupTP
-```
-
----
-
-## 🚨 Emergency Checklist
-
-If backtest produces **zero trades**:
-
-1. [ ] Check date range (avoid weekends)
-2. [ ] Set `InpRespectStops = false`
-3. [ ] Verify `InpLotBase = 0.01` (not 500!)
-4. [ ] Check symbol exists and has data
-5. [ ] Initial balance > $100
-6. [ ] Enable logging: `InpLogEvents = true`
-7. [ ] Check Experts tab for errors
-8. [ ] Try simpler symbol (EURUSD, not exotics)
-9. [ ] Reduce to `InpGridLevels = 6` first
-10. [ ] Test static mode: `InpDynamicGrid = false`
-
----
-
-## 📞 Still Not Working?
-
-Share these in log:
-1. Full init log (first 20 lines)
-2. EA inputs screenshot
-3. Strategy Tester settings
-4. Symbol specifications
-5. Account balance/leverage
-
-Common missed settings:
-- ✅ Mode: Every tick
-- ✅ Visualization: OFF (for speed)
-- ✅ Optimization: Disabled
-- ✅ Forward: Disabled initially
-
+*Last Updated: October 2024*
