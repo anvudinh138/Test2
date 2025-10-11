@@ -15,7 +15,9 @@
 // Forward declarations
 class CTrapDetector;
 class CTrendFilter;
-class CTrendStrengthAnalyzer;
+
+// Phase 13: Include trend strength analyzer
+#include "TrendStrengthAnalyzer.mqh"
 
 class CGridBasket
   {
@@ -576,93 +578,6 @@ private:
          m_log.Event(Tag(),StringFormat("%s %.2f => %.2f",reason,delta,EffectiveTargetUsd()));
      }
 
-   //+------------------------------------------------------------------+
-   //| Check if basket SL is hit (CONDITIONAL - only in strong trend)  |
-   //+------------------------------------------------------------------+
-   bool           CheckBasketSL()
-     {
-      // Only check if basket has positions
-      if(m_total_lot<=0.0 || m_avg_price<=0.0)
-         return false;
-
-      // Phase 12: Only check Basket SL if counter-trend detected
-      // This prevents SL loop in range markets
-      if(m_params.reseed_with_trend_only && m_trend_filter!=NULL)
-        {
-         ETrendState current_trend=m_trend_filter.GetTrendState();
-         bool is_counter_trend=false;
-
-         // BUY basket counter-trend = DOWNTREND
-         if(m_direction==DIR_BUY && current_trend==TREND_DOWN)
-            is_counter_trend=true;
-
-         // SELL basket counter-trend = UPTREND
-         if(m_direction==DIR_SELL && current_trend==TREND_UP)
-            is_counter_trend=true;
-
-         // Skip SL check if NOT counter-trend (allow grid to work in range/with-trend)
-         if(!is_counter_trend)
-           {
-            static datetime last_skip_log=0;
-            datetime now=TimeCurrent();
-            if(m_log!=NULL && now-last_skip_log>300)  // Log every 5 min
-              {
-               m_log.Event(Tag(),StringFormat("Basket SL skipped: No counter-trend (trend: %s)",
-                                             EnumToString(current_trend)));
-               last_skip_log=now;
-              }
-            return false;  // No SL check - let grid work normally
-           }
-
-         // Counter-trend detected - proceed with SL check
-         if(m_log!=NULL)
-           {
-            static datetime last_check_log=0;
-            datetime now=TimeCurrent();
-            if(now-last_check_log>60)  // Log every 1 min
-              {
-               m_log.Event(Tag(),StringFormat("⚠️  Counter-trend detected (%s) - Basket SL ACTIVE",
-                                             EnumToString(current_trend)));
-               last_check_log=now;
-              }
-           }
-        }
-
-      // Get current spacing in price units
-      double current_spacing_pips=(m_spacing!=NULL)?m_spacing.SpacingPips():m_params.spacing_pips;
-      double point=SymbolInfoDouble(m_symbol,SYMBOL_POINT);
-      double spacing_px=current_spacing_pips*point*10.0;
-
-      // Calculate SL distance in price units
-      double sl_distance_px=spacing_px*m_params.basket_sl_spacing;
-
-      // Get current price
-      double current_price=(m_direction==DIR_BUY)?SymbolInfoDouble(m_symbol,SYMBOL_BID):SymbolInfoDouble(m_symbol,SYMBOL_ASK);
-
-      // Check if price moved against basket by SL distance
-      bool sl_hit=false;
-      if(m_direction==DIR_BUY)
-        {
-         // BUY basket: SL hit if price drops below (avg - SL distance)
-         double sl_price=m_avg_price-sl_distance_px;
-         sl_hit=(current_price<=sl_price);
-        }
-      else
-        {
-         // SELL basket: SL hit if price rises above (avg + SL distance)
-         double sl_price=m_avg_price+sl_distance_px;
-         sl_hit=(current_price>=sl_price);
-        }
-
-      if(sl_hit && m_log!=NULL)
-        {
-         int digits=(int)SymbolInfoInteger(m_symbol,SYMBOL_DIGITS);
-         m_log.Event(Tag(),StringFormat("🚨 Basket SL HIT (counter-trend): avg=%."+IntegerToString(digits)+"f cur=%."+IntegerToString(digits)+"f spacing=%.1f pips dist=%.1fx loss=%.2f USD",
-                                        m_avg_price,current_price,current_spacing_pips,m_params.basket_sl_spacing,m_pnl_usd));
-        }
-
-      return sl_hit;
-     }
 
 public:
    CGridBasket(const string symbol,
@@ -887,13 +802,6 @@ public:
 
       // Phase 5: Check for new trap conditions (detect traps before they worsen)
       CheckTrapConditions();
-
-      // Basket Stop Loss check (spacing-based)
-      if(m_params.basket_sl_enabled && CheckBasketSL())
-        {
-         CloseBasket("BasketSL");
-         return;  // Exit early after SL closure
-        }
 
       // Lazy grid expansion
       if(m_params.lazy_grid_enabled)
