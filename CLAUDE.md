@@ -448,3 +448,4 @@ InpUseTestedPresets: true     // Prefer tested presets over volatility-based
 - **Testing**: Use MT5 Strategy Tester for backtesting (do NOT test .mq5/.mqh files with other tools)
 - **Experimental features**: Keep OFF by default, require explicit opt-in
 - **Documentation**: Update relevant docs (STRATEGY_SPEC.md, ARCHITECTURE.md) when adding features
+- log.txt và các loại log rất lớn , việc đọc full context chỉ tốn resource , nên grep/find/search log theo ngữ cảnh để tìm câu trả lời

@@ -15,6 +15,7 @@
 // Forward declarations
 class CTrapDetector;
 class CTrendFilter;
+class CGapManager;
 
 class CGridBasket
   {
@@ -54,7 +55,10 @@ private:
    
    // trap detector (v3.1 - Phase 5)
    CTrapDetector *m_trap_detector;
-   
+
+   // gap manager (v3.1 - Phase 9)
+   CGapManager   *m_gap_manager;
+
    // quick exit mode (v3.1 - Phase 7)
    bool           m_quick_exit_active;
    double         m_quick_exit_target;
@@ -685,10 +689,13 @@ public:
            }
         }
       ArrayResize(m_levels,0);
-      
+
       // Initialize trap detector pointer to NULL
       m_trap_detector=NULL;
-      
+
+      // Initialize gap manager pointer to NULL
+      m_gap_manager=NULL;
+
       // Initialize quick exit state
       m_quick_exit_active=false;
       m_quick_exit_target=0.0;
@@ -706,6 +713,13 @@ public:
         {
          delete m_trap_detector;
          m_trap_detector=NULL;
+        }
+
+      // Cleanup gap manager
+      if(m_gap_manager!=NULL)
+        {
+         delete m_gap_manager;
+         m_gap_manager=NULL;
         }
      }
 
@@ -739,6 +753,14 @@ public:
                                         m_params.trap_dd_threshold,
                                         m_params.trap_conditions_required,
                                         m_params.trap_stuck_minutes);
+
+      // Initialize gap manager (Phase 9)
+      m_gap_manager=new CGapManager(GetPointer(this),
+                                    m_executor,
+                                    m_log,
+                                    m_symbol,
+                                    m_magic,
+                                    m_params);
 
       return true;
      }
@@ -800,15 +822,21 @@ public:
          return;
       m_closed_recently=false;
       RefreshState();
-      
+
       // Phase 7: Check Quick Exit TP (highest priority - escape trap ASAP)
       if(CheckQuickExitTP())
         {
          return;  // Quick exit closed basket, skip other checks
         }
-      
+
       // Phase 5: Check for new trap conditions (detect traps before they worsen)
       CheckTrapConditions();
+
+      // Phase 9: Gap Management (check for large gaps and bridge them)
+      if(m_gap_manager!=NULL)
+        {
+         m_gap_manager.Update(m_direction);
+        }
 
       // Basket Stop Loss check (spacing-based)
       if(m_params.basket_sl_enabled && CheckBasketSL())
@@ -1278,7 +1306,8 @@ public:
      }
   };
 
-// Include TrapDetector after GridBasket definition (to resolve circular dependency)
+// Include TrapDetector and GapManager after GridBasket definition (to resolve circular dependency)
 #include "TrapDetector.mqh"
+#include "GapManager.mqh"
 
 #endif // __RGD_V2_GRID_BASKET_MQH__

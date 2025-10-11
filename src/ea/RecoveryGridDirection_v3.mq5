@@ -117,12 +117,19 @@ input bool              InpQuickExitCloseFar    = true;        // Close far posi
 input bool              InpQuickExitReseed      = true;        // Auto reseed after exit
 input int               InpQuickExitTimeoutMinutes = 0;       // Timeout (minutes)
 
-//--- Gap Management (Phase 4)
-input group             "=== Gap Management (v3.1 - Phase 0: OFF) ==="
-input bool              InpAutoFillBridge       = false;       // Auto fill bridge levels (OFF for Phase 0)
-input int               InpMaxBridgeLevels      = 5;           // Max bridge levels per gap
-input double            InpMaxPositionDistance  = 300.0;       // Max distance for position (pips)
-input double            InpMaxAcceptableLoss    = -100.0;      // Max loss to abandon trapped ($)
+//--- Gap Management (Phase 9-10 - Auto-Adaptive)
+input group             "=== Gap Management v1: Bridge (Phase 9) ==="
+input bool              InpAutoFillBridge         = false;     // Auto fill bridge levels (OFF by default)
+input double            InpGapBridgeMinMultiplier = 1.5;       // Min gap size (spacing × this - LOWERED for easier trigger!)
+input double            InpGapBridgeMaxMultiplier = 4.0;       // Max gap size (spacing × this - LOWERED for easier trigger!)
+input int               InpMaxBridgeLevels        = 5;         // Max bridge levels per gap
+
+input group             "=== Gap Management v2: CloseFar (Phase 10) ==="
+input bool              InpGapCloseFarEnabled     = false;     // Enable close-far for large gaps
+input double            InpGapCloseFarMultiplier  = 5.0;       // Close-far threshold (spacing × this - LOWERED!)
+input double            InpGapCloseFarDistance    = 2.5;       // Distance from avg to close (spacing × this - LOWERED!)
+input double            InpMaxAcceptableLoss      = -100.0;    // Max loss to accept when closing far ($)
+input int               InpMinPositionsBeforeReseed = 2;       // Min positions before reseed
 
 //--- Globals
 SParams              g_params;
@@ -252,13 +259,21 @@ void PrintConfiguration()
       Print("   Timeout: ",InpQuickExitTimeoutMinutes," minutes");
      }
    
-   // Gap Management (Phase 4)
-   Print("4. GAP MANAGEMENT: ",(InpAutoFillBridge?"ENABLED ⚠️":"DISABLED ✓"));
+   // Gap Management (Phase 9-10)
+   Print("4. GAP MANAGEMENT v1 (Bridge): ",(InpAutoFillBridge?"ENABLED ⚠️":"DISABLED ✓"));
    if(InpAutoFillBridge)
      {
+      Print("   Gap range: AUTO (Spacing × ",InpGapBridgeMinMultiplier," to ",InpGapBridgeMaxMultiplier,")");
       Print("   Max bridge levels: ",InpMaxBridgeLevels);
-      Print("   Max position distance: ",InpMaxPositionDistance," pips");
+     }
+
+   Print("5. GAP MANAGEMENT v2 (CloseFar): ",(InpGapCloseFarEnabled?"ENABLED ⚠️":"DISABLED ✓"));
+   if(InpGapCloseFarEnabled)
+     {
+      Print("   Close-far threshold: AUTO (Spacing × ",InpGapCloseFarMultiplier,")");
+      Print("   Far distance: AUTO (Spacing × ",InpGapCloseFarDistance,")");
       Print("   Max acceptable loss: $",InpMaxAcceptableLoss);
+      Print("   Min positions before reseed: ",InpMinPositionsBeforeReseed);
      }
    
    Print("");
@@ -368,11 +383,16 @@ void BuildParams()
    g_params.quick_exit_reseed     =InpQuickExitReseed;
    g_params.quick_exit_timeout_min=InpQuickExitTimeoutMinutes;
    
-   // Gap management
-   g_params.auto_fill_bridge      =InpAutoFillBridge;
-   g_params.max_bridge_levels     =InpMaxBridgeLevels;
-   g_params.max_position_distance =InpMaxPositionDistance;
-   g_params.max_acceptable_loss   =InpMaxAcceptableLoss;
+   // Gap management (Phase 9-10 - auto-adaptive)
+   g_params.auto_fill_bridge            =InpAutoFillBridge;
+   g_params.gap_bridge_min_multiplier   =InpGapBridgeMinMultiplier;
+   g_params.gap_bridge_max_multiplier   =InpGapBridgeMaxMultiplier;
+   g_params.max_bridge_levels           =InpMaxBridgeLevels;
+   g_params.gap_close_far_enabled       =InpGapCloseFarEnabled;
+   g_params.gap_close_far_multiplier    =InpGapCloseFarMultiplier;
+   g_params.gap_close_far_distance      =InpGapCloseFarDistance;
+   g_params.max_acceptable_loss         =InpMaxAcceptableLoss;
+   g_params.min_positions_before_reseed =InpMinPositionsBeforeReseed;
 
    // THEN apply preset overrides (if not CUSTOM)
    // Preset will override only the critical params (spacing, grid, target, cooldown)

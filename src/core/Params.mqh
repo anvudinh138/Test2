@@ -95,11 +95,18 @@ struct SParams
    bool         quick_exit_reseed;       // auto reseed after exit
    int          quick_exit_timeout_min;  // timeout (minutes)
    
-   // gap management (Phase 4)
-   bool         auto_fill_bridge;        // auto fill bridge levels
+   // gap management (Phase 9-10 - auto-adaptive using multipliers)
+   bool         auto_fill_bridge;        // auto fill bridge levels (200-400 pips range)
+   double       gap_bridge_min_multiplier; // min gap size (spacing × this, e.g., 8.0)
+   double       gap_bridge_max_multiplier; // max gap size (spacing × this, e.g., 16.0)
    int          max_bridge_levels;       // max bridge levels per gap
-   double       max_position_distance;   // max distance for position (pips)
+
+   // Phase 10: CloseFar for large gaps (>400 pips range)
+   bool         gap_close_far_enabled;   // enable close-far for large gaps
+   double       gap_close_far_multiplier; // close-far threshold (spacing × this, e.g., 16.0)
+   double       gap_close_far_distance;  // distance from avg to consider "far" (spacing × this, e.g., 8.0)
    double       max_acceptable_loss;     // max loss to abandon trapped ($)
+   int          min_positions_before_reseed; // min positions before reseed (default: 2)
   };
 
 #endif // __RGD_V2_PARAMS_MQH__
