@@ -93,6 +93,13 @@ input bool              InpDynamicSpacingEnabled = false;      // Enable dynamic
 input double            InpDynamicSpacingMax    = 3.0;         // Max spacing multiplier (3.0 = 3x wider in extreme trend)
 input ENUM_TIMEFRAMES   InpTrendTimeframe       = PERIOD_M15;  // Timeframe for trend analysis
 
+//--- Phase 13 Layer 4: Time-Based Exit (Safe Solution)
+input group             "=== Phase 13 Layer 4: Time-Based Exit ==="
+input bool              InpTimeExitEnabled      = false;       // Enable time-based exit (OFF by default - TEST FIRST!)
+input int               InpTimeExitHours        = 24;          // Hours threshold before exit (24 hours = 1 day)
+input double            InpTimeExitMaxLoss      = -100.0;      // Max acceptable loss in USD (e.g., -100)
+input bool              InpTimeExitTrendOnly    = true;        // Only exit if counter-trend (recommended: true)
+
 //+------------------------------------------------------------------+
 //| NEW PARAMETERS FOR v3.1.0 - Lazy Grid Fill + Trap Detection     |
 //+------------------------------------------------------------------+
@@ -372,6 +379,12 @@ void BuildParams()
    g_params.dynamic_spacing_enabled=InpDynamicSpacingEnabled;
    g_params.dynamic_spacing_max   =InpDynamicSpacingMax;
    g_params.trend_timeframe       =InpTrendTimeframe;
+
+   // Phase 13 Layer 4: Time-Based Exit
+   g_params.time_exit_enabled     =InpTimeExitEnabled;
+   g_params.time_exit_hours       =InpTimeExitHours;
+   g_params.time_exit_max_loss_usd=InpTimeExitMaxLoss;
+   g_params.time_exit_trend_only  =InpTimeExitTrendOnly;
 
    // NEW v3.1.0 parameters (Phase 0: OFF by default)
    // Lazy grid fill

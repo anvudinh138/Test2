@@ -435,6 +435,20 @@ public:
       if(m_sell!=NULL)
          m_sell.CheckTrapConditions();
 
+      // Phase 13 Layer 4: Check time-based exit
+      if(m_buy!=NULL && m_buy.CheckTimeBasedExit())
+        {
+         if(m_log!=NULL)
+            m_log.Event(Tag(),"⏰ Closing BUY basket - Time exit triggered");
+         m_buy.CloseBasket("TimeExit");
+        }
+      if(m_sell!=NULL && m_sell.CheckTimeBasedExit())
+        {
+         if(m_log!=NULL)
+            m_log.Event(Tag(),"⏰ Closing SELL basket - Time exit triggered");
+         m_sell.CloseBasket("TimeExit");
+        }
+
       if(m_buy!=NULL && m_buy.ClosedRecently())
         {
          // Check if basket was closed due to SL

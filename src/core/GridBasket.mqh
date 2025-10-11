@@ -72,6 +72,10 @@ private:
    double         m_original_target;
    datetime       m_quick_exit_start_time;
 
+   // time-based exit (Phase 13 Layer 4)
+   datetime       m_first_position_time;     // When first position opened
+   bool           m_time_exit_triggered;     // Exit already triggered?
+
    double         m_last_realized;
 
    double         m_volume_step;
@@ -562,25 +566,6 @@ private:
       return (ask<=m_tp_price);
      }
 
-   void           CloseBasket(const string reason)
-     {
-      if(!m_active)
-         return;
-      m_last_realized=m_pnl_usd;
-      if(m_executor!=NULL)
-        {
-         m_executor.SetMagic(m_magic);
-         m_executor.CloseAllByDirection(m_direction,m_magic);
-         m_executor.CancelPendingByDirection(m_direction,m_magic);
-        }
-      m_active=false;
-      m_closed_recently=true;
-      m_close_reason=reason;  // Track close reason
-      m_cycles_done++;
-      if(m_log!=NULL)
-        m_log.Event(Tag(),StringFormat("Basket closed: %s",reason));
-     }
-
   void           AdjustTarget(const double delta,const string reason)
      {
       if(delta<=0.0)
@@ -757,6 +742,10 @@ public:
       m_quick_exit_target=0.0;
       m_original_target=0.0;
       m_quick_exit_start_time=0;
+
+      // Initialize time-based exit state (Phase 13 Layer 4)
+      m_first_position_time=0;
+      m_time_exit_triggered=false;
      }
    
    //+------------------------------------------------------------------+
@@ -843,6 +832,9 @@ public:
      {
       if(m_spacing==NULL)
          return;
+
+      // Phase 13 Layer 4: Reset time tracking
+      ResetTimeTracking();
 
       // Get current price for anchor
       double anchor_price=SymbolInfoDouble(m_symbol,(m_direction==DIR_BUY)?SYMBOL_ASK:SYMBOL_BID);
@@ -1117,7 +1109,112 @@ public:
      {
       return m_refill_enabled;
      }
-   
+
+   //+------------------------------------------------------------------+
+   //| Phase 13 Layer 4: Time-Based Exit Methods                        |
+   //+------------------------------------------------------------------+
+   bool           CheckTimeBasedExit()
+     {
+      // Only if enabled
+      if(!m_params.time_exit_enabled)
+         return false;
+
+      // Only if basket has positions
+      if(!m_active || m_total_lot<=0.0)
+         return false;
+
+      datetime now=TimeCurrent();
+
+      // Initialize first position time if not set
+      if(m_first_position_time==0)
+        {
+         m_first_position_time=now;
+         return false;
+        }
+
+      // Calculate time underwater (in hours)
+      int hours_underwater=(int)((now-m_first_position_time)/3600);
+
+      // Not yet triggered?
+      if(hours_underwater<m_params.time_exit_hours)
+         return false;
+
+      // Already triggered?
+      if(m_time_exit_triggered)
+         return false;
+
+      // Check if loss acceptable
+      double current_pnl=BasketPnL();
+      if(current_pnl<m_params.time_exit_max_loss_usd)
+        {
+         if(m_log!=NULL)
+           {
+            m_log.Event(Tag(),StringFormat("Time exit rejected: Loss %.2f < Max %.2f",
+                                          current_pnl,m_params.time_exit_max_loss_usd));
+           }
+         return false;
+        }
+
+      // Optional: Check if counter-trend
+      if(m_params.time_exit_trend_only && m_trend_filter!=NULL)
+        {
+         ETrendState trend=m_trend_filter.GetTrendState();
+         bool is_counter_trend=false;
+
+         if(m_direction==DIR_BUY && trend==TREND_DOWN)
+            is_counter_trend=true;
+         if(m_direction==DIR_SELL && trend==TREND_UP)
+            is_counter_trend=true;
+
+         if(!is_counter_trend)
+           {
+            if(m_log!=NULL)
+              {
+               m_log.Event(Tag(),"Time exit skipped: Not counter-trend");
+              }
+            return false;
+           }
+        }
+
+      // TRIGGER TIME EXIT
+      if(m_log!=NULL)
+        {
+         m_log.Event(Tag(),StringFormat("⏰ [Phase 13 Layer 4] Time exit triggered! Hours: %d, Loss: %.2f USD",
+                                        hours_underwater,current_pnl));
+        }
+
+      m_time_exit_triggered=true;
+      return true;
+     }
+
+   void           ResetTimeTracking()
+     {
+      m_first_position_time=0;
+      m_time_exit_triggered=false;
+     }
+
+   //+------------------------------------------------------------------+
+   //| Close basket with reason tracking                                |
+   //+------------------------------------------------------------------+
+   void           CloseBasket(const string reason)
+     {
+      if(!m_active)
+         return;
+      m_last_realized=m_pnl_usd;
+      if(m_executor!=NULL)
+        {
+         m_executor.SetMagic(m_magic);
+         m_executor.CloseAllByDirection(m_direction,m_magic);
+         m_executor.CancelPendingByDirection(m_direction,m_magic);
+        }
+      m_active=false;
+      m_closed_recently=true;
+      m_close_reason=reason;  // Track close reason
+      m_cycles_done++;
+      if(m_log!=NULL)
+         m_log.Event(Tag(),StringFormat("Basket closed: %s",reason));
+     }
+
    //+------------------------------------------------------------------+
    //| Phase 5: Trap Detection Helper Methods                           |
    //+------------------------------------------------------------------+

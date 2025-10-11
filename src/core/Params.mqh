@@ -72,6 +72,12 @@ struct SParams
    double       dynamic_spacing_max;     // max spacing multiplier (default 3.0)
    ENUM_TIMEFRAMES trend_timeframe;      // timeframe for trend analysis (default M15)
 
+   // Phase 13 Layer 4: Time-Based Exit
+   bool         time_exit_enabled;       // enable time-based exit
+   int          time_exit_hours;         // hours threshold before exit (default: 24)
+   double       time_exit_max_loss_usd;  // max acceptable loss in USD (default: -100)
+   bool         time_exit_trend_only;    // only exit if counter-trend (default: true)
+
    //+------------------------------------------------------------------+
    //| NEW PARAMETERS FOR v3.1.0 (Phase 0: OFF by default)             |
    //+------------------------------------------------------------------+
