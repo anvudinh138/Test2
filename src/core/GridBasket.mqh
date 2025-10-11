@@ -15,6 +15,7 @@
 // Forward declarations
 class CTrapDetector;
 class CTrendFilter;
+class CTrendStrengthAnalyzer;
 class CGapManager;
 
 class CGridBasket
@@ -58,6 +59,9 @@ private:
 
    // trend filter (Phase 12 - for conditional Basket SL)
    CTrendFilter  *m_trend_filter;
+
+   // trend strength analyzer (Phase 13 - for dynamic spacing)
+   CTrendStrengthAnalyzer *m_trend_analyzer;
 
    // gap manager (v3.1 - Phase 9)
    CGapManager   *m_gap_manager;
@@ -742,6 +746,9 @@ public:
       // Initialize trend filter pointer to NULL (Phase 12)
       m_trend_filter=NULL;
 
+      // Initialize trend analyzer pointer to NULL (Phase 13)
+      m_trend_analyzer=NULL;
+
       // Initialize gap manager pointer to NULL
       m_gap_manager=NULL;
 
@@ -777,6 +784,21 @@ public:
       if(m_spacing==NULL)
          return false;
       double spacing_pips=m_spacing.SpacingPips();
+
+      // Phase 13: Apply dynamic spacing multiplier based on trend strength
+      if(m_params.dynamic_spacing_enabled && m_trend_analyzer!=NULL)
+        {
+         double multiplier=m_trend_analyzer.GetSpacingMultiplier();
+         spacing_pips=spacing_pips*multiplier;
+
+         if(m_log!=NULL)
+           {
+            EMarketState state=m_trend_analyzer.GetMarketState();
+            m_log.Event(Tag(),StringFormat("Phase 13: Dynamic spacing %.0f pips × %.1f = %.0f pips (%s)",
+                                          m_spacing.SpacingPips(),multiplier,spacing_pips,EnumToString(state)));
+           }
+        }
+
       double spacing_px=m_spacing.ToPrice(spacing_pips);
       if(spacing_px<=0.0)
          return false;
@@ -832,6 +854,21 @@ public:
 
       // Rebuild grid and place orders
       double spacing_pips=m_spacing.SpacingPips();
+
+      // Phase 13: Apply dynamic spacing multiplier based on trend strength
+      if(m_params.dynamic_spacing_enabled && m_trend_analyzer!=NULL)
+        {
+         double multiplier=m_trend_analyzer.GetSpacingMultiplier();
+         spacing_pips=spacing_pips*multiplier;
+
+         if(m_log!=NULL)
+           {
+            EMarketState state=m_trend_analyzer.GetMarketState();
+            m_log.Event(Tag(),StringFormat("Phase 13: Dynamic spacing on reseed %.0f pips × %.1f = %.0f pips (%s)",
+                                          m_spacing.SpacingPips(),multiplier,spacing_pips,EnumToString(state)));
+           }
+        }
+
       double spacing_px=m_spacing.ToPrice(spacing_pips);
       if(spacing_px>0.0)
         {
@@ -1069,6 +1106,11 @@ public:
    void           SetTrendFilter(CTrendFilter *filter)
      {
       m_trend_filter=filter;
+     }
+
+   void           SetTrendAnalyzer(CTrendStrengthAnalyzer *analyzer)
+     {
+      m_trend_analyzer=analyzer;
      }
 
    bool           IsRefillEnabled() const

@@ -1,0 +1,179 @@
+;+------------------------------------------------------------------+
+;| XAUUSD PHASE 13 PRESET - Dynamic Spacing Test Configuration      |
+;| Symbol: XAUUSD (High Volatility - GOLD)                          |
+;| Strategy: LazyGrid + Phase 13 Dynamic Spacing                    |
+;| Status: TESTING (Compare with XAUUSD-SIMPLE.set)                |
+;| Created: 2025-01-11                                              |
+;+------------------------------------------------------------------+
+;
+; 🎯 PURPOSE: Test Phase 13 Dynamic Spacing vs Simple LazyGrid
+;
+; Compare this with XAUUSD-SIMPLE.set:
+; - SIMPLE: LazyGrid only (Image #3 - best result)
+; - PHASE13: LazyGrid + Dynamic Spacing (adaptive)
+;
+; Expected: Phase 13 should reduce DD in strong trends
+;           while maintaining range profitability
+
+;=== CORE CONFIGURATION ===
+
+;--- Identity
+InpMagic=990048
+; Different magic from SIMPLE (990047)
+
+;--- Symbol Preset System
+InpSymbolPreset=99
+; PRESET_CUSTOM
+
+InpUseTestedPresets=false
+
+;--- Spacing Engine
+InpSpacingMode=2
+; 2 = HYBRID
+
+InpSpacingStepPips=150.0
+; Base spacing: 150 pips (same as SIMPLE)
+
+InpSpacingAtrMult=1.2
+InpMinSpacingPips=80.0
+InpAtrTimeframe=PERIOD_H1
+InpAtrPeriod=14
+
+;--- Grid Configuration
+InpGridLevels=5
+InpLotBase=0.01
+InpLotScale=1.5
+
+;--- Profit Target
+InpTargetCycleUSD=15.0
+
+;--- Risk Management
+InpSessionSL_USD=10000.0
+
+;--- Execution
+InpOrderCooldownSec=10
+InpSlippagePips=5
+InpRespectStops=false
+InpCommissionPerLot=0.0
+
+;=== FEATURE FLAGS ===
+
+;--- ✅ PHASE 1: LAZY GRID (ENABLED - Same as SIMPLE)
+InpLazyGridEnabled=true
+InpInitialWarmLevels=1
+InpAutoMaxLevelDistance=true
+InpMaxLevelDistance=3000
+InpLazyDistanceMultiplier=20.0
+InpMaxDDForExpansion=-20.0
+
+;--- ❌ PHASE 5: TRAP DETECTION (DISABLED - Same as SIMPLE)
+InpTrapDetectionEnabled=false
+InpTrapAutoThreshold=true
+InpTrapGapThreshold=200.0
+InpTrapATRMultiplier=2.0
+InpTrapSpacingMultiplier=1.5
+InpTrapDDThreshold=-15.0
+InpTrapConditionsRequired=1
+InpTrapStuckMinutes=20
+
+;--- ❌ PHASE 7: QUICK EXIT (DISABLED - Same as SIMPLE)
+InpQuickExitEnabled=false
+InpQuickExitMode=1
+InpQuickExitLoss=-25.0
+InpQuickExitPercentage=-0.40
+InpQuickExitCloseFar=true
+InpQuickExitReseed=true
+InpQuickExitTimeoutMin=45
+
+;--- ❌ PHASE 9: GAP BRIDGE (DISABLED - Same as SIMPLE)
+InpAutoFillBridge=false
+InpGapBridgeMinMultiplier=1.5
+InpGapBridgeMaxMultiplier=4.0
+InpMaxBridgeLevels=3
+
+;--- ❌ PHASE 10: GAP CLOSE FAR (DISABLED - Same as SIMPLE)
+InpGapCloseFarEnabled=false
+InpGapCloseFarMultiplier=5.0
+InpGapCloseFarDistance=2.5
+InpMaxAcceptableLoss=-200.0
+InpMinPositionsBeforeReseed=2
+
+;--- ❌ PHASE 11: BASKET STOP LOSS (DISABLED - Same as SIMPLE)
+InpBasketSL_Enabled=false
+InpBasketSL_Spacing=2.5
+
+;--- ❌ PHASE 12: TREND-AWARE RESEED (DISABLED - Same as SIMPLE)
+InpReseedMode=0
+; 0 = RESEED_IMMEDIATE (Phase 12 OFF)
+InpReseedCooldownMin=30
+InpReseedWithTrendOnly=false
+
+;--- ✅ PHASE 13: DYNAMIC SPACING (ENABLED - KEY DIFFERENCE!)
+InpDynamicSpacingEnabled=true
+; ✅ ENABLED - Adaptive spacing based on trend strength
+
+InpDynamicSpacingMax=3.0
+; Max multiplier: 3.0×
+; Range: 150 × 1.0 = 150 pips
+; Weak trend: 150 × 1.5 = 225 pips
+; Strong trend: 150 × 2.0 = 300 pips
+; Extreme trend: 150 × 3.0 = 450 pips
+
+InpTrendTimeframe=PERIOD_M15
+; M15 for trend analysis
+
+;=== EXPECTED BEHAVIOR ===
+;
+; Same as SIMPLE, but with adaptive spacing:
+;
+; Range Market (ADX < 25):
+; - Spacing: 150 pips × 1.0 = 150 pips
+; - Behavior: Same as SIMPLE
+; - Profit: Same as SIMPLE
+;
+; Strong Trend (ADX > 35):
+; - Spacing: 150 pips × 2.0 = 300 pips
+; - Behavior: Fewer positions fill
+; - Exposure: Lower than SIMPLE
+; - DD: Expected to be lower than SIMPLE
+;
+; Trade-off:
+; - Slightly less profit in whipsaw markets
+; - Much lower DD in strong trends
+; - Overall: Better risk-adjusted returns?
+
+;=== COMPARISON TEST PLAN ===
+;
+; Run both presets on same period:
+;
+; 1. XAUUSD-SIMPLE.set (Image #3 baseline)
+;    - LazyGrid only
+;    - Fixed 150 pips spacing
+;    - Proven: +24% in 3 months
+;
+; 2. XAUUSD-PHASE13.set (This file)
+;    - LazyGrid + Dynamic Spacing
+;    - Adaptive 150-450 pips
+;    - Expected: Similar profit, lower DD
+;
+; Compare metrics:
+; - Total profit
+; - Max DD
+; - DD frequency
+; - Recovery time
+; - Win rate
+; - Profit factor
+
+;=== VERSION INFO ===
+; EA Version: v3.2.0
+; Preset Version: 1.0 (Phase 13 Test)
+; Created: 2025-01-11
+; Based on: SIMPLE + Dynamic Spacing
+; Strategy: Adaptive spacing in trends
+; Status: TESTING
+; Risk Level: ⚠️⚠️ MODERATE
+;
+; Changelog v1.0: Initial Phase 13 test config
+;                  - Based on SIMPLE preset
+;                  - Added Dynamic Spacing
+;                  - For comparison testing

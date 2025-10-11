@@ -66,7 +66,12 @@ struct SParams
    EReseedMode  reseed_mode;             // when to reseed after basket SL
    int          reseed_cooldown_min;     // cooldown minutes before reseed (COOLDOWN mode)
    bool         reseed_with_trend_only;  // enable trend filter for reseed (Phase 12)
-   
+
+   // Phase 13: Dynamic Spacing & Trend Strength
+   bool         dynamic_spacing_enabled; // enable dynamic spacing based on trend strength
+   double       dynamic_spacing_max;     // max spacing multiplier (default 3.0)
+   ENUM_TIMEFRAMES trend_timeframe;      // timeframe for trend analysis (default M15)
+
    //+------------------------------------------------------------------+
    //| NEW PARAMETERS FOR v3.1.0 (Phase 0: OFF by default)             |
    //+------------------------------------------------------------------+

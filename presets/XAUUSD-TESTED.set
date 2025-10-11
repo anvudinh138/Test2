@@ -1,9 +1,9 @@
 ;+------------------------------------------------------------------+
-;| XAUUSD TESTED PRESET - FULL Phase 1-10 Configuration             |
+;| XAUUSD TESTED PRESET - FULL Phase 1-13 Configuration             |
 ;| Symbol: XAUUSD (High Volatility - GOLD)                          |
-;| Phases: Lazy Grid + Trap Detection + Quick Exit + Gap Management |
-;| Status: PRODUCTION READY (Tuned for High Volatility)            |
-;| Last Updated: 2025-01-10 (v1.1 - TIGHTENED Gap Management)      |
+;| Phases: Lazy + Trap + Quick Exit + Gap + Basket SL + Phase 13    |
+;| Status: TESTING (Phase 13 Dynamic Spacing - Quick Win)          |
+;| Last Updated: 2025-01-11 (v1.3 - Phase 13 Quick Win)            |
 ;+------------------------------------------------------------------+
 ;
 ; ⚠️ XAUUSD SPECIAL NOTES:
@@ -225,6 +225,24 @@ InpReseedWithTrendOnly=true
 ;   - After trend ends → SELL reseed allowed
 ; Result: Prevents -22.8% SL loop, expected: 0% to +5%
 
+;--- PHASE 13: DYNAMIC SPACING (Quick Win - Recommended!)
+InpDynamicSpacingEnabled=true
+; ✅ ENABLED - Automatically widens spacing in strong trends
+; → Fewer positions = Less exposure = Lower DD
+
+InpDynamicSpacingMax=3.0
+; Max multiplier: 3.0× base spacing
+; Range market: 150 pips × 1.0 = 150 pips (normal)
+; Weak trend: 150 pips × 1.5 = 225 pips (caution)
+; Strong trend: 150 pips × 2.0 = 300 pips (danger)
+; Extreme trend: 150 pips × 3.0 = 450 pips (STOP!)
+; Result: Adaptive spacing reduces exposure in trends
+
+InpTrendTimeframe=PERIOD_M15
+; M15 timeframe for trend strength analysis
+; Balances responsiveness vs noise
+; Uses ADX (50%) + ATR (30%) + EMA Angle (20%)
+
 ;=== EXPECTED BEHAVIOR (XAUUSD) ===
 ;
 ; Spacing: 150 pips (HYBRID mode with 1.2× ATR)
@@ -253,13 +271,15 @@ InpReseedWithTrendOnly=true
 ; 7. Test on demo for 1 MONTH minimum
 
 ;=== VERSION INFO ===
-; EA Version: v3.1.0
-; Preset Version: 1.2 (XAUUSD High Volatility - EASY TRIGGER Gap Management!)
+; EA Version: v3.2.0
+; Preset Version: 1.3 (Phase 13 Quick Win - Dynamic Spacing!)
 ; Created: 2025-01-10
-; Updated: 2025-01-10 (Gap thresholds LOWERED for end-user friendliness!)
-; Phases: 1-10 Complete
-; Status: Production Ready (HIGH RISK!)
+; Updated: 2025-01-11 (Phase 13 Quick Win implemented!)
+; Phases: 1-13 (Quick Win: Dynamic Spacing ENABLED)
+; Status: TESTING (Phase 13 requires backtest validation!)
 ; Risk Level: ⚠️⚠️⚠️ EXTREME
-; Changelog v1.2: Gap Management multipliers LOWERED to 1.5-4.0 (bridge) & 5.0 (close-far)
-;                  - Much easier to trigger than v1.1 (4-8 & 8)
-;                  - User-friendly: works with any spacing automatically!
+; Changelog v1.3: Phase 13 Quick Win - Dynamic Spacing enabled
+;                  - Automatically adjusts spacing based on trend strength
+;                  - Expected DD reduction: -50% → -30%
+;                  - Fewer positions in strong trends = Lower exposure
+;                  - Maintains range profitability with 1.0× spacing

@@ -38,6 +38,15 @@ enum EReseedMode
    RESEED_TREND_REVERSAL = 2   // Reseed only when trend reverses
   };
 
+// Phase 13: Market state classification
+enum EMarketState
+  {
+   MARKET_RANGE         = 0,  // ADX < 25, sideways
+   MARKET_WEAK_TREND    = 1,  // ADX 25-35, mild trend
+   MARKET_STRONG_TREND  = 2,  // ADX 35-45, strong trend
+   MARKET_EXTREME_TREND = 3   // ADX > 45, extreme trend (danger!)
+  };
+
 enum EJobStatus
   {
    JOB_ACTIVE    = 0,  // Trading normally

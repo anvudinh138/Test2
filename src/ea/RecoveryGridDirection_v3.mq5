@@ -87,6 +87,12 @@ input EReseedMode       InpReseedMode           = RESEED_TREND_REVERSAL; // When
 input int               InpReseedCooldownMin    = 30;          // Cooldown minutes before reseed (for COOLDOWN mode)
 input bool              InpReseedWithTrendOnly  = true;        // Enable trend filter for reseed
 
+//--- Phase 13: Dynamic Spacing & Trend Strength (XAUUSD Protection)
+input group             "=== Phase 13: Dynamic Spacing (Quick Win) ==="
+input bool              InpDynamicSpacingEnabled = false;      // Enable dynamic spacing (OFF by default - TEST FIRST!)
+input double            InpDynamicSpacingMax    = 3.0;         // Max spacing multiplier (3.0 = 3x wider in extreme trend)
+input ENUM_TIMEFRAMES   InpTrendTimeframe       = PERIOD_M15;  // Timeframe for trend analysis
+
 //+------------------------------------------------------------------+
 //| NEW PARAMETERS FOR v3.1.0 - Lazy Grid Fill + Trap Detection     |
 //+------------------------------------------------------------------+
@@ -361,6 +367,11 @@ void BuildParams()
    g_params.reseed_mode           =InpReseedMode;
    g_params.reseed_cooldown_min   =InpReseedCooldownMin;
    g_params.reseed_with_trend_only=InpReseedWithTrendOnly;
+
+   // Phase 13: Dynamic Spacing & Trend Strength
+   g_params.dynamic_spacing_enabled=InpDynamicSpacingEnabled;
+   g_params.dynamic_spacing_max   =InpDynamicSpacingMax;
+   g_params.trend_timeframe       =InpTrendTimeframe;
 
    // NEW v3.1.0 parameters (Phase 0: OFF by default)
    // Lazy grid fill

@@ -11,6 +11,7 @@
 #include "OrderExecutor.mqh"
 #include "GridBasket.mqh"
 #include "TrendFilter.mqh"
+#include "TrendStrengthAnalyzer.mqh"
 #include "Logger.mqh"
 
 class CLifecycleController
@@ -26,6 +27,7 @@ private:
    CGridBasket      *m_buy;
    CGridBasket      *m_sell;
    CTrendFilter     *m_trend_filter;
+   CTrendStrengthAnalyzer *m_trend_analyzer;  // Phase 13: Market state analysis
    bool              m_halted;
 
    // Grid protection
@@ -284,6 +286,7 @@ public:
                          m_buy(NULL),
                          m_sell(NULL),
                          m_trend_filter(NULL),
+                         m_trend_analyzer(NULL),
                          m_halted(false),
                          m_cooldown_until(0),
                          m_in_cooldown(false),
@@ -308,6 +311,17 @@ public:
          m_trend_filter=NULL;
         }
 
+      // Phase 13: Initialize trend strength analyzer
+      if(m_params.dynamic_spacing_enabled)
+        {
+         m_trend_analyzer=new CTrendStrengthAnalyzer(m_symbol,m_params.trend_timeframe,m_log);
+         if(m_log!=NULL)
+           {
+            m_log.Event(Tag(),StringFormat("Phase 13: Trend analyzer enabled (TF: %s)",
+                                          EnumToString(m_params.trend_timeframe)));
+           }
+        }
+
       double ask=SymbolInfoDouble(m_symbol,SYMBOL_ASK);
       double bid=SymbolInfoDouble(m_symbol,SYMBOL_BID);
       if(ask<=0 || bid<=0)
@@ -328,6 +342,10 @@ public:
          // Phase 12: Set trend filter for conditional Basket SL
          m_buy.SetTrendFilter(m_trend_filter);
          m_sell.SetTrendFilter(m_trend_filter);
+
+         // Phase 13: Set trend analyzer for dynamic spacing
+         m_buy.SetTrendAnalyzer(m_trend_analyzer);
+         m_sell.SetTrendAnalyzer(m_trend_analyzer);
 
          // Mark baskets active without seeding
          m_buy.SetActive(true);
@@ -356,6 +374,7 @@ public:
       m_buy=new CGridBasket(m_symbol,DIR_BUY,BASKET_PRIMARY,m_params,m_spacing,m_executor,m_log,m_magic);
       m_buy.SetTradingEnabled(true);
       m_buy.SetTrendFilter(m_trend_filter);  // Phase 12: For conditional Basket SL
+      m_buy.SetTrendAnalyzer(m_trend_analyzer);  // Phase 13: For dynamic spacing
       if(!m_buy.Init(ask))
         {
          if(m_log!=NULL)
@@ -368,6 +387,7 @@ public:
       m_sell=new CGridBasket(m_symbol,DIR_SELL,BASKET_PRIMARY,m_params,m_spacing,m_executor,m_log,m_magic);
       m_sell.SetTradingEnabled(true);
       m_sell.SetTrendFilter(m_trend_filter);  // Phase 12: For conditional Basket SL
+      m_sell.SetTrendAnalyzer(m_trend_analyzer);  // Phase 13: For dynamic spacing
       if(!m_sell.Init(bid))
         {
          if(m_log!=NULL)
@@ -480,6 +500,11 @@ public:
          delete m_trend_filter;
          m_trend_filter=NULL;
         }
+      if(m_trend_analyzer!=NULL)
+        {
+         delete m_trend_analyzer;
+         m_trend_analyzer=NULL;
+        }
      }
 
    // P&L tracking methods (for multi-job system)
@@ -501,6 +526,12 @@ public:
    double            GetTotalPnL() const
      {
       return GetUnrealizedPnL()+GetRealizedPnL();
+     }
+
+   // Phase 13: Trend analyzer access
+   CTrendStrengthAnalyzer* GetTrendAnalyzer() const
+     {
+      return m_trend_analyzer;
      }
 
    bool              IsTSLActive() const
