@@ -42,15 +42,15 @@ input double            InpLotBase          = 0.01;  // Base lot size
 input double            InpLotScale         = 2.0;   // Lot scale multiplier
 
 //--- Profit Target
-input double            InpTargetCycleUSD   = 5.0;   // Target profit per cycle (USD)
+input double            InpTargetCycleUSD   = 10.0;   // Target profit per cycle (USD)
 
 //--- Risk Management (Session Stop Loss)
 input double            InpSessionSL_USD    = 10000; // Session stop loss (USD) - for monitoring only
 
 //--- News Filter (pause trading during high-impact news)
-input bool              InpNewsFilterEnabled   = false;  // Enable news filter
+input bool              InpNewsFilterEnabled   = true;  // Enable news filter
 input string            InpNewsImpactFilter    = "High"; // Impact filter (High, Medium+, All)
-input int               InpNewsBufferMinutes   = 30;     // Buffer before/after news (minutes)
+input int               InpNewsBufferMinutes   = 60;     // Buffer before/after news (minutes)
 
 //--- Execution
 input int               InpOrderCooldownSec = 5;     // Min seconds between orders (anti-spam)
@@ -89,13 +89,13 @@ input bool              InpReseedWithTrendOnly  = true;        // Enable trend f
 
 //--- Phase 13: Dynamic Spacing & Trend Strength (XAUUSD Protection)
 input group             "=== Phase 13: Dynamic Spacing (Quick Win) ==="
-input bool              InpDynamicSpacingEnabled = false;      // Enable dynamic spacing (OFF by default - TEST FIRST!)
+input bool              InpDynamicSpacingEnabled = true;      // Enable dynamic spacing (OFF by default - TEST FIRST!)
 input double            InpDynamicSpacingMax    = 3.0;         // Max spacing multiplier (3.0 = 3x wider in extreme trend)
 input ENUM_TIMEFRAMES   InpTrendTimeframe       = PERIOD_M15;  // Timeframe for trend analysis
 
 //--- Phase 13 Layer 4: Time-Based Exit (Safe Solution)
 input group             "=== Phase 13 Layer 4: Time-Based Exit ==="
-input bool              InpTimeExitEnabled      = false;       // Enable time-based exit (OFF by default - TEST FIRST!)
+input bool              InpTimeExitEnabled      = true;       // Enable time-based exit (OFF by default - TEST FIRST!)
 input int               InpTimeExitHours        = 24;          // Hours threshold before exit (24 hours = 1 day)
 input double            InpTimeExitMaxLoss      = -100.0;      // Max acceptable loss in USD (e.g., -100)
 input bool              InpTimeExitTrendOnly    = true;        // Only exit if counter-trend (recommended: true)
