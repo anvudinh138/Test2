@@ -12,7 +12,6 @@
 #include <RECOVERY-GRID-DIRECTION_v3/core/GridBasket.mqh>
 #include <RECOVERY-GRID-DIRECTION_v3/core/LifecycleController.mqh>
 #include <RECOVERY-GRID-DIRECTION_v3/core/NewsFilter.mqh>
-#include <RECOVERY-GRID-DIRECTION_v3/core/JobManager.mqh>
 
 //--- Inputs
 //--- Identity
@@ -58,38 +57,11 @@ input int               InpSlippagePips     = 0;     // Max slippage (pips)
 input bool              InpRespectStops     = false; // Respect broker stops level (false for backtest)
 input double            InpCommissionPerLot = 0.0;   // Commission per lot (for PnL calc only, does NOT affect live)
 
-//--- Multi-Job System (Phase 2 - Experimental)
-input group             "=== Multi-Job System (v3.0 - EXPERIMENTAL) ==="
-input bool              InpMultiJobEnabled  = false; // Enable multi-job system (OFF by default)
-input int               InpMaxJobs          = 5;     // Max concurrent jobs (5-10 recommended)
-input double            InpJobSL_USD        = 50.0;  // SL per job in USD (0=disabled)
-input double            InpJobDDThreshold   = 30.0;  // Abandon job if DD >= this % (e.g., 30%)
-input double            InpGlobalDDLimit    = 50.0;  // Stop spawning if global DD >= this % (e.g., 50%)
 
-input group             "=== Magic Number (Job Isolation) ==="
-input long              InpMagicOffset      = 421;   // Magic offset between jobs (e.g., 421)
 
-input group             "=== Spawn Triggers ==="
-input bool              InpSpawnOnGridFull  = false;  // Spawn new job when grid full
-input bool              InpSpawnOnTSL       = true;  // Spawn new job when TSL active
-input bool              InpSpawnOnJobDD     = true;  // Spawn new job when job DD >= threshold
-input int               InpSpawnCooldownSec = 30;    // Cooldown between spawns (seconds)
-input int               InpMaxSpawns        = 10;    // Max spawns per session
-
-//--- Basket Stop Loss (Spacing-Based Risk Management)
-input group             "=== Basket Stop Loss (v3.2 - Spacing-Based) ==="
-input bool              InpBasketSL_Enabled     = false;       // Enable basket stop loss
-input double            InpBasketSL_Spacing     = 2.0;         // SL distance in spacing units (e.g., 2.0 = 2x spacing from entry)
-
-//--- Phase 12: Trend-Aware Reseed
-input group             "=== Phase 12: Trend-Aware Reseed ==="
-input EReseedMode       InpReseedMode           = RESEED_TREND_REVERSAL; // When to reseed after basket SL
-input int               InpReseedCooldownMin    = 30;          // Cooldown minutes before reseed (for COOLDOWN mode)
-input bool              InpReseedWithTrendOnly  = true;        // Enable trend filter for reseed
-
-//--- Phase 13: Dynamic Spacing & Trend Strength (XAUUSD Protection)
-input group             "=== Phase 13: Dynamic Spacing (Quick Win) ==="
-input bool              InpDynamicSpacingEnabled = true;      // Enable dynamic spacing (OFF by default - TEST FIRST!)
+//--- Phase 13: Dynamic Spacing & Trend Strength (XAUUSD Protection) - ALWAYS ENABLED (proven feature)
+input group             "=== Phase 13: Dynamic Spacing (ALWAYS ON) ==="
+// InpDynamicSpacingEnabled removed - now always true (proven feature)
 input double            InpDynamicSpacingMax    = 3.0;         // Max spacing multiplier (3.0 = 3x wider in extreme trend)
 input ENUM_TIMEFRAMES   InpTrendTimeframe       = PERIOD_M15;  // Timeframe for trend analysis
 
@@ -104,9 +76,9 @@ input bool              InpTimeExitTrendOnly    = true;        // Only exit if c
 //| NEW PARAMETERS FOR v3.1.0 - Lazy Grid Fill + Trap Detection     |
 //+------------------------------------------------------------------+
 
-//--- Lazy Grid Fill (Phase 1)
-input group             "=== Lazy Grid Fill (v3.1 - Phase 0: OFF) ==="
-input bool              InpLazyGridEnabled      = true;        // Enable lazy grid fill (OFF for Phase 0)
+//--- Lazy Grid Fill (Phase 1) - ALWAYS ENABLED (proven feature)
+input group             "=== Lazy Grid Fill (v3.1 - ALWAYS ON) ==="
+// InpLazyGridEnabled removed - now always true (proven feature)
 input int               InpInitialWarmLevels    = 1;           // Initial pending levels (1-2)
 input bool              InpAutoMaxLevelDistance = true;        // Auto-calculate max level distance
 input int               InpMaxLevelDistance     = 500;         // Manual max distance (pips) - used if auto=false
@@ -134,19 +106,6 @@ input bool              InpQuickExitCloseFar    = true;        // Close far posi
 input bool              InpQuickExitReseed      = true;        // Auto reseed after exit
 input int               InpQuickExitTimeoutMinutes = 0;       // Timeout (minutes)
 
-//--- Gap Management (Phase 9-10 - Auto-Adaptive)
-input group             "=== Gap Management v1: Bridge (Phase 9) ==="
-input bool              InpAutoFillBridge         = false;     // Auto fill bridge levels (OFF by default)
-input double            InpGapBridgeMinMultiplier = 1.5;       // Min gap size (spacing × this - LOWERED for easier trigger!)
-input double            InpGapBridgeMaxMultiplier = 4.0;       // Max gap size (spacing × this - LOWERED for easier trigger!)
-input int               InpMaxBridgeLevels        = 5;         // Max bridge levels per gap
-
-input group             "=== Gap Management v2: CloseFar (Phase 10) ==="
-input bool              InpGapCloseFarEnabled     = false;     // Enable close-far for large gaps
-input double            InpGapCloseFarMultiplier  = 5.0;       // Close-far threshold (spacing × this - LOWERED!)
-input double            InpGapCloseFarDistance    = 2.5;       // Distance from avg to close (spacing × this - LOWERED!)
-input double            InpMaxAcceptableLoss      = -100.0;    // Max loss to accept when closing far ($)
-input int               InpMinPositionsBeforeReseed = 2;       // Min positions before reseed
 
 //--- Globals
 SParams              g_params;
@@ -155,7 +114,6 @@ CSpacingEngine      *g_spacing       = NULL;
 COrderValidator     *g_validator     = NULL;
 COrderExecutor      *g_executor      = NULL;
 CLifecycleController*g_controller    = NULL;
-CJobManager         *g_job_manager   = NULL;
 CNewsFilter         *g_news_filter   = NULL;
 
 //+------------------------------------------------------------------+
@@ -223,21 +181,18 @@ void PrintConfiguration()
    Print("v3.1.0 NEW FEATURES STATUS");
    Print("========================================");
    
-   // Lazy Grid Fill (Phase 1)
-   Print("1. LAZY GRID FILL: ",(InpLazyGridEnabled?"ENABLED ⚠️":"DISABLED ✓"));
-   if(InpLazyGridEnabled)
+   // Lazy Grid Fill (Phase 1) - ALWAYS ENABLED
+   Print("1. LAZY GRID FILL: ALWAYS ENABLED ✓");
+   Print("   Initial warm levels: ",InpInitialWarmLevels);
+   if(InpAutoMaxLevelDistance)
      {
-      Print("   Initial warm levels: ",InpInitialWarmLevels);
-      if(InpAutoMaxLevelDistance)
-        {
-         Print("   Max level distance: AUTO (Spacing × ",InpLazyDistanceMultiplier,")");
-        }
-      else
-        {
-         Print("   Max level distance: ",InpMaxLevelDistance," pips (manual)");
-        }
-      Print("   Max DD for expansion: ",InpMaxDDForExpansion,"%");
+      Print("   Max level distance: AUTO (Spacing × ",InpLazyDistanceMultiplier,")");
      }
+   else
+     {
+      Print("   Max level distance: ",InpMaxLevelDistance," pips (manual)");
+     }
+   Print("   Max DD for expansion: ",InpMaxDDForExpansion,"%");
    
    // Trap Detection (Phase 5)
    Print("2. TRAP DETECTION: ",(InpTrapDetectionEnabled?"ENABLED ⚠️":"DISABLED ✓"));
@@ -276,46 +231,18 @@ void PrintConfiguration()
       Print("   Timeout: ",InpQuickExitTimeoutMinutes," minutes");
      }
    
-   // Gap Management (Phase 9-10)
-   Print("4. GAP MANAGEMENT v1 (Bridge): ",(InpAutoFillBridge?"ENABLED ⚠️":"DISABLED ✓"));
-   if(InpAutoFillBridge)
-     {
-      Print("   Gap range: AUTO (Spacing × ",InpGapBridgeMinMultiplier," to ",InpGapBridgeMaxMultiplier,")");
-      Print("   Max bridge levels: ",InpMaxBridgeLevels);
-     }
-
-   Print("5. GAP MANAGEMENT v2 (CloseFar): ",(InpGapCloseFarEnabled?"ENABLED ⚠️":"DISABLED ✓"));
-   if(InpGapCloseFarEnabled)
-     {
-      Print("   Close-far threshold: AUTO (Spacing × ",InpGapCloseFarMultiplier,")");
-      Print("   Far distance: AUTO (Spacing × ",InpGapCloseFarDistance,")");
-      Print("   Max acceptable loss: $",InpMaxAcceptableLoss);
-      Print("   Min positions before reseed: ",InpMinPositionsBeforeReseed);
-     }
    
    Print("");
-   
-   // Phase 0 validation
-   if(InpLazyGridEnabled || InpTrapDetectionEnabled || InpQuickExitEnabled || InpAutoFillBridge)
+
+   // Phase validation (lazy grid is now always on - proven feature)
+   if(InpTrapDetectionEnabled || InpQuickExitEnabled)
      {
-      Print("⚠️  WARNING: Phase 0 expects ALL new features OFF!");
-      Print("    Enable only after Phase 1-4 implementation.");
+      Print("⚠️  WARNING: Some experimental features are enabled!");
+      Print("    Test thoroughly on demo before live trading.");
      }
    else
      {
-      Print("✅ Phase 0 OK: All new features disabled as expected.");
-     }
-   
-   // Multi-job system
-   if(InpMultiJobEnabled)
-     {
-      Print("");
-      Print("--- Multi-Job System (EXPERIMENTAL) ---");
-      Print("Max jobs: ",InpMaxJobs);
-      Print("Job SL: $",InpJobSL_USD);
-      Print("Job DD threshold: ",InpJobDDThreshold,"%");
-      Print("Global DD limit: ",InpGlobalDDLimit,"%");
-      Print("Magic offset: ",InpMagicOffset);
+      Print("✅ Using proven features only (lazy grid, dynamic spacing).");
      }
    
    Print("========================================");
@@ -347,36 +274,11 @@ void BuildParams()
 
    g_params.magic              =InpMagic;
 
-   // Multi-job system params
-   g_params.multi_job_enabled  =InpMultiJobEnabled;
-   g_params.max_jobs           =InpMaxJobs;
-   g_params.job_sl_usd         =InpJobSL_USD;
-   g_params.job_dd_threshold   =InpJobDDThreshold;
-   g_params.global_dd_limit    =InpGlobalDDLimit;
-   g_params.magic_start        =InpMagic;
-   g_params.magic_offset       =InpMagicOffset;
-   g_params.spawn_on_grid_full =InpSpawnOnGridFull;
-   g_params.spawn_on_tsl       =InpSpawnOnTSL;
-   g_params.spawn_on_job_dd    =InpSpawnOnJobDD;
-   g_params.spawn_cooldown_sec =InpSpawnCooldownSec;
-   g_params.max_spawns         =InpMaxSpawns;
-
    // Timeframe preservation (bug fix - always enabled)
    g_params.preserve_on_tf_switch=true;
 
-   // Trend filter (Phase 1.1 - strong trend protection)
-
-   // Basket stop loss (Phase 1.2 - spacing-based risk management)
-   g_params.basket_sl_enabled     =InpBasketSL_Enabled;
-   g_params.basket_sl_spacing     =InpBasketSL_Spacing;
-
-   // Phase 12: Trend-Aware Reseed
-   g_params.reseed_mode           =InpReseedMode;
-   g_params.reseed_cooldown_min   =InpReseedCooldownMin;
-   g_params.reseed_with_trend_only=InpReseedWithTrendOnly;
-
-   // Phase 13: Dynamic Spacing & Trend Strength
-   g_params.dynamic_spacing_enabled=InpDynamicSpacingEnabled;
+   // Phase 13: Dynamic Spacing & Trend Strength - ALWAYS ENABLED (proven feature)
+   g_params.dynamic_spacing_enabled=true;  // Always true - proven feature
    g_params.dynamic_spacing_max   =InpDynamicSpacingMax;
    g_params.trend_timeframe       =InpTrendTimeframe;
 
@@ -386,9 +288,9 @@ void BuildParams()
    g_params.time_exit_max_loss_usd=InpTimeExitMaxLoss;
    g_params.time_exit_trend_only  =InpTimeExitTrendOnly;
 
-   // NEW v3.1.0 parameters (Phase 0: OFF by default)
-   // Lazy grid fill
-   g_params.lazy_grid_enabled     =InpLazyGridEnabled;
+   // NEW v3.1.0 parameters
+   // Lazy grid fill - ALWAYS ENABLED (proven feature)
+   g_params.lazy_grid_enabled     =true;  // Always true - proven feature
    g_params.initial_warm_levels   =InpInitialWarmLevels;
    g_params.auto_max_level_distance=InpAutoMaxLevelDistance;
    g_params.max_level_distance    =InpMaxLevelDistance;
@@ -413,17 +315,6 @@ void BuildParams()
    g_params.quick_exit_close_far  =InpQuickExitCloseFar;
    g_params.quick_exit_reseed     =InpQuickExitReseed;
    g_params.quick_exit_timeout_min=InpQuickExitTimeoutMinutes;
-   
-   // Gap management (Phase 9-10 - auto-adaptive)
-   g_params.auto_fill_bridge            =InpAutoFillBridge;
-   g_params.gap_bridge_min_multiplier   =InpGapBridgeMinMultiplier;
-   g_params.gap_bridge_max_multiplier   =InpGapBridgeMaxMultiplier;
-   g_params.max_bridge_levels           =InpMaxBridgeLevels;
-   g_params.gap_close_far_enabled       =InpGapCloseFarEnabled;
-   g_params.gap_close_far_multiplier    =InpGapCloseFarMultiplier;
-   g_params.gap_close_far_distance      =InpGapCloseFarDistance;
-   g_params.max_acceptable_loss         =InpMaxAcceptableLoss;
-   g_params.min_positions_before_reseed =InpMinPositionsBeforeReseed;
 
    // THEN apply preset overrides (if not CUSTOM)
    // Preset will override only the critical params (spacing, grid, target, cooldown)
@@ -451,37 +342,14 @@ int OnInit()
       g_executor.SetMagic(g_params.magic);
    g_news_filter = new CNewsFilter(InpNewsFilterEnabled,InpNewsImpactFilter,InpNewsBufferMinutes,g_logger);
 
-   // Multi-job system (Phase 2) or legacy single lifecycle
-   if(g_params.multi_job_enabled)
+   // Single lifecycle controller (simplified)
+   g_controller = new CLifecycleController(_Symbol,g_params,g_spacing,g_executor,g_logger,g_params.magic);
+
+   if(g_controller==NULL || !g_controller.Init())
      {
-      // Multi-job mode
-      g_job_manager = new CJobManager(_Symbol,g_params,g_spacing,g_executor,g_logger,
-                                      g_params.magic_start,g_params.magic_offset,
-                                      g_params.global_dd_limit,g_params.job_sl_usd,g_params.job_dd_threshold,
-                                      g_params.spawn_cooldown_sec,g_params.max_spawns,
-                                      g_params.spawn_on_grid_full,g_params.spawn_on_tsl,g_params.spawn_on_job_dd);
-
-      if(g_job_manager==NULL || !g_job_manager.Init())
-        {
-         if(g_logger!=NULL)
-            g_logger.Event("[RGDv2]","JobManager init failed");
-         return(INIT_FAILED);
-        }
-
       if(g_logger!=NULL)
-         g_logger.Event("[RGDv2]","Multi-Job System: ENABLED (EXPERIMENTAL)");
-     }
-   else
-     {
-      // Legacy single lifecycle mode
-      g_controller = new CLifecycleController(_Symbol,g_params,g_spacing,g_executor,g_logger,g_params.magic);
-
-      if(g_controller==NULL || !g_controller.Init())
-        {
-         if(g_logger!=NULL)
-            g_logger.Event("[RGDv2]","Controller init failed");
-         return(INIT_FAILED);
-        }
+         g_logger.Event("[RGDv2]","Controller init failed");
+      return(INIT_FAILED);
      }
    
    // Print comprehensive configuration (Phase 1)
@@ -513,22 +381,13 @@ void OnTick()
       return;
      }
 
-   // Update lifecycle (multi-job or legacy)
-   if(g_params.multi_job_enabled)
-     {
-      if(g_job_manager!=NULL)
-         g_job_manager.Update();
-     }
-   else
-     {
-      if(g_controller!=NULL)
-         g_controller.Update();
-     }
+   // Update lifecycle controller
+   if(g_controller!=NULL)
+      g_controller.Update();
   }
 
 void OnDeinit(const int reason)
   {
-   if(g_job_manager!=NULL){ g_job_manager.Shutdown(); delete g_job_manager; g_job_manager=NULL; }
    if(g_controller!=NULL){ g_controller.Shutdown(); delete g_controller; g_controller=NULL; }
    if(g_news_filter!=NULL){ delete g_news_filter; g_news_filter=NULL; }
    if(g_executor!=NULL){ delete g_executor; g_executor=NULL; }

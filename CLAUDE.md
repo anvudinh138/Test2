@@ -37,7 +37,6 @@ src/
     ├── NewsFilter.mqh                   # Economic calendar news filter
     ├── TrendFilter.mqh                  # Strong trend protection (Phase 1.1)
     ├── TrendStrengthAnalyzer.mqh        # Trend analysis for Phase 13
-    ├── JobManager.mqh                   # Multi-job system manager (Phase 2)
     ├── PresetManager.mqh                # Symbol-specific presets
     ├── Logger.mqh                       # Event logging
     └── MathHelpers.mqh                  # Math utilities
@@ -82,28 +81,21 @@ src/
    - Hysteresis logic prevents rapid state changes (3-minute cooldown)
    - Configurable EMA timeframe, ADX threshold, and buffer distance
 
-7. **CJobManager** (`JobManager.mqh`) - Phase 2 Multi-Job System (EXPERIMENTAL)
-   - Manages multiple independent lifecycle instances with unique magic numbers
-   - Auto-spawns new jobs based on triggers (grid full, TSL active, DD threshold)
-   - Per-job stop loss and global DD limits for risk management
-   - Job lifecycle: ACTIVE → STOPPED/ABANDONED
-   - Spawn cooldown and max spawn limits to prevent over-trading
-
-8. **CPresetManager** (`PresetManager.mqh`)
+7. **CPresetManager** (`PresetManager.mqh`)
    - Symbol-specific preset configurations
    - Tested presets for EURUSD, XAUUSD, GBPUSD, USDJPY
    - Volatility-based presets (LOW_VOL, MEDIUM_VOL, HIGH_VOL)
    - Auto-detection based on symbol name
    - Adjusts spacing, grid levels, targets per symbol characteristics
 
-9. **CTrendStrengthAnalyzer** (`TrendStrengthAnalyzer.mqh`) - Phase 13 Dynamic Spacing (Layer 2)
+8. **CTrendStrengthAnalyzer** (`TrendStrengthAnalyzer.mqh`) - Phase 13 Dynamic Spacing (Layer 2)
    - Analyzes trend strength using EMA + ADX + ATR indicators
    - Returns market state: RANGE, WEAK_TREND, STRONG_TREND, EXTREME_TREND
    - Provides dynamic spacing multiplier (1.0x → 3.0x based on trend strength)
    - Used by GridBasket to adjust grid spacing in real-time
    - Reduces position count during unfavorable trends
 
-10. **GridBasket Time-Based Exit** (Phase 13 Layer 4) - **CRITICAL FEATURE**
+9. **GridBasket Time-Based Exit** (Phase 13 Layer 4) - **CRITICAL FEATURE**
    - Tracks time underwater for each basket (m_first_position_time)
    - Triggers time-based exit after threshold (default: 24 hours)
    - Checks if loss is acceptable (default: <= -$100)
@@ -176,21 +168,16 @@ src/
 - `InpTrendADX_Threshold`: ADX threshold for strong trend (default: 30.0)
 - `InpTrendBufferPips`: Distance buffer from EMA in pips (default: 100.0)
 
-**Multi-Job System** (Phase 2 - EXPERIMENTAL):
-- `InpMultiJobEnabled`: Enable multi-job system (default: false - OFF by default)
-- `InpMaxJobs`: Max concurrent jobs (5-10 recommended)
-- `InpJobSL_USD`: Stop loss per job in USD (0=disabled)
-- `InpJobDDThreshold`: Abandon job if DD >= this % (e.g., 30%)
-- `InpGlobalDDLimit`: Stop spawning if global DD >= this % (e.g., 50%)
-- `InpMagicOffset`: Magic number offset between jobs (e.g., 421)
-- `InpSpawnOnGridFull`: Spawn new job when grid full
-- `InpSpawnOnTSL`: Spawn new job when TSL active
-- `InpSpawnOnJobDD`: Spawn new job when job DD >= threshold
-- `InpSpawnCooldownSec`: Cooldown between spawns (seconds)
-- `InpMaxSpawns`: Max spawns per session
+**Lazy Grid Fill** (Phase 1) - **ALWAYS ENABLED** (proven feature):
+- Lazy grid fill is now permanently enabled - no input parameter needed
+- `InpInitialWarmLevels`: Initial pending levels (1-2)
+- `InpAutoMaxLevelDistance`: Auto-calculate max level distance
+- `InpMaxLevelDistance`: Manual max distance in pips
+- `InpLazyDistanceMultiplier`: Spacing multiplier for auto mode
+- `InpMaxDDForExpansion`: Stop expanding if DD < this %
 
-**Phase 13 Layer 2: Dynamic Spacing** (PRODUCTION READY):
-- `InpDynamicSpacingEnabled`: Enable dynamic grid spacing (default: false for backward compatibility)
+**Phase 13 Layer 2: Dynamic Spacing** (PRODUCTION READY) - **ALWAYS ENABLED**:
+- Dynamic spacing is now permanently enabled - no input parameter needed
 - `InpDynamicSpacingMax`: Max spacing multiplier (1.0-3.0, default: 3.0)
 - `InpTrendTimeframe`: Timeframe for trend analysis (default: M15)
 
@@ -253,20 +240,26 @@ src/
 
 This EA has been significantly simplified from the original design:
 
-**Removed Features**:
+**Removed Features** (Latest refactor):
 1. **TSL (Trailing Stop Loss)** - Removed entirely (was not working correctly)
 2. **Recovery/Rescue System** - Removed RescueEngine.mqh (including hedge deployment, breach detection, cooldown logic)
 3. **Exposure & Risk Caps** - Removed PortfolioLedger.mqh (InpExposureCapLots, InpMaxCyclesPerSide, InpCooldownBars removed)
 4. **Rescue Triggers** - Removed InpDDOpenUSD, InpOffsetRatio parameters
 5. **Basket Roles** - No more PRIMARY/HEDGE distinction - both baskets are equal
+6. **Multi-Job System (Phase 2)** - Removed JobManager.mqh and all related functionality (experimental feature that didn't work)
+7. **Basket Stop Loss (Phase 12)** - Removed all basket SL and reseed modes (accepting losses during strong trends instead)
+8. **Gap Management (Phase 9-10)** - Removed GapManager.mqh and bridge/close-far features (unnecessary complexity)
 
 **Current Behavior**:
 - Two independent grids (BUY + SELL) trade simultaneously
 - Each basket closes when it hits its group TP
 - Realized profit from one basket reduces the other basket's TP requirement
 - Closed basket automatically reopens with fresh grid
+- **Lazy Grid Fill** is always enabled (proven feature)
+- **Dynamic Spacing** is always enabled (adapts to market conditions)
 - No rescue intervention, no exposure caps enforced by code
 - Session SL parameter exists but is NOT enforced (monitoring only)
+- Strategy accepts losses during strong trends as part of the approach
 
 ### Broker Constraints
 - `InpRespectStops`: Set `false` for backtesting (bypasses broker freeze/stops distance)
@@ -382,7 +375,7 @@ InpNewsBufferMinutes   = 30          // Pause 30 min before/after
 
 See `doc/NEWS_FILTER.md` for detailed documentation
 
-### 🧪 Experimental Features (Phase 1.1 & Phase 2)
+### 🧪 Experimental Features (Phase 1.1)
 
 **⚠️ IMPORTANT**: These features are EXPERIMENTAL and OFF by default. Test thoroughly on demo before enabling.
 
@@ -412,39 +405,6 @@ InpTrendBufferPips      = 100.0
 - May reduce trading opportunities (blocks counter-trend trades)
 - Test on different symbols/timeframes - effectiveness varies
 - Start with `TREND_ACTION_NONE` before trying `CLOSE_ALL` or `NO_REFILL`
-
-#### Multi-Job System (Phase 2 - EXPERIMENTAL)
-
-**Purpose**: Manages multiple independent trading instances with auto-spawn triggers
-
-**How it works**:
-- Each "job" is an independent lifecycle controller with unique magic number
-- Auto-spawns new jobs based on triggers (grid full, TSL active, DD threshold)
-- Per-job stop loss and global DD limits for risk management
-- Jobs can be ACTIVE, STOPPED, or ABANDONED
-
-**Recommended Settings** (for testing):
-```
-InpMultiJobEnabled      = true
-InpMaxJobs              = 5      // Start small (3-5 jobs max)
-InpJobSL_USD            = 50.0   // Per-job stop loss
-InpJobDDThreshold       = 30.0   // Abandon job at 30% DD
-InpGlobalDDLimit        = 50.0   // Stop spawning at 50% global DD
-InpMagicOffset          = 421    // Magic number spacing between jobs
-InpSpawnOnGridFull      = true
-InpSpawnOnTSL           = false  // Disable until TSL is re-implemented
-InpSpawnOnJobDD         = false  // Start with grid-full trigger only
-InpSpawnCooldownSec     = 30
-InpMaxSpawns            = 10
-```
-
-**⚠️ CRITICAL Warnings**:
-- **HIGH RISK**: Can spawn multiple jobs rapidly, multiplying exposure
-- **ACCOUNT BLOW-UP RISK**: Test on demo with small lot sizes first
-- **NOT RECOMMENDED for live trading** until extensively tested
-- Monitor account equity closely - each job adds exposure
-- Spawning too many jobs = exponential lot size growth
-- Start with ONLY `InpSpawnOnGridFull = true`, disable other triggers
 
 #### Symbol Preset System
 
