@@ -225,19 +225,10 @@ private:
       // Grid Configuration (EURUSD can handle more levels - low volatility)
       params.grid_levels = 10;        // More levels for EUR (stable)
 
-      // Dynamic Grid
-      params.grid_dynamic_enabled = true;
-      params.grid_warm_levels = 5;
-      params.grid_refill_threshold = 2;
-      params.grid_refill_batch = 3;
-      params.grid_max_pendings = 15;
 
       // Profit Target
       params.target_cycle_usd = 6.0;
 
-      // Grid Protection
-      params.grid_protection_enabled = true;
-      params.grid_cooldown_minutes = 30;
      }
 
    //+------------------------------------------------------------------+
@@ -256,19 +247,10 @@ private:
       // Grid Configuration (XAU needs fewer levels - high volatility)
       params.grid_levels = 5;             // Fewer levels for XAU (volatile)
 
-      // Dynamic Grid (conservative)
-      params.grid_dynamic_enabled = true;
-      params.grid_warm_levels = 3;        // Fewer pending orders
-      params.grid_refill_threshold = 1;   // Refill earlier
-      params.grid_refill_batch = 2;       // Smaller batches
-      params.grid_max_pendings = 10;      // Limit exposure
 
       // Profit Target
       params.target_cycle_usd = 10.0;     // Higher spread
 
-      // Grid Protection
-      params.grid_protection_enabled = true;
-      params.grid_cooldown_minutes = 60;  // XAU trends last longer
      }
 
    //+------------------------------------------------------------------+
@@ -287,19 +269,10 @@ private:
       // Grid Configuration (GBP medium levels - medium volatility)
       params.grid_levels = 7;             // Medium levels for GBP
 
-      // Dynamic Grid
-      params.grid_dynamic_enabled = true;
-      params.grid_warm_levels = 4;
-      params.grid_refill_threshold = 2;
-      params.grid_refill_batch = 2;
-      params.grid_max_pendings = 12;
 
       // Profit Target
       params.target_cycle_usd = 8.0;      // GBP spread higher than EUR
 
-      // Grid Protection
-      params.grid_protection_enabled = true;
-      params.grid_cooldown_minutes = 45;
      }
 
    //+------------------------------------------------------------------+
@@ -318,19 +291,10 @@ private:
       // Grid Configuration (JPY medium levels - stable trends)
       params.grid_levels = 8;             // Medium-high levels for JPY (stable)
 
-      // Dynamic Grid
-      params.grid_dynamic_enabled = true;
-      params.grid_warm_levels = 4;
-      params.grid_refill_threshold = 2;
-      params.grid_refill_batch = 3;
-      params.grid_max_pendings = 12;
 
       // Profit Target
       params.target_cycle_usd = 7.0;
 
-      // Grid Protection
-      params.grid_protection_enabled = true;
-      params.grid_cooldown_minutes = 40;
      }
 
    //+------------------------------------------------------------------+
@@ -350,15 +314,8 @@ private:
       params.atr_timeframe = PERIOD_M15;
 
       params.grid_levels = 10;
-      params.grid_dynamic_enabled = true;
-      params.grid_warm_levels = 5;
-      params.grid_refill_threshold = 2;
-      params.grid_refill_batch = 3;
-      params.grid_max_pendings = 15;
 
       params.target_cycle_usd = 6.0;
-      params.grid_protection_enabled = true;
-      params.grid_cooldown_minutes = 30;
      }
 
    //+------------------------------------------------------------------+
@@ -374,15 +331,8 @@ private:
       params.atr_timeframe = PERIOD_M15;
 
       params.grid_levels = 9;
-      params.grid_dynamic_enabled = true;
-      params.grid_warm_levels = 4;
-      params.grid_refill_threshold = 2;
-      params.grid_refill_batch = 3;
-      params.grid_max_pendings = 14;
 
       params.target_cycle_usd = 6.5;
-      params.grid_protection_enabled = true;
-      params.grid_cooldown_minutes = 35;
      }
 
    //+------------------------------------------------------------------+
@@ -398,15 +348,8 @@ private:
       params.atr_timeframe = PERIOD_M30;
 
       params.grid_levels = 8;
-      params.grid_dynamic_enabled = true;
-      params.grid_warm_levels = 4;
-      params.grid_refill_threshold = 2;
-      params.grid_refill_batch = 3;
-      params.grid_max_pendings = 13;
 
       params.target_cycle_usd = 7.5;
-      params.grid_protection_enabled = true;
-      params.grid_cooldown_minutes = 40;
      }
 
    //+------------------------------------------------------------------+
@@ -422,15 +365,8 @@ private:
       params.atr_timeframe = PERIOD_M30;
 
       params.grid_levels = 6;
-      params.grid_dynamic_enabled = true;
-      params.grid_warm_levels = 3;
-      params.grid_refill_threshold = 2;
-      params.grid_refill_batch = 2;
-      params.grid_max_pendings = 10;
 
       params.target_cycle_usd = 9.0;
-      params.grid_protection_enabled = true;
-      params.grid_cooldown_minutes = 50;
      }
 
    //+------------------------------------------------------------------+
@@ -446,15 +382,8 @@ private:
       params.atr_timeframe = PERIOD_H1;
 
       params.grid_levels = 5;
-      params.grid_dynamic_enabled = true;
-      params.grid_warm_levels = 3;
-      params.grid_refill_threshold = 1;
-      params.grid_refill_batch = 2;
-      params.grid_max_pendings = 10;
 
       params.target_cycle_usd = 10.0;
-      params.grid_protection_enabled = true;
-      params.grid_cooldown_minutes = 60;
      }
   };
 

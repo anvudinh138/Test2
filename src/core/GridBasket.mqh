@@ -12,6 +12,13 @@
 #include "Logger.mqh"
 #include "MathHelpers.mqh"
 
+// Forward declarations
+class CTrapDetector;
+class CTrendFilter;
+
+// Phase 13: Include trend strength analyzer
+#include "TrendStrengthAnalyzer.mqh"
+
 class CGridBasket
   {
 private:
@@ -44,6 +51,28 @@ private:
    int            m_levels_placed;
    int            m_pending_count;
    double         m_initial_spacing_pips;
+   
+   // lazy grid state (v3.1 - Phase 3)
+   SGridState     m_grid_state;
+   
+   // trap detector (v3.1 - Phase 5)
+   CTrapDetector *m_trap_detector;
+
+   // trend filter (Phase 12 - for conditional Basket SL)
+   CTrendFilter  *m_trend_filter;
+
+   // trend strength analyzer (Phase 13 - for dynamic spacing)
+   CTrendStrengthAnalyzer *m_trend_analyzer;
+
+   // quick exit mode (v3.1 - Phase 7)
+   bool           m_quick_exit_active;
+   double         m_quick_exit_target;
+   double         m_original_target;
+   datetime       m_quick_exit_start_time;
+
+   // time-based exit (Phase 13 Layer 4)
+   datetime       m_first_position_time;     // When first position opened
+   bool           m_time_exit_triggered;     // Exit already triggered?
 
    double         m_last_realized;
 
@@ -137,8 +166,8 @@ private:
       m_levels_placed=0;
       m_pending_count=0;
       
-      // Pre-allocate full array but only fill warm levels
-      if(m_params.grid_dynamic_enabled)
+      // Pre-allocate array for lazy grid (filled dynamically)
+      if(m_params.lazy_grid_enabled)
         {
          ArrayResize(m_levels,m_max_levels);
          for(int i=0;i<m_max_levels;i++)
@@ -151,7 +180,7 @@ private:
         }
       else
         {
-         // Old behavior: build all levels
+         // Old static grid behavior: build all levels upfront
          AppendLevel(anchor_price,LevelLot(0));
          for(int i=1;i<m_params.grid_levels;i++)
            {
@@ -163,6 +192,225 @@ private:
             AppendLevel(price,LevelLot(i));
            }
          m_last_grid_price=m_levels[ArraySize(m_levels)-1].price;
+        }
+     }
+
+   //+------------------------------------------------------------------+
+   //| Lazy Grid v1: Seed minimal grid (1 market + 1 pending)          |
+   //| Phase 3 - Only called when InpLazyGridEnabled=true              |
+   //+------------------------------------------------------------------+
+   void           SeedInitialGrid()
+     {
+      m_executor.SetMagic(m_magic);
+      m_executor.BypassNext(2);  // Bypass cooldown for 2 orders
+      
+      double spacing_px=m_spacing.ToPrice(m_initial_spacing_pips);
+      double anchor=SymbolInfoDouble(m_symbol,(m_direction==DIR_BUY)?SYMBOL_ASK:SYMBOL_BID);
+      
+      m_levels_placed=0;
+      m_pending_count=0;
+      m_last_grid_price=0.0;
+      m_grid_state.Reset();  // Reset lazy grid state
+      
+      // 1. Place market seed (level 0)
+      double seed_lot=LevelLot(0);
+      if(seed_lot<=0.0)
+         return;
+         
+      ulong market_ticket=m_executor.Market(m_direction,seed_lot,"RGDv2_LazySeed");
+      if(market_ticket>0)
+        {
+         m_levels[0].price=anchor;
+         m_levels[0].lot=seed_lot;
+         m_levels[0].ticket=market_ticket;
+         m_levels[0].filled=true;
+         m_levels_placed++;
+         m_last_grid_price=anchor;
+         LogDynamic("SEED",0,anchor);
+        }
+      
+      // 2. Place ONE pending order (level 1)
+      double price=anchor;
+      if(m_direction==DIR_BUY)
+         price-=spacing_px;
+      else
+         price+=spacing_px;
+         
+      double lot=LevelLot(1);
+      ulong pending=(m_direction==DIR_BUY)?m_executor.Limit(DIR_BUY,price,lot,"RGDv2_LazyGrid")
+                                          :m_executor.Limit(DIR_SELL,price,lot,"RGDv2_LazyGrid");
+      if(pending>0)
+        {
+         m_levels[1].price=price;
+         m_levels[1].lot=lot;
+         m_levels[1].ticket=pending;
+         m_levels[1].filled=false;
+         m_levels_placed++;
+         m_pending_count++;
+         m_last_grid_price=price;
+         LogDynamic("SEED",1,price);
+        }
+      
+      // Update lazy grid state
+      m_grid_state.currentMaxLevel=1;
+      m_grid_state.pendingCount=m_pending_count;
+      m_grid_state.lastFilledLevel=0;  // No fills yet, will expand when level 0 fills
+      
+      if(m_log!=NULL)
+         m_log.Event(Tag(),StringFormat("Initial grid seeded (lazy) levels=%d pending=%d",
+                                        m_levels_placed,m_pending_count));
+     }
+
+   //+------------------------------------------------------------------+
+   //| Phase 4: Smart Expansion Helpers                                 |
+   //+------------------------------------------------------------------+
+   
+   //--- Calculate next level price
+   double         CalculateNextLevelPrice()
+     {
+      int next_level=m_grid_state.currentMaxLevel+1;
+      double spacing_px=m_spacing.ToPrice(m_initial_spacing_pips);
+      double anchor=m_levels[0].price;
+      
+      if(m_direction==DIR_BUY)
+         return anchor-(spacing_px*next_level);
+      else
+         return anchor+(spacing_px*next_level);
+     }
+   
+   //--- Convert price difference to pips
+   double         PriceToDistance(const double price1,const double price2)
+     {
+      double diff=MathAbs(price1-price2);
+      double point=SymbolInfoDouble(m_symbol,SYMBOL_POINT);
+      int digits=(int)SymbolInfoInteger(m_symbol,SYMBOL_DIGITS);
+      
+      // For 3/5 digit brokers, divide by 10
+      if(digits==3 || digits==5)
+         return diff/point/10.0;
+      else
+         return diff/point;
+     }
+   
+   //--- Validate price is on correct side of market
+   bool           IsPriceReasonable(const double price)
+     {
+      double current=SymbolInfoDouble(m_symbol,
+                     (m_direction==DIR_BUY)?SYMBOL_ASK:SYMBOL_BID);
+      
+      // BUY: pending must be BELOW current
+      if(m_direction==DIR_BUY && price>=current)
+         return false;
+      
+      // SELL: pending must be ABOVE current
+      if(m_direction==DIR_SELL && price<=current)
+         return false;
+      
+      return true;
+     }
+   
+   //--- Check if grid should expand (all guards)
+   bool           ShouldExpandGrid()
+     {
+      // Guard 0: New level filled? (Phase 4 KEY: Only expand on fill!)
+      int current_filled=GetFilledLevels();
+      if(current_filled<=m_grid_state.lastFilledLevel)
+        {
+         // No new fills since last expansion - silent return
+         return false;
+        }
+      
+      // Guard 1: Max levels reached?
+      if(m_grid_state.currentMaxLevel>=m_max_levels-1)
+        {
+         if(m_log!=NULL)
+           // m_log.Event(Tag(),"Expansion blocked: GRID_FULL");
+         return false;
+        }
+      
+      // Guard 2: DD too deep?
+      if(m_total_lot>0.0)
+        {
+         double account_balance=AccountInfoDouble(ACCOUNT_BALANCE);
+         if(account_balance>0.0)
+           {
+            double dd_pct=(m_pnl_usd/account_balance)*100.0;
+            if(dd_pct<m_params.max_dd_for_expansion)
+              {
+               if(m_log!=NULL)
+                 // m_log.Event(Tag(),StringFormat("Expansion blocked: DD too deep %.2f%% < %.2f%%",
+                  //                               dd_pct,m_params.max_dd_for_expansion));
+               return false;
+              }
+           }
+        }
+      
+      // Guard 3: Distance too far?
+      double next_price=CalculateNextLevelPrice();
+      double distance_pips=PriceToDistance(next_price,m_levels[0].price);
+      double max_distance=GetEffectiveMaxLevelDistance();
+      if(distance_pips>max_distance)
+        {
+         if(m_log!=NULL)
+           // m_log.Event(Tag(),StringFormat("Expansion blocked: Distance %.1f pips > %.1f max",
+           //                               distance_pips,max_distance));
+         return false;
+        }
+      
+      // Guard 4: Price reasonable?
+      if(!IsPriceReasonable(next_price))
+        {
+         if(m_log!=NULL)
+           // m_log.Event(Tag(),"Expansion blocked: Price on wrong side of market");
+         return false;
+        }
+      
+      return true;
+     }
+   
+   //--- Expand grid by one level
+   void           ExpandOneLevel()
+     {
+      int next_level=m_grid_state.currentMaxLevel+1;
+      
+      double spacing_px=m_spacing.ToPrice(m_initial_spacing_pips);
+      double anchor=m_levels[0].price;
+      
+      double price=anchor;
+      if(m_direction==DIR_BUY)
+         price-=(spacing_px*next_level);
+      else
+         price+=(spacing_px*next_level);
+      
+      double lot=LevelLot(next_level);
+      if(lot<=0.0)
+         return;
+      
+      m_executor.SetMagic(m_magic);
+      ulong ticket=(m_direction==DIR_BUY)
+                  ?m_executor.Limit(DIR_BUY,price,lot,"RGDv2_LazyExpand")
+                  :m_executor.Limit(DIR_SELL,price,lot,"RGDv2_LazyExpand");
+      
+      if(ticket>0)
+        {
+         m_levels[next_level].price=price;
+         m_levels[next_level].lot=lot;
+         m_levels[next_level].ticket=ticket;
+         m_levels[next_level].filled=false;
+         
+         m_levels_placed++;
+         m_pending_count++;
+         m_last_grid_price=price;
+         
+         m_grid_state.currentMaxLevel=next_level;
+         m_grid_state.pendingCount=m_pending_count;
+         // lastFilledLevel already updated in RefillBatch()
+         
+         LogDynamic("EXPAND",next_level,price);
+         
+         if(m_log!=NULL)
+            m_log.Event(Tag(),StringFormat("Lazy grid expanded to level %d, pending=%d/%d (filled=%d)",
+                                          next_level,m_pending_count,m_max_levels,m_grid_state.lastFilledLevel));
         }
      }
 
@@ -182,99 +430,44 @@ private:
         }
 
       m_executor.SetMagic(m_magic);
-
-      if(m_params.grid_dynamic_enabled)
+      
+      // Phase 4: Use lazy grid if enabled
+      if(m_params.lazy_grid_enabled)
         {
-         // Dynamic mode: only place seed + warm levels
-         int warm=MathMin(m_params.grid_warm_levels,m_max_levels-1);
-         int warm_cap=warm;
-         if(m_params.grid_max_pendings>0)
-            warm_cap=MathMin(warm,m_params.grid_max_pendings);
-         m_executor.BypassNext(1+warm_cap);
-         
-         double spacing_px=m_spacing.ToPrice(m_initial_spacing_pips);
-         double anchor=SymbolInfoDouble(m_symbol,(m_direction==DIR_BUY)?SYMBOL_ASK:SYMBOL_BID);
-         
-         // Place seed
-         double seed_lot=LevelLot(0);
-         ulong market_ticket=m_executor.Market(m_direction,seed_lot,"RGDv2_Seed");
-         if(market_ticket>0)
-           {
-            m_levels[0].price=anchor;
-            m_levels[0].lot=seed_lot;
-            m_levels[0].ticket=market_ticket;
-            m_levels[0].filled=true;
-            m_levels_placed++;
-            m_last_grid_price=anchor;
-            LogDynamic("SEED",0,anchor);
-           }
-         
-         // Place warm pending
-         for(int i=1;i<=warm_cap;i++)
-           {
-            double price=anchor;
-            if(m_direction==DIR_BUY)
-               price-=spacing_px*i;
-            else
-               price+=spacing_px*i;
-            double lot=LevelLot(i);
-            ulong pending=(m_direction==DIR_BUY)?m_executor.Limit(DIR_BUY,price,lot,"RGDv2_Grid")
-                                                :m_executor.Limit(DIR_SELL,price,lot,"RGDv2_Grid");
-            if(pending>0)
-              {
-               m_levels[i].price=price;
-               m_levels[i].lot=lot;
-               m_levels[i].ticket=pending;
-               m_levels[i].filled=false;
-               m_levels_placed++;
-               m_pending_count++;
-               m_last_grid_price=price;
-               LogDynamic("SEED",i,price);
-              }
-           }
-
-         if((warm>warm_cap) || (m_params.grid_max_pendings>0 && m_pending_count>=m_params.grid_max_pendings))
-            LogDynamic("LIMIT",m_levels_placed,m_last_grid_price);
-
-         if(m_pending_count==0)
-            m_last_grid_price=anchor;
-         
-         if(m_log!=NULL)
-            m_log.Event(Tag(),StringFormat("Dynamic grid warm=%d/%d",m_levels_placed,m_max_levels));
+         SeedInitialGrid();
+         return;
         }
-      else
+      
+      // Fallback: Static grid (place all levels at once)
+      m_executor.BypassNext(ArraySize(m_levels));
+      
+      double seed_lot=m_levels[0].lot;
+      if(seed_lot<=0.0)
+         return;
+      ulong market_ticket=m_executor.Market(m_direction,seed_lot,"RGDv2_Seed");
+      if(market_ticket>0)
         {
-         // Old static mode: place all
-         m_executor.BypassNext(ArraySize(m_levels));
-         
-         double seed_lot=m_levels[0].lot;
-         if(seed_lot<=0.0)
-            return;
-         ulong market_ticket=m_executor.Market(m_direction,seed_lot,"RGDv2_Seed");
-         if(market_ticket>0)
-           {
-            m_levels[0].ticket=market_ticket;
-            m_levels[0].filled=true;
-           }
-         
-         for(int i=1;i<ArraySize(m_levels);i++)
-           {
-            double price=m_levels[i].price;
-            double lot=m_levels[i].lot;
-            if(lot<=0.0)
-               continue;
-            ulong pending=0;
-            if(m_direction==DIR_BUY)
-               pending=m_executor.Limit(DIR_BUY,price,lot,"RGDv2_Grid");
-            else
-               pending=m_executor.Limit(DIR_SELL,price,lot,"RGDv2_Grid");
-            if(pending>0)
-               m_levels[i].ticket=pending;
-           }
-         
-         if(m_log!=NULL)
-            m_log.Event(Tag(),StringFormat("Grid seeded levels=%d",ArraySize(m_levels)));
+         m_levels[0].ticket=market_ticket;
+         m_levels[0].filled=true;
         }
+      
+      for(int i=1;i<ArraySize(m_levels);i++)
+        {
+         double price=m_levels[i].price;
+         double lot=m_levels[i].lot;
+         if(lot<=0.0)
+            continue;
+         ulong pending=0;
+         if(m_direction==DIR_BUY)
+            pending=m_executor.Limit(DIR_BUY,price,lot,"RGDv2_Grid");
+         else
+            pending=m_executor.Limit(DIR_SELL,price,lot,"RGDv2_Grid");
+         if(pending>0)
+            m_levels[i].ticket=pending;
+        }
+      
+      if(m_log!=NULL)
+         m_log.Event(Tag(),StringFormat("Static grid seeded levels=%d",ArraySize(m_levels)));
      }
 
    void           RefreshState()
@@ -308,6 +501,16 @@ private:
          lot_acc+=vol;
          weighted_price+=vol*price;
          m_pnl_usd+=profit;
+         
+         // Update level filled status (Phase 4: Track fills for lazy grid)
+         for(int j=0;j<ArraySize(m_levels);j++)
+           {
+            if(m_levels[j].ticket==ticket && !m_levels[j].filled)
+              {
+               m_levels[j].filled=true;
+               break;
+              }
+           }
         }
 
       if(lot_acc>0.0)
@@ -361,25 +564,6 @@ private:
       return (ask<=m_tp_price);
      }
 
-   void           CloseBasket(const string reason)
-     {
-      if(!m_active)
-         return;
-      m_last_realized=m_pnl_usd;
-      if(m_executor!=NULL)
-        {
-         m_executor.SetMagic(m_magic);
-         m_executor.CloseAllByDirection(m_direction,m_magic);
-         m_executor.CancelPendingByDirection(m_direction,m_magic);
-        }
-      m_active=false;
-      m_closed_recently=true;
-      m_close_reason=reason;  // Track close reason
-      m_cycles_done++;
-      if(m_log!=NULL)
-        m_log.Event(Tag(),StringFormat("Basket closed: %s",reason));
-     }
-
   void           AdjustTarget(const double delta,const string reason)
      {
       if(delta<=0.0)
@@ -394,50 +578,6 @@ private:
          m_log.Event(Tag(),StringFormat("%s %.2f => %.2f",reason,delta,EffectiveTargetUsd()));
      }
 
-   //+------------------------------------------------------------------+
-   //| Check if basket SL is hit (spacing-based)                        |
-   //+------------------------------------------------------------------+
-   bool           CheckBasketSL()
-     {
-      // Only check if basket has positions
-      if(m_total_lot<=0.0 || m_avg_price<=0.0)
-         return false;
-
-      // Get current spacing in price units
-      double current_spacing_pips=(m_spacing!=NULL)?m_spacing.GetSpacing():m_params.spacing_pips;
-      double point=SymbolInfoDouble(m_symbol,SYMBOL_POINT);
-      double spacing_px=current_spacing_pips*point*10.0;
-
-      // Calculate SL distance in price units
-      double sl_distance_px=spacing_px*m_params.basket_sl_spacing;
-
-      // Get current price
-      double current_price=(m_direction==DIR_BUY)?SymbolInfoDouble(m_symbol,SYMBOL_BID):SymbolInfoDouble(m_symbol,SYMBOL_ASK);
-
-      // Check if price moved against basket by SL distance
-      bool sl_hit=false;
-      if(m_direction==DIR_BUY)
-        {
-         // BUY basket: SL hit if price drops below (avg - SL distance)
-         double sl_price=m_avg_price-sl_distance_px;
-         sl_hit=(current_price<=sl_price);
-        }
-      else
-        {
-         // SELL basket: SL hit if price rises above (avg + SL distance)
-         double sl_price=m_avg_price+sl_distance_px;
-         sl_hit=(current_price>=sl_price);
-        }
-
-      if(sl_hit && m_log!=NULL)
-        {
-         int digits=(int)SymbolInfoInteger(m_symbol,SYMBOL_DIGITS);
-         m_log.Event(Tag(),StringFormat("Basket SL HIT: avg=%."+IntegerToString(digits)+"f cur=%."+IntegerToString(digits)+"f spacing=%.1f pips dist=%.1fx loss=%.2f USD",
-                                        m_avg_price,current_price,current_spacing_pips,m_params.basket_sl_spacing,m_pnl_usd));
-        }
-
-      return sl_hit;
-     }
 
 public:
    CGridBasket(const string symbol,
@@ -495,6 +635,38 @@ public:
            }
         }
       ArrayResize(m_levels,0);
+
+      // Initialize trap detector pointer to NULL
+      m_trap_detector=NULL;
+
+      // Initialize trend filter pointer to NULL (Phase 12)
+      m_trend_filter=NULL;
+
+      // Initialize trend analyzer pointer to NULL (Phase 13)
+      m_trend_analyzer=NULL;
+
+      // Initialize quick exit state
+      m_quick_exit_active=false;
+      m_quick_exit_target=0.0;
+      m_original_target=0.0;
+      m_quick_exit_start_time=0;
+
+      // Initialize time-based exit state (Phase 13 Layer 4)
+      m_first_position_time=0;
+      m_time_exit_triggered=false;
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Destructor                                                        |
+   //+------------------------------------------------------------------+
+                    ~CGridBasket()
+     {
+      // Cleanup trap detector
+      if(m_trap_detector!=NULL)
+        {
+         delete m_trap_detector;
+         m_trap_detector=NULL;
+        }
      }
 
    bool           Init(const double anchor_price)
@@ -502,6 +674,21 @@ public:
       if(m_spacing==NULL)
          return false;
       double spacing_pips=m_spacing.SpacingPips();
+
+      // Phase 13: Apply dynamic spacing multiplier based on trend strength
+      if(m_params.dynamic_spacing_enabled && m_trend_analyzer!=NULL)
+        {
+         double multiplier=m_trend_analyzer.GetSpacingMultiplier();
+         spacing_pips=spacing_pips*multiplier;
+
+         if(m_log!=NULL)
+           {
+            EMarketState state=m_trend_analyzer.GetMarketState();
+            m_log.Event(Tag(),StringFormat("Phase 13: Dynamic spacing %.0f pips × %.1f = %.0f pips (%s)",
+                                          m_spacing.SpacingPips(),multiplier,spacing_pips,EnumToString(state)));
+           }
+        }
+
       double spacing_px=m_spacing.ToPrice(spacing_pips);
       if(spacing_px<=0.0)
          return false;
@@ -513,70 +700,91 @@ public:
       m_active=true;
       m_closed_recently=false;
       RefreshState();
+
+      // Initialize trap detector (Phase 5)
+      // Note: TrendFilter will be passed from LifecycleController (for now NULL)
+      m_trap_detector=new CTrapDetector(GetPointer(this),
+                                        NULL,  // TrendFilter reference (will be set later)
+                                        m_log,
+                                        m_params.trap_detection_enabled,
+                                        m_params.trap_auto_threshold,
+                                        m_params.trap_gap_threshold,
+                                        m_params.trap_atr_multiplier,
+                                        m_params.trap_spacing_multiplier,
+                                        m_params.trap_dd_threshold,
+                                        m_params.trap_conditions_required,
+                                        m_params.trap_stuck_minutes);
+
       return true;
      }
 
-   void           RefillBatch()
+   //+------------------------------------------------------------------+
+   //| Reseed basket with fresh grid (for Quick Exit auto-reseed)      |
+   //+------------------------------------------------------------------+
+   void           Reseed()
      {
-      if(!m_params.grid_dynamic_enabled)
+      if(m_spacing==NULL)
          return;
-      if(!m_trading_enabled)
-         return;  // Trend filter disabled trading (NONE/CLOSE_ALL modes)
-      if(!m_refill_enabled)
-         return;  // NO_REFILL mode: block refill, allow existing positions
-      if(m_levels_placed>=m_max_levels)
-         return;
-      if(m_pending_count>m_params.grid_refill_threshold)
-         return;
-      if(m_params.grid_max_pendings>0 && m_pending_count>=m_params.grid_max_pendings)
-         return;
-      
-      double spacing_px=m_spacing.ToPrice(m_initial_spacing_pips);
-      double anchor_price=SymbolInfoDouble(m_symbol,(m_direction==DIR_BUY)?SYMBOL_BID:SYMBOL_ASK);
-      int to_add=MathMin(m_params.grid_refill_batch,m_max_levels-m_levels_placed);
-      int added=0;
-      
-      for(int i=0;i<to_add;i++)
-        {
-         int idx=m_levels_placed;
-         if(idx>=m_max_levels)
-            break;
-         
-         double base_price=(m_levels_placed==0)?anchor_price:m_last_grid_price;
-         double price=base_price;
-         if(m_direction==DIR_BUY)
-            price-=spacing_px;
-         else
-            price+=spacing_px;
-         
-         double lot=LevelLot(idx);
-         if(lot<=0.0)
-            continue;
-         
-         ulong pending=(m_direction==DIR_BUY)?m_executor.Limit(DIR_BUY,price,lot,"RGDv2_GridRefill")
-                                             :m_executor.Limit(DIR_SELL,price,lot,"RGDv2_GridRefill");
-         if(pending>0)
-           {
-            m_levels[idx].price=price;
-            m_levels[idx].lot=lot;
-            m_levels[idx].ticket=pending;
-            m_levels[idx].filled=false;
-            m_levels_placed++;
-            m_pending_count++;
-            m_last_grid_price=price;
-            LogDynamic("REFILL",idx,price);
-            added++;
 
-            if(m_params.grid_max_pendings>0 && m_pending_count>=m_params.grid_max_pendings)
-              {
-               LogDynamic("LIMIT",idx,price);
-               break;
-              }
+      // Phase 13 Layer 4: Reset time tracking
+      ResetTimeTracking();
+
+      // Get current price for anchor
+      double anchor_price=SymbolInfoDouble(m_symbol,(m_direction==DIR_BUY)?SYMBOL_ASK:SYMBOL_BID);
+
+      // Clear old state
+      ClearLevels();
+      m_target_reduction=0.0;
+      m_last_realized=0.0;
+
+      // Rebuild grid and place orders
+      double spacing_pips=m_spacing.SpacingPips();
+
+      // Phase 13: Apply dynamic spacing multiplier based on trend strength
+      if(m_params.dynamic_spacing_enabled && m_trend_analyzer!=NULL)
+        {
+         double multiplier=m_trend_analyzer.GetSpacingMultiplier();
+         spacing_pips=spacing_pips*multiplier;
+
+         if(m_log!=NULL)
+           {
+            EMarketState state=m_trend_analyzer.GetMarketState();
+            m_log.Event(Tag(),StringFormat("Phase 13: Dynamic spacing on reseed %.0f pips × %.1f = %.0f pips (%s)",
+                                          m_spacing.SpacingPips(),multiplier,spacing_pips,EnumToString(state)));
            }
         }
+
+      double spacing_px=m_spacing.ToPrice(spacing_pips);
+      if(spacing_px>0.0)
+        {
+         m_initial_spacing_pips=spacing_pips;
+         BuildGrid(anchor_price,spacing_px);
+         PlaceInitialOrders();
+         m_active=true;
+         RefreshState();
+
+         if(m_log!=NULL)
+            m_log.Event(Tag(),StringFormat("[%s] Basket reseeded at %.5f",DirectionLabel(),anchor_price));
+        }
+     }
+
+   //+------------------------------------------------------------------+
+   //| Refill/Expand Grid (Lazy Grid Only)                              |
+   //+------------------------------------------------------------------+
+   void           RefillBatch()
+     {
+      // Only handle lazy grid expansion
+      if(!m_params.lazy_grid_enabled)
+         return;
       
-      if(added>0 && m_log!=NULL)
-         m_log.Event(Tag(),StringFormat("Refill +%d placed=%d/%d pending=%d",added,m_levels_placed,m_max_levels,m_pending_count));
+      // Check if we should expand by one level
+      int current_filled=GetFilledLevels();
+      if(ShouldExpandGrid())
+        {
+         // Update lastFilledLevel BEFORE expansion
+         m_grid_state.lastFilledLevel=current_filled;
+         ExpandOneLevel();
+        }
      }
 
    void           Update()
@@ -586,15 +794,17 @@ public:
       m_closed_recently=false;
       RefreshState();
 
-      // Basket Stop Loss check (spacing-based)
-      if(m_params.basket_sl_enabled && CheckBasketSL())
+      // Phase 7: Check Quick Exit TP (highest priority - escape trap ASAP)
+      if(CheckQuickExitTP())
         {
-         CloseBasket("BasketSL");
-         return;  // Exit early after SL closure
+         return;  // Quick exit closed basket, skip other checks
         }
 
-      // Dynamic grid refill
-      if(m_params.grid_dynamic_enabled)
+      // Phase 5: Check for new trap conditions (detect traps before they worsen)
+      CheckTrapConditions();
+
+      // Lazy grid expansion
+      if(m_params.lazy_grid_enabled)
         {
          // Update pending count by direction
          m_pending_count=0;
@@ -615,7 +825,7 @@ public:
                continue;
             m_pending_count++;
            }
-         RefillBatch();
+         RefillBatch();  // Calls ExpandOneLevel() if guards pass
         }
 
       if((m_pnl_usd>=EffectiveTargetUsd()) || PriceReachedTP())
@@ -765,10 +975,402 @@ public:
       m_refill_enabled=enabled;
      }
 
+   void           SetTrendFilter(CTrendFilter *filter)
+     {
+      m_trend_filter=filter;
+     }
+
+   void           SetTrendAnalyzer(CTrendStrengthAnalyzer *analyzer)
+     {
+      m_trend_analyzer=analyzer;
+     }
+
    bool           IsRefillEnabled() const
      {
       return m_refill_enabled;
      }
+
+   //+------------------------------------------------------------------+
+   //| Phase 13 Layer 4: Time-Based Exit Methods                        |
+   //+------------------------------------------------------------------+
+   bool           CheckTimeBasedExit()
+     {
+      // Only if enabled
+      if(!m_params.time_exit_enabled)
+         return false;
+
+      // Only if basket has positions
+      if(!m_active || m_total_lot<=0.0)
+         return false;
+
+      datetime now=TimeCurrent();
+
+      // Initialize first position time if not set
+      if(m_first_position_time==0)
+        {
+         m_first_position_time=now;
+         return false;
+        }
+
+      // Calculate time underwater (in hours)
+      int hours_underwater=(int)((now-m_first_position_time)/3600);
+
+      // Not yet triggered?
+      if(hours_underwater<m_params.time_exit_hours)
+         return false;
+
+      // Already triggered?
+      if(m_time_exit_triggered)
+         return false;
+
+      // Check if loss acceptable
+      double current_pnl=BasketPnL();
+      if(current_pnl<m_params.time_exit_max_loss_usd)
+        {
+         if(m_log!=NULL)
+           {
+            m_log.Event(Tag(),StringFormat("Time exit rejected: Loss %.2f < Max %.2f",
+                                          current_pnl,m_params.time_exit_max_loss_usd));
+           }
+         return false;
+        }
+
+      // Optional: Check if counter-trend
+      if(m_params.time_exit_trend_only && m_trend_filter!=NULL)
+        {
+         ETrendState trend=m_trend_filter.GetTrendState();
+         bool is_counter_trend=false;
+
+         if(m_direction==DIR_BUY && trend==TREND_DOWN)
+            is_counter_trend=true;
+         if(m_direction==DIR_SELL && trend==TREND_UP)
+            is_counter_trend=true;
+
+         if(!is_counter_trend)
+           {
+            if(m_log!=NULL)
+              {
+               m_log.Event(Tag(),"Time exit skipped: Not counter-trend");
+              }
+            return false;
+           }
+        }
+
+      // TRIGGER TIME EXIT
+      if(m_log!=NULL)
+        {
+         m_log.Event(Tag(),StringFormat("⏰ [Phase 13 Layer 4] Time exit triggered! Hours: %d, Loss: %.2f USD",
+                                        hours_underwater,current_pnl));
+        }
+
+      m_time_exit_triggered=true;
+      return true;
+     }
+
+   void           ResetTimeTracking()
+     {
+      m_first_position_time=0;
+      m_time_exit_triggered=false;
+     }
+
+   //+------------------------------------------------------------------+
+   //| Close basket with reason tracking                                |
+   //+------------------------------------------------------------------+
+   void           CloseBasket(const string reason)
+     {
+      if(!m_active)
+         return;
+      m_last_realized=m_pnl_usd;
+      if(m_executor!=NULL)
+        {
+         m_executor.SetMagic(m_magic);
+         m_executor.CloseAllByDirection(m_direction,m_magic);
+         m_executor.CancelPendingByDirection(m_direction,m_magic);
+        }
+      m_active=false;
+      m_closed_recently=true;
+      m_close_reason=reason;  // Track close reason
+      m_cycles_done++;
+      if(m_log!=NULL)
+         m_log.Event(Tag(),StringFormat("Basket closed: %s",reason));
+     }
+
+   //+------------------------------------------------------------------+
+   //| Phase 5: Trap Detection Helper Methods                           |
+   //+------------------------------------------------------------------+
+   
+   //+------------------------------------------------------------------+
+   //| Calculate gap size between filled positions                      |
+   //+------------------------------------------------------------------+
+   double         CalculateGapSize() const
+     {
+      // Find all filled positions
+      double prices[];
+      int count=0;
+      
+      for(int i=0;i<ArraySize(m_levels);i++)
+        {
+         if(m_levels[i].filled && m_levels[i].ticket>0)
+           {
+            ArrayResize(prices,count+1);
+            prices[count]=m_levels[i].price;
+            count++;
+           }
+        }
+      
+      if(count<2)
+         return 0.0;  // Need at least 2 positions
+      
+      // Sort prices
+      ArraySort(prices);
+      
+      // Find largest gap between consecutive positions
+      double max_gap=0.0;
+      double point=SymbolInfoDouble(m_symbol,SYMBOL_POINT);
+      int digits=(int)SymbolInfoInteger(m_symbol,SYMBOL_DIGITS);
+      
+      for(int i=0;i<count-1;i++)
+        {
+         double gap=MathAbs(prices[i+1]-prices[i])/point;
+         
+         // Convert to pips (handle 3/5 digit brokers)
+         if(digits==3 || digits==5)
+            gap/=10.0;
+         
+         if(gap>max_gap)
+            max_gap=gap;
+        }
+      
+      return max_gap;
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Get DD percent (for trap detection)                              |
+   //+------------------------------------------------------------------+
+   double         GetDDPercent() const
+     {
+      double balance=AccountInfoDouble(ACCOUNT_BALANCE);
+      if(balance<=0.0)
+         return 0.0;
+      
+      return (m_pnl_usd/balance)*100.0;
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Get basket direction (for trap detection)                        |
+   //+------------------------------------------------------------------+
+   EDirection     GetDirection() const
+     {
+      return m_direction;
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Get ATR pips (for auto trap threshold calculation)              |
+   //+------------------------------------------------------------------+
+   double         GetATRPips() const
+     {
+      if(m_spacing == NULL)
+         return 0.0;
+      return m_spacing.AtrPips();
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Get current spacing (for auto trap threshold calculation)       |
+   //+------------------------------------------------------------------+
+   double         GetCurrentSpacing() const
+     {
+      if(m_spacing == NULL)
+         return 0.0;
+      return m_spacing.SpacingPips();
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Get effective max level distance (auto or manual)               |
+   //+------------------------------------------------------------------+
+   double         GetEffectiveMaxLevelDistance()
+     {
+      if(!m_params.auto_max_level_distance)
+         return m_params.max_level_distance; // Manual mode
+      
+      // Auto mode: spacing × multiplier
+      double spacing_pips = GetCurrentSpacing();
+      if(spacing_pips <= 0)
+         return m_params.max_level_distance; // Fallback to manual
+      
+      return spacing_pips * m_params.lazy_distance_multiplier;
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Handle trap detected (Phase 7: activate Quick Exit once only)    |
+   //+------------------------------------------------------------------+
+   void           HandleTrapDetected()
+     {
+      if(m_trap_detector==NULL)
+         return;
+      
+      // Phase 7: Try to activate Quick Exit Mode
+      // (ActivateQuickExitMode will check if already active and skip if so)
+      ActivateQuickExitMode();
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Check for trap conditions (call from LifecycleController)        |
+   //+------------------------------------------------------------------+
+   void           CheckTrapConditions()
+     {
+      if(m_trap_detector==NULL || !m_trap_detector.IsEnabled())
+         return;
+      
+      if(!m_active)
+         return;
+      
+      if(m_trap_detector.DetectTrapConditions())
+        {
+         HandleTrapDetected();
+        }
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Phase 7: Activate Quick Exit Mode                                |
+   //+------------------------------------------------------------------+
+   void           ActivateQuickExitMode()
+     {
+      if(!m_params.quick_exit_enabled)
+         return;
+      
+      if(m_quick_exit_active)
+        {
+         // Already active - silently ignore to prevent log spam
+         return;
+        }
+      
+      // Log trap details BEFORE activation (from trap detector)
+      if(m_trap_detector!=NULL && m_log!=NULL)
+        {
+         STrapState trap_state=m_trap_detector.GetTrapState();
+         m_log.Event(Tag(),"🚨 TRAP DETECTED!");
+         m_log.Event(Tag(),StringFormat("   Gap: %.1f pips",trap_state.gapSize));
+         m_log.Event(Tag(),StringFormat("   DD: %.2f%%",trap_state.ddAtDetection));
+         m_log.Event(Tag(),StringFormat("   Conditions: %d/5",trap_state.conditionsMet));
+        }
+      
+      m_original_target = m_params.target_cycle_usd;
+      m_quick_exit_target = CalculateQuickExitTarget();
+      m_quick_exit_active = true;
+      m_quick_exit_start_time = TimeCurrent();
+      
+      if(m_log!=NULL)
+         m_log.Event(Tag(),StringFormat("Quick Exit ACTIVATED | Original Target: $%.2f → New Target: $%.2f",
+                                        m_original_target,m_quick_exit_target));
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Phase 7: Calculate Quick Exit Target (negative target = accept loss)|
+   //+------------------------------------------------------------------+
+   double         CalculateQuickExitTarget()
+     {
+      double current_pnl = m_pnl_usd;
+      double target = 0.0;
+      
+      switch(m_params.quick_exit_mode)
+        {
+         case QE_FIXED:
+            // Accept a fixed loss amount
+            target = -m_params.quick_exit_loss;
+            break;
+         
+         case QE_PERCENTAGE:
+            // Accept X% of current DD
+            // Example: DD = -$100, percentage = 30% → target = -$30 (accept $30 loss to escape)
+            if(current_pnl < 0)
+               target = current_pnl * (m_params.quick_exit_percentage / 100.0);
+            else
+               target = -m_params.quick_exit_loss; // fallback to fixed
+            break;
+         
+         case QE_DYNAMIC:
+           {
+            // Dynamic: choose smaller loss between fixed and percentage
+            double percentage_loss = (current_pnl < 0) ? (current_pnl * m_params.quick_exit_percentage / 100.0) : 0.0;
+            target = MathMax(-m_params.quick_exit_loss, percentage_loss); // choose less negative (smaller loss)
+            break;
+           }
+        }
+      
+      // Debug log removed - too verbose
+      return target;
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Phase 7: Check if Quick Exit TP reached                          |
+   //+------------------------------------------------------------------+
+   bool           CheckQuickExitTP()
+     {
+      if(!m_quick_exit_active)
+         return false;
+      
+      // Timeout check
+      if(m_params.quick_exit_timeout_min > 0)
+        {
+         int elapsed_minutes = (int)((TimeCurrent() - m_quick_exit_start_time) / 60);
+         if(elapsed_minutes >= m_params.quick_exit_timeout_min)
+           {
+            if(m_log!=NULL)
+               m_log.Warn(Tag(),StringFormat("[%s] Quick Exit TIMEOUT (%d minutes) - deactivating", 
+                                             DirectionLabel(),elapsed_minutes));
+            DeactivateQuickExitMode();
+            return false;
+           }
+        }
+      
+      double current_pnl = m_pnl_usd;
+      
+      // Check if we've reached the quick exit target (negative target = accept small loss)
+      // Example: target = -$20, current = -$18 → CLOSE! (loss reduced enough)
+      if(current_pnl >= m_quick_exit_target)
+        {
+         if(m_log!=NULL)
+            m_log.Event(Tag(),StringFormat("[%s] 🎯 Quick Exit TARGET REACHED! PnL: $%.2f >= Target: $%.2f → CLOSING ALL",
+                                           DirectionLabel(),current_pnl,m_quick_exit_target));
+         
+         // Close all positions in this basket
+         CloseBasket("QuickExit");
+         
+         // Auto reseed if enabled
+         if(m_params.quick_exit_reseed)
+           {
+            if(m_log!=NULL)
+               m_log.Event(Tag(),StringFormat("[%s] Quick Exit: Auto-reseeding basket after escape",DirectionLabel()));
+            Reseed();
+           }
+         
+         DeactivateQuickExitMode();
+         return true;
+        }
+      
+      return false;
+     }
+   
+   //+------------------------------------------------------------------+
+   //| Phase 7: Deactivate Quick Exit Mode                              |
+   //+------------------------------------------------------------------+
+   void           DeactivateQuickExitMode()
+     {
+      if(!m_quick_exit_active)
+         return;
+      
+      m_quick_exit_active = false;
+      m_quick_exit_target = 0.0;
+      m_quick_exit_start_time = 0;
+      
+      // Restore original target
+      m_params.target_cycle_usd = m_original_target;
+      
+      // Debug log removed - deactivation happens silently after timeout or close
+     }
   };
+
+// Include TrapDetector after GridBasket definition (to resolve circular dependency)
+#include "TrapDetector.mqh"
 
 #endif // __RGD_V2_GRID_BASKET_MQH__
